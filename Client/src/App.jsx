@@ -2,6 +2,7 @@ import { Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { ThemeProvider } from './context/ThemeContext'
 import { ToastProvider } from './context/ToastContext'
+import { AuthProvider } from './context/AuthContext'   // ← NEW
 import PageTransition from './components/PageTransition'
 
 import Landing from './pages/Landing'
@@ -37,7 +38,10 @@ export default function App() {
   return (
     <ThemeProvider>
       <ToastProvider>
-        <AnimatedRoutes />
+        {/* AuthProvider gives every page access to user info + login/logout */}
+        <AuthProvider>
+          <AnimatedRoutes />
+        </AuthProvider>
       </ToastProvider>
     </ThemeProvider>
   )

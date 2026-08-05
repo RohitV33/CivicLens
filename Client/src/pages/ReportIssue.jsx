@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  MapPin, Sparkles, Loader2, CheckCircle2, Building2, AlertTriangle, Send, RefreshCw,
+  MapPin, Sparkles, Loader2, CheckCircle2, AlertTriangle, Send, RefreshCw,
 } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
 import Card from '../components/Card'
@@ -11,7 +11,9 @@ import ImageUploader from '../components/ImageUploader'
 import MapCard from '../components/MapCard'
 import { SeverityChip } from '../components/StatusChip'
 import { useToast } from '../context/ToastContext'
+import { createIssueAPI } from '../services/api'  // ← real API call
 
+// Fake AI detection results (the actual AI feature can be added later)
 const AI_RESULTS = [
   { issue: 'Pothole', category: 'Road Damage', department: 'Public Works Dept.', confidence: 96, severity: 'high' },
   { issue: 'Overflowing garbage bin', category: 'Waste Management', department: 'Sanitation Dept.', confidence: 91, severity: 'medium' },
@@ -27,6 +29,7 @@ export default function ReportIssue() {
   const navigate = useNavigate()
   const { addToast } = useToast()
 
+  // When user uploads a photo, simulate AI analysis (real AI can be added later)
   const handleFile = (f) => {
     setFile(f)
     setResult(null)
@@ -37,19 +40,30 @@ export default function ReportIssue() {
       const r = AI_RESULTS[Math.floor(Math.random() * AI_RESULTS.length)]
       setResult(r)
       setDescription(
-        `A ${r.issue.toLowerCase()} was detected at the reported location, classified under ${r.category} with ${r.severity} severity. Immediate attention from the ${r.department} is recommended to prevent further deterioration and ensure public safety.`
+        `A ${r.issue.toLowerCase()} was detected at the reported location, classified under ${r.category} with ${r.severity} severity. Immediate attention from the ${r.department} is recommended.`
       )
       setAnalyzing(false)
     }, 1800)
   }
 
-  const submit = () => {
+  // When user clicks "Submit Official Report" → call real backend API
+  const submit = async () => {
+    if (!result) return
     setSubmitting(true)
-    setTimeout(() => {
-      setSubmitting(false)
+    try {
+      const res = await createIssueAPI(
+        result.issue,                  // title
+        description,                   // description
+        'GT Road, Sector 14, Ghaziabad' // location (hardcoded for now — GPS can be added)
+      )
       addToast('Report submitted successfully — you can track it from your dashboard.', 'success')
-      navigate('/complaint/CL-10245')
-    }, 1200)
+      // Navigate to dashboard (the real issue ID from DB is res.data.id)
+      navigate('/dashboard')
+    } catch (err) {
+      addToast(err.message || 'Failed to submit report. Please login first.', 'error')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (

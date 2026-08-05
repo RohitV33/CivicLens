@@ -7,10 +7,31 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ---- USER MODEL ----
+// Stores registered users
 model User {
   id        Int      @id @default(autoincrement())
   name      String
   email     String   @unique
-  password  String
+  password  String   // stored as bcrypt hash, never plain text
+  role      String   @default("USER")  // "USER" or "ADMIN"
   createdAt DateTime @default(now())
-} 
+
+  // A user can report many issues
+  issues    Issue[]  @relation("ReportedIssues")
+}
+
+// ---- ISSUE MODEL ----
+// Stores civic issues reported by users
+model Issue {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  location    String?  // optional field (the ? means it can be null)
+  status      String   @default("OPEN")  // OPEN, IN_PROGRESS, RESOLVED
+  createdAt   DateTime @default(now())
+
+  // Which user reported this issue
+  reporterId  Int
+  reporter    User     @relation("ReportedIssues", fields: [reporterId], references: [id])
+}

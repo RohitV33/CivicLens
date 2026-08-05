@@ -8,6 +8,7 @@ import ReportCard from '../components/ReportCard'
 import { EmptyState } from '../components/EmptyState'
 import { reports, leaderboard, activity } from '../data/mockData'
 import { useCountUp } from '../hooks/useCountUp'
+import { useAuth } from '../context/AuthContext'  // ← get real user data
 
 function StatCard({ icon: Icon, label, value, bgClass = 'bg-white dark:bg-[#1A1C20]', tone = 'text-black dark:text-white', delta }) {
   const { ref, value: animated } = useCountUp(value)
@@ -75,13 +76,17 @@ function DonutChart() {
 }
 
 export default function Dashboard() {
+  const { user } = useAuth()  // get the logged-in user from context
+  // Get just the first name (e.g. "Rohit Sharma" → "Rohit")
+  const firstName = user?.name?.split(' ')[0] || 'there'
+
   return (
     <AppLayout title="Dashboard">
       {/* Craft Header Banner */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-6 border-b border-black/5 dark:border-white/10 gap-4">
         <div>
           <h1 className="font-serif text-3xl sm:text-4xl text-neutral-900 dark:text-white">
-            Welcome back, <span className="font-serif-italic">Rohit</span>
+            Welcome back, <span className="font-serif-italic">{firstName}</span>
           </h1>
           <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1 font-normal">
             Your space for civic reports, resolution progress, and city transformation.

@@ -1,13 +1,23 @@
 import { useState } from 'react'
-import { Bell, Menu, PlusCircle } from 'lucide-react'
+import { Bell, Menu, PlusCircle, LogOut } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import SearchBar from './SearchBar'
 import ThemeToggle from './ThemeToggle'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useAuth } from '../context/AuthContext'  // ← real user + logout
 
 export default function Topbar({ onMenuClick, title }) {
   const [query, setQuery] = useState('')
   const [notifOpen, setNotifOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const { user, logout } = useAuth()  // real user data + logout function
+
+  // Get initials from name ("Rohit Sharma" → "RS")
+  const initials = (user?.name || 'U')
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
 
   return (
     <header className="sticky top-0 z-40 h-16 flex items-center gap-3 px-4 sm:px-6 border-b border-border dark:border-border-dark bg-surface/90 dark:bg-bg-dark/90 backdrop-blur-md">
@@ -63,11 +73,37 @@ export default function Topbar({ onMenuClick, title }) {
           </AnimatePresence>
         </div>
 
-        <Link to="/profile" className="flex items-center gap-2 pl-1">
-          <div className="w-8 h-8 rounded-full bg-primary/15 text-primary dark:text-primary-dark flex items-center justify-center text-xs font-semibold shrink-0">
-            RS
-          </div>
-        </Link>
+        <div className="relative">
+          <button
+            onClick={() => setUserMenuOpen((o) => !o)}
+            className="flex items-center gap-2 pl-1"
+          >
+            <div className="w-8 h-8 rounded-full bg-primary/15 text-primary dark:text-primary-dark flex items-center justify-center text-xs font-semibold shrink-0">
+              {initials}
+            </div>
+          </button>
+          <AnimatePresence>
+            {userMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 mt-2 w-48 card-surface !p-1 overflow-hidden"
+              >
+                <Link to="/profile" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-text-primary dark:text-text-dark hover:bg-black/[0.04] dark:hover:bg-white/[0.06] rounded-lg">
+                  {user?.name || 'Profile'}
+                </Link>
+                <button
+                  onClick={() => { setUserMenuOpen(false); logout() }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-danger hover:bg-danger/5 rounded-lg"
+                >
+                  <LogOut size={14} /> Logout
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </header>
   )

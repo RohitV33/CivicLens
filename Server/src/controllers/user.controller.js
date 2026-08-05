@@ -1,0 +1,70 @@
+// ============================================================
+// controllers/user.controller.js - USER CONTROLLER
+//
+// Handles requests related to users.
+// These routes are protected by authMiddleware (must be logged in)
+// ============================================================
+
+import prisma from "../lib/prisma.js";
+
+// ---- GET /api/users/profile ----
+// Returns the currently logged-in user's profile
+// req.user is set by authMiddleware (contains { id, email, role })
+export const getMyProfile = async (req, res, next) => {
+  try {
+    // Get the user id from the JWT token (set by auth middleware)
+    const userId = req.user.id;
+
+    // Find the user in the database by their id
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      // Only return safe fields (exclude password)
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      const error = new Error("User not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: user,
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ---- GET /api/users/all ----
+// Returns ALL users in the database
+// ADMIN ONLY - protected by authorizeRoles("ADMIN") in the route
+export const getAllUsers = async (req, res, next) => {
+  try {
+    // Get all users from database (excluding passwords)
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      count: users.length, // helpful to know how many records were returned
+      data: users,
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};

@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   MapPin, Calendar, Edit3, FileText, CheckCircle2, Award, Flag, Layers,
-  Megaphone, ThumbsUp, Flame, Trophy, X, Save,
+  Megaphone, ThumbsUp, Flame, Trophy, Save,
 } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
 import Card from '../components/Card'
@@ -12,6 +12,8 @@ import ReportCard from '../components/ReportCard'
 import { reports, achievements } from '../data/mockData'
 import { useCountUp } from '../hooks/useCountUp'
 import { useToast } from '../context/ToastContext'
+import { useAuth } from '../context/AuthContext'  // ← get real user
+import { getProfileAPI } from '../services/api'   // ← fetch profile from backend
 
 const achievementIcons = { Flag, Layers, Megaphone, ThumbsUp, Flame, Trophy }
 
@@ -27,9 +29,19 @@ function ProfileStat({ value, label }) {
 
 export default function Profile() {
   const [editOpen, setEditOpen] = useState(false)
-  const [name, setName] = useState('Rohit Sharma')
-  const [bio, setBio] = useState('Full stack developer & civic tech enthusiast, building a better Ghaziabad one report at a time.')
+  const { user } = useAuth()  // get logged-in user from context
+
+  // Use real name from database, fallback to placeholder while loading
+  const [name, setName] = useState(user?.name || 'Loading...')
+  const [bio, setBio] = useState('Full stack developer & civic tech enthusiast, building a better city one report at a time.')
   const { addToast } = useToast()
+
+  // Get initials for avatar (e.g. "Rohit Sharma" → "RS")
+  const initials = (user?.name || 'U')
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
 
   const save = () => {
     setEditOpen(false)
@@ -47,8 +59,8 @@ export default function Profile() {
         <div className="px-6 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-10 sm:-mt-12">
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-primary text-white flex items-center justify-center text-2xl font-display font-bold border-4 border-surface dark:border-card-dark shrink-0">
-              RS
-            </div>
+            {initials}
+          </div>
             <div className="flex-1 min-w-0 pb-1">
               <h1 className="font-display text-xl font-bold text-text-primary dark:text-text-dark">{name}</h1>
               <div className="flex items-center gap-4 mt-1 text-xs text-text-secondary dark:text-text-dark/60 flex-wrap">
