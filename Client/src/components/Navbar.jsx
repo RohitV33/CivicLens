@@ -26,18 +26,7 @@ export default function Navbar() {
 
   return (
     <div className="w-full z-50 sticky top-0 font-sans">
-      {/* ── Top Golden Amber Banner (Craft Style) ── */}
-      <div className="w-full bg-gradient-to-r from-[#F99015] via-[#E25C05] to-[#EE8012] text-white py-2 px-4 relative flex items-center justify-center text-xs sm:text-sm font-medium tracking-wide shadow-sm overflow-hidden">
-        {/* Decorative Glowing End Dots */}
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white/90 shadow-[0_0_12px_rgba(255,255,255,0.9)] hidden sm:block"></div>
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white/90 shadow-[0_0_12px_rgba(255,255,255,0.9)] hidden sm:block"></div>
-
-        <a href="#features" className="flex items-center gap-2 hover:underline transition-opacity">
-          <span className="font-serif-italic text-sm sm:text-base font-normal tracking-normal text-amber-100">
-            Summer Sale &rarr; Get 40% off CivicLens Pro &amp; Enterprise
-          </span>
-        </a>
-      </div>
+      
 
       {/* ── Floating Capsule Header ── */}
       <header className="max-w-6xl mx-auto px-4 pt-3 pb-2 transition-all duration-300">
