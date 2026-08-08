@@ -44,7 +44,7 @@ export const getIssueByIdService = async (issueId) => {
 
 // ---- Create a new issue ----
 export const createIssueService = async (issueData, reporterId) => {
-  const { title, description, location } = issueData;
+  const { title, description, location, lat, lng, category, imageUrl } = issueData;
 
   // Validate required fields manually (simple version)
   if (!title || !description) {
@@ -58,6 +58,10 @@ export const createIssueService = async (issueData, reporterId) => {
       title,
       description,
       location: location || null,
+      lat: lat ? parseFloat(lat) : null,
+      lng: lng ? parseFloat(lng) : null,
+      category: category || "General",
+      imageUrl: imageUrl || null,
       reporterId, // the logged-in user's id (from req.user.id)
     },
   });

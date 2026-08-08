@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Issue" ADD COLUMN     "category" TEXT NOT NULL DEFAULT 'General',
+ADD COLUMN     "imageUrl" TEXT,
+ADD COLUMN     "lat" DOUBLE PRECISION,
+ADD COLUMN     "lng" DOUBLE PRECISION;

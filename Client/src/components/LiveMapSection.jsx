@@ -1,53 +1,82 @@
-import { useState } from 'react'
+// components/LiveMapSection.jsx
+// Landing-page live map section — fetches real issues from backend
+import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MapPin, SlidersHorizontal, ArrowRight, CheckCircle2, AlertCircle, Clock } from 'lucide-react'
+import { MapPin, ArrowRight, RefreshCw } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import LeafletMap from './LeafletMap'
+import { getAllIssuesAPI } from '../services/api'
 
-const mapReports = [
-  { id: 'CL-101', type: 'pothole', title: 'Road Crater on Main St', category: 'Pothole', color: 'bg-red-500', status: 'Pending', distance: '0.4 km', severity: 'High', location: 'GT Road, Sector 14', x: 25, y: 35 },
-  { id: 'CL-102', type: 'resolved', title: 'Resurfaced Asphalt Patch', category: 'Resolved', color: 'bg-emerald-500', status: 'Resolved', distance: '1.2 km', severity: 'Low', location: 'Park Avenue, Ward 6', x: 65, y: 25 },
-  { id: 'CL-103', type: 'garbage', title: 'Overflowing Bin Dump', category: 'Garbage', color: 'bg-amber-500', status: 'In Progress', distance: '0.8 km', severity: 'Medium', location: 'Market Complex, Sector 4', x: 42, y: 55 },
-  { id: 'CL-104', type: 'water', title: 'Pipeline Leakage Burst', category: 'Water', color: 'bg-blue-500', status: 'Pending', distance: '1.9 km', severity: 'High', location: 'Green Park Road', x: 75, y: 68 },
-  { id: 'CL-105', type: 'lights', title: 'Dark Spot Lamp Out', category: 'Lights', color: 'bg-purple-500', status: 'In Progress', distance: '2.3 km', severity: 'Low', location: 'Station Square', x: 30, y: 78 },
+const STATUS_META = {
+  OPEN:        { label: 'Open',        color: 'bg-red-500',   dot: '#EF4444' },
+  IN_PROGRESS: { label: 'In Progress', color: 'bg-amber-500', dot: '#F59E0B' },
+  RESOLVED:    { label: 'Resolved',    color: 'bg-green-500', dot: '#22C55E' },
+}
+
+const FILTER_OPTIONS = [
+  { id: 'all',         label: 'All Issues',     color: 'bg-neutral-800 text-white' },
+  { id: 'OPEN',        label: '🔴 Open',        color: 'bg-red-500 text-white'     },
+  { id: 'IN_PROGRESS', label: '🟡 In Progress', color: 'bg-amber-500 text-white'   },
+  { id: 'RESOLVED',    label: '🟢 Resolved',    color: 'bg-green-500 text-white'   },
 ]
 
 export default function LiveMapSection() {
-  const [filter, setFilter] = useState('all')
-  const [selected, setSelected] = useState(mapReports[0])
+  const [filter, setFilter]     = useState('all')
+  const [selected, setSelected] = useState(null)
+  const [issues, setIssues]     = useState([])
+  const [loading, setLoading]   = useState(true)
 
-  const filtered = filter === 'all' ? mapReports : mapReports.filter((r) => r.type === filter)
+  const fetchIssues = useCallback(async () => {
+    try {
+      const res = await getAllIssuesAPI()
+      const data = (res.data || []).filter((r) => r.lat && r.lng)
+      setIssues(data)
+      if (data.length > 0 && !selected) setSelected(data[0])
+    } catch {
+      // Silently fail in landing page context — show nothing
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchIssues()
+    const id = setInterval(fetchIssues, 30_000)
+    return () => clearInterval(id)
+  }, [fetchIssues])
+
+  const filtered = filter === 'all' ? issues : issues.filter((r) => r.status === filter)
 
   return (
     <div className="w-full max-w-7xl mx-auto rounded-[20px] bg-white dark:bg-[#1A1C20] border border-black/10 dark:border-white/10 shadow-craft overflow-hidden">
-      
-      {/* Map Header Toolbar */}
+
+      {/* Header */}
       <div className="p-6 sm:p-8 border-b border-black/5 dark:border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" /> Real-Time City Monitoring
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            Real-Time City Monitoring
           </span>
           <h2 className="font-serif text-3xl text-neutral-900 dark:text-white mt-1">
             Live City Issue Map
           </h2>
+          {!loading && (
+            <p className="text-xs text-neutral-400 mt-0.5">
+              {issues.length} issues on map · updates every 30s
+            </p>
+          )}
         </div>
 
-        {/* Filter Pills */}
+        {/* Filter pills */}
         <div className="flex flex-wrap items-center gap-2">
-          {[
-            { id: 'all', label: 'All Markers', color: 'bg-neutral-800 text-white' },
-            { id: 'pothole', label: 'Red: Potholes', color: 'bg-red-500 text-white' },
-            { id: 'resolved', label: 'Green: Resolved', color: 'bg-emerald-500 text-white' },
-            { id: 'garbage', label: 'Yellow: Garbage', color: 'bg-amber-500 text-white' },
-            { id: 'water', label: 'Blue: Water', color: 'bg-blue-500 text-white' },
-            { id: 'lights', label: 'Purple: Lights', color: 'bg-purple-500 text-white' },
-          ].map((f) => (
+          {FILTER_OPTIONS.map((f) => (
             <button
               key={f.id}
               onClick={() => setFilter(f.id)}
               className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
                 filter === f.id
                   ? `${f.color} shadow-sm scale-105`
-                  : 'bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200'
+                  : 'bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-white/20'
               }`}
             >
               {f.label}
@@ -56,75 +85,79 @@ export default function LiveMapSection() {
         </div>
       </div>
 
-      {/* Map Body: Left Interactive Canvas + Right Sidebar */}
+      {/* Body */}
       <div className="grid lg:grid-cols-3 min-h-[500px]">
-        
-        {/* OpenStreetMap Styled Mock Viewport */}
-        <div className="lg:col-span-2 relative bg-[#E5E3DF] dark:bg-[#15171A] overflow-hidden min-h-[400px]">
-          {/* Subtle Grid Map Texture */}
-          <div
-            className="absolute inset-0 opacity-20 pointer-events-none"
-            style={{
-              backgroundImage: 'radial-gradient(circle, #000 1px, transparent 1px)',
-              backgroundSize: '24px 24px',
-            }}
-          />
 
-          {/* Map Road Vectors Graphic */}
-          <svg className="absolute inset-0 w-full h-full stroke-white/40 dark:stroke-white/5 fill-none" strokeWidth="6">
-            <path d="M-50,100 Q200,80 400,200 T800,300" />
-            <path d="M200,-50 L200,600" />
-            <path d="M500,-50 L500,600" />
-            <path d="M-50,400 L900,400" />
-          </svg>
-
-          {/* Pulsing Markers */}
-          {filtered.map((m) => (
-            <button
-              key={m.id}
-              onClick={() => setSelected(m)}
-              className="absolute -translate-x-1/2 -translate-y-1/2 group cursor-pointer z-10"
-              style={{ left: `${m.x}%`, top: `${m.y}%` }}
-            >
-              {/* Outer Pulsing Ring */}
-              <span className={`absolute -inset-2 rounded-full opacity-60 animate-ping ${m.color}`} />
-              {/* Main Pin Circle */}
-              <div className={`relative w-8 h-8 rounded-full ${m.color} text-white font-bold text-xs flex items-center justify-center shadow-lg transition-transform group-hover:scale-125`}>
-                <MapPin size={16} />
+        {/* Real Leaflet Map */}
+        <div className="lg:col-span-2 relative overflow-hidden min-h-[400px]">
+          {loading ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-neutral-100 dark:bg-[#15171A]">
+              <div className="text-center space-y-3">
+                <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                <p className="text-sm font-medium text-neutral-500">Loading live map…</p>
               </div>
-            </button>
-          ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-neutral-50 dark:bg-[#15171A]">
+              <div className="text-center space-y-2">
+                <MapPin size={32} className="mx-auto text-neutral-300" />
+                <p className="text-sm text-neutral-400">No issues for this filter</p>
+              </div>
+            </div>
+          ) : (
+            <LeafletMap
+              issues={filtered}
+              center={[28.6139, 77.2090]}
+              zoom={10}
+              height="100%"
+              selectedId={selected?.id}
+              onMarkerClick={setSelected}
+            />
+          )}
         </div>
 
-        {/* Right Sidebar: Recent Reports List */}
-        <div className="p-6 bg-white dark:bg-[#1A1C20] border-t lg:border-t-0 lg:border-l border-black/5 dark:border-white/10 flex flex-col justify-between space-y-4">
+        {/* Sidebar: list + selected details */}
+        <div className="p-6 bg-white dark:bg-[#1A1C20] border-t lg:border-t-0 lg:border-l border-black/5 dark:border-white/10 flex flex-col justify-between space-y-4 overflow-y-auto max-h-[500px]">
           <div>
             <h3 className="font-serif text-xl text-neutral-900 dark:text-white mb-4">
-              Recent City Reports ({filtered.length})
+              Recent Reports ({filtered.length})
             </h3>
 
             <div className="space-y-3">
-              {filtered.map((r) => (
-                <div
-                  key={r.id}
-                  onClick={() => setSelected(r)}
-                  className={`p-4 rounded-[16px] border text-left cursor-pointer transition-all ${
-                    selected.id === r.id
-                      ? 'bg-neutral-50 dark:bg-white/10 border-black dark:border-white shadow-sm'
-                      : 'bg-white dark:bg-[#141517] border-black/5 dark:border-white/10 hover:border-black/20'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">{r.id}</span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-white/10 text-neutral-800 dark:text-neutral-200">{r.status}</span>
+              {filtered.slice(0, 6).map((r) => {
+                const cfg = STATUS_META[r.status] || STATUS_META.OPEN
+                return (
+                  <div
+                    key={r.id}
+                    onClick={() => setSelected(r)}
+                    className={`p-4 rounded-[16px] border text-left cursor-pointer transition-all ${
+                      selected?.id === r.id
+                        ? 'bg-neutral-50 dark:bg-white/10 border-black dark:border-white shadow-sm'
+                        : 'bg-white dark:bg-[#141517] border-black/5 dark:border-white/10 hover:border-black/20'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                        #{r.id}
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full text-white ${cfg.color}`}
+                      >
+                        {cfg.label}
+                      </span>
+                    </div>
+                    <h4 className="font-bold text-sm text-neutral-900 dark:text-white leading-snug">
+                      {r.title}
+                    </h4>
+                    <div className="flex items-center justify-between mt-2 text-xs text-neutral-500 font-medium">
+                      <span>📍 {r.location || 'Unknown'}</span>
+                      <span className="text-[10px] bg-neutral-100 dark:bg-white/10 px-1.5 py-0.5 rounded-full">
+                        {r.category || 'General'}
+                      </span>
+                    </div>
                   </div>
-                  <h4 className="font-bold text-sm text-neutral-900 dark:text-white leading-snug">{r.title}</h4>
-                  <div className="flex items-center justify-between mt-2 text-xs text-neutral-500 font-medium">
-                    <span>📍 {r.location}</span>
-                    <span>{r.distance}</span>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
 
@@ -135,9 +168,7 @@ export default function LiveMapSection() {
             Explore Full Map View <ArrowRight size={14} />
           </Link>
         </div>
-
       </div>
-
     </div>
   )
 }

@@ -28,6 +28,10 @@ model Issue {
   title       String
   description String
   location    String?  // optional field (the ? means it can be null)
+  lat         Float?   // latitude for map pin
+  lng         Float?   // longitude for map pin
+  category    String   @default("General")  // e.g. Pothole, Garbage, Water, Lights
+  imageUrl    String?  // optional image URL
   status      String   @default("OPEN")  // OPEN, IN_PROGRESS, RESOLVED
   createdAt   DateTime @default(now())
 
