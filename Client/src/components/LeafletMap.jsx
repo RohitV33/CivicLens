@@ -62,7 +62,7 @@ export default function LeafletMap({
   const mapRef      = useRef(null)
   const markersRef  = useRef({})
 
-  // ---- Initialize map once ----
+  // ---- Initialize map once with size invalidation ----
   useEffect(() => {
     if (mapRef.current) return
     const map = L.map(containerRef.current, {
@@ -80,7 +80,14 @@ export default function LeafletMap({
     }).addTo(map)
 
     mapRef.current = map
+
+    // Invalidate container size after mount to prevent blank tiles
+    const timer = setTimeout(() => {
+      if (mapRef.current) mapRef.current.invalidateSize()
+    }, 200)
+
     return () => {
+      clearTimeout(timer)
       map.remove()
       mapRef.current = null
     }
@@ -144,7 +151,7 @@ export default function LeafletMap({
     <div
       ref={containerRef}
       className={className}
-      style={{ height, width: '100%' }}
+      style={{ height, width: '100%', minHeight: '400px' }}
     />
   )
 }
