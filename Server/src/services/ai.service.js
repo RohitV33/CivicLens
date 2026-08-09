@@ -56,13 +56,11 @@ const fetchImagePart = async (imageUrl) => {
   }
 };
 
-// Non-Civic Terms (Anime, Artwork, Wallpapers, Screenshots, Bar Charts, Graphs, Documents, Code)
+// Specific Non-Civic Terms (Anime, Cartoons, Art Wallpapers, Graphs, Academic Charts)
 const NON_CIVIC_TERMS = [
-  "demon-slayer", "anime", "manga", "wallpaper", "fanart", "game",
-  "avatar", "portrait", "selfie", "illustration", "drawing", "artwork",
-  "character", "naruto", "goku", "screenshot", "5120x2880", "1920x1080",
-  "graph", "chart", "diagram", "figure", "accuracy", "plot", "metrics",
-  "document", "paper", "presentation", "slide", "code", "table", "bar"
+  "demon-slayer", "anime", "manga", "wallpaper", "fanart", "character", "naruto", "goku",
+  "barchart", "linegraph", "piechart", "flowchart", "scatterplot", "diagram_accuracy",
+  "accuracy_graph", "confusion_matrix", "academic_paper", "code_screenshot"
 ];
 
 // Default title and description generators by category
@@ -142,7 +140,7 @@ Tasks:
    - Choose category from: ["POTHOLE", "GARBAGE", "STREETLIGHT", "WATER_LEAKAGE", "ROAD_DAMAGE", "SEWAGE", "DRAINAGE", "OTHER"]
    - Choose priority from: ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
    - Calculate confidence (percentage between 70.0 and 99.0)
-   - Write a concise technical aiClassification sentence.
+   - Write a concise technical aiClassification sentence describing the defect shown in the image.
    - Generate a professional 4-8 word suggestedTitle describing the defect.
    - Generate a detailed 2-3 sentence suggestedDescription describing the problem, hazard, and recommended municipal repair action.
    - Set warning = null

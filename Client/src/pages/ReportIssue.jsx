@@ -87,14 +87,21 @@ export default function ReportIssue() {
     setAnalyzing(true)
 
     try {
-      // 1. Upload photo to Cloudinary
+      // 1. Convert selected file to base64 Data URI for Gemini Vision
+      const reader = new FileReader()
+      reader.readAsDataURL(selectedFile)
+      const dataUri = await new Promise((resolve) => {
+        reader.onloadend = () => resolve(reader.result)
+      })
+
+      // 2. Upload photo to Cloudinary
       const uploadRes = await uploadImageAPI(selectedFile)
       const uploadedUrl = uploadRes.data.url
       setImageUrl(uploadedUrl)
 
-      // 2. Trigger AI Computer Vision Classification
+      // 3. Trigger Gemini Vision AI Computer Vision Classification with Base64 Data URI
       const aiRes = await analyzeIssueAIAPI({
-        imageUrl: uploadedUrl,
+        imageUrl: dataUri || uploadedUrl,
         title: title || selectedFile.name,
         description: description || 'Citizen reported issue',
       })
