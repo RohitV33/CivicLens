@@ -69,6 +69,18 @@ export const createIssueAPI = (issueData) => {
   })
 }
 
+// ---- NOTIFICATION API CALLS ----
+export const getNotificationsAPI = () => apiFetch('/api/notifications')
+
+export const markNotificationReadAPI = (id) =>
+  apiFetch(`/api/notifications/${id}/read`, { method: 'PATCH' })
+
+export const markAllNotificationsReadAPI = () =>
+  apiFetch('/api/notifications/read-all', { method: 'PATCH' })
+
+export const deleteNotificationAPI = (id) =>
+  apiFetch(`/api/notifications/${id}`, { method: 'DELETE' })
+
 // ---- AI & DUPLICATE DETECTION API CALLS ----
 export const analyzeIssueAIAPI = ({ imageUrl, title, description }) =>
   apiFetch('/api/ai/analyze', {
