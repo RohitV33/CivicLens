@@ -1,6 +1,5 @@
 // components/LeafletMap.jsx
 // Real interactive map using Leaflet + OpenStreetMap tiles
-// Replaces the static SVG canvas across the entire app
 import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 
@@ -12,26 +11,29 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 })
 
-// ---- Status → color / emoji mapping ----
+// ---- Status → color / emoji mapping (Aligned with Prisma DB Schema) ----
 const statusConfig = {
-  OPEN:        { color: '#EF4444', emoji: '🔴', label: 'Open'       },
+  PENDING:     { color: '#EF4444', emoji: '🔴', label: 'Pending'     },
+  REVIEWING:   { color: '#F59E0B', emoji: '🟡', label: 'Reviewing'   },
+  ASSIGNED:    { color: '#3B82F6', emoji: '🔵', label: 'Assigned'    },
   IN_PROGRESS: { color: '#F59E0B', emoji: '🟡', label: 'In Progress' },
-  RESOLVED:    { color: '#22C55E', emoji: '🟢', label: 'Resolved'   },
+  RESOLVED:    { color: '#22C55E', emoji: '🟢', label: 'Resolved'    },
+  REJECTED:    { color: '#6B7280', emoji: '⚪', label: 'Rejected'    },
 }
 
 const categoryEmoji = {
-  Pothole:       '🕳️',
-  Garbage:       '🗑️',
-  Water:         '💧',
-  Lights:        '💡',
-  Infrastructure:'🏗️',
-  Drainage:      '🌊',
-  Animal:        '🐕',
-  General:       '📍',
+  POTHOLE:       '🕳️',
+  GARBAGE:       '🗑️',
+  WATER_LEAKAGE: '💧',
+  STREETLIGHT:   '💡',
+  ROAD_DAMAGE:   '🏗️',
+  DRAINAGE:      '🌊',
+  SEWAGE:        '☣️',
+  OTHER:         '📍',
 }
 
 function makeIcon(status) {
-  const cfg = statusConfig[status] || statusConfig.OPEN
+  const cfg = statusConfig[status] || statusConfig.PENDING
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="40" viewBox="0 0 30 40">
       <path d="M15 0 C6.7 0 0 6.7 0 15 C0 26 15 40 15 40 C15 40 30 26 30 15 C30 6.7 23.3 0 15 0 Z"
@@ -62,7 +64,7 @@ export default function LeafletMap({
 
   // ---- Initialize map once ----
   useEffect(() => {
-    if (mapRef.current) return // already initialized
+    if (mapRef.current) return
     const map = L.map(containerRef.current, {
       center,
       zoom,
@@ -70,7 +72,7 @@ export default function LeafletMap({
       attributionControl: true,
     })
 
-    // OpenStreetMap dark-ish CartoDB Voyager tiles
+    // CartoDB Voyager tiles
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
       subdomains: 'abcd',
@@ -94,11 +96,11 @@ export default function LeafletMap({
     markersRef.current = {}
 
     issues.forEach((issue) => {
-      const lat = issue.lat ?? issue.latitude
-      const lng = issue.lng ?? issue.longitude
-      if (!lat || !lng) return
+      const lat = parseFloat(issue.latitude ?? issue.lat)
+      const lng = parseFloat(issue.longitude ?? issue.lng)
+      if (isNaN(lat) || isNaN(lng)) return
 
-      const cfg = statusConfig[issue.status] || statusConfig.OPEN
+      const cfg = statusConfig[issue.status] || statusConfig.PENDING
       const catEmoji = categoryEmoji[issue.category] || '📍'
 
       const marker = L.marker([lat, lng], { icon: makeIcon(issue.status) })
@@ -110,7 +112,7 @@ export default function LeafletMap({
             <span style="font-size:11px;color:#888">${catEmoji} ${issue.category || 'General'}</span>
           </div>
           <p style="font-size:13px;font-weight:700;color:#111;margin:0 0 4px;line-height:1.3">${issue.title}</p>
-          <p style="font-size:11px;color:#666;margin:0 0 10px">📍 ${issue.location || 'Unknown location'}</p>
+          <p style="font-size:11px;color:#666;margin:0 0 10px">📍 ${issue.address || issue.location || 'Location specified'}</p>
           <a href="/complaint/${issue.id}"
              style="display:block;background:#111;color:white;text-align:center;padding:7px 0;border-radius:999px;font-size:11px;font-weight:700;text-decoration:none">
             View Report →

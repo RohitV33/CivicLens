@@ -1,17 +1,17 @@
 import { useMemo, useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { SlidersHorizontal, X, Wifi, RefreshCw, AlertCircle } from 'lucide-react'
+import { SlidersHorizontal, X, RefreshCw, AlertCircle } from 'lucide-react'
 import Sidebar from '../components/Sidebar'
 import Topbar from '../components/Topbar'
 import SearchBar from '../components/SearchBar'
 import { FilterSection, CheckOption } from '../components/FilterDrawer'
-import { StatusChip } from '../components/StatusChip'
 import LeafletMap from '../components/LeafletMap'
 import { getAllIssuesAPI } from '../services/api'
 
 const STATUS_META = {
-  OPEN:        { label: 'Open',        color: 'bg-red-500'    },
+  PENDING:     { label: 'Pending',     color: 'bg-red-500'    },
+  ASSIGNED:    { label: 'Assigned',    color: 'bg-blue-500'   },
   IN_PROGRESS: { label: 'In Progress', color: 'bg-amber-500'  },
   RESOLVED:    { label: 'Resolved',    color: 'bg-green-500'  },
 }
@@ -35,7 +35,7 @@ export default function MapExplorer() {
   const fetchIssues = useCallback(async () => {
     try {
       const res = await getAllIssuesAPI()
-      const data = res.data || []
+      const data = res.items || res.data || []
       setIssues(data)
       // Build unique categories from fetched data
       const cats = [...new Set(data.map((r) => r.category || 'General'))]
@@ -64,18 +64,26 @@ export default function MapExplorer() {
     setArr(arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val])
 
   const filtered = useMemo(() => {
-    return issues.filter(
-      (r) =>
-        statusFilter.includes(r.status) &&
-        catFilter.includes(r.category || 'General') &&
-        (query === '' ||
-          r.title.toLowerCase().includes(query.toLowerCase()) ||
-          (r.location || '').toLowerCase().includes(query.toLowerCase()))
-    )
+    return issues.filter((r) => {
+      const matchesStatus = statusFilter.includes(r.status)
+      const matchesCat = catFilter.length === 0 || catFilter.includes(r.category || 'General')
+      const matchesQuery =
+        query === '' ||
+        r.title.toLowerCase().includes(query.toLowerCase()) ||
+        (r.address || r.location || '').toLowerCase().includes(query.toLowerCase())
+
+      return matchesStatus && matchesCat && matchesQuery
+    })
   }, [issues, statusFilter, catFilter, query])
 
-  // Only keep issues that have real coordinates for the map
-  const mappable = useMemo(() => filtered.filter((r) => r.lat && r.lng), [filtered])
+  // Map issues with valid latitude/longitude coordinates
+  const mappable = useMemo(() => {
+    return filtered.filter((r) => {
+      const lat = parseFloat(r.latitude ?? r.lat)
+      const lng = parseFloat(r.longitude ?? r.lng)
+      return !isNaN(lat) && !isNaN(lng)
+    })
+  }, [filtered])
 
   return (
     <div className="h-screen flex bg-[#FAF8F5] dark:bg-[#0C0D0E] overflow-hidden font-sans">
@@ -185,7 +193,7 @@ export default function MapExplorer() {
             )}
 
             {/* Loading overlay */}
-            {loading && (
+            {!issues.length && loading && (
               <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 dark:bg-black/60 backdrop-blur-sm">
                 <div className="text-center space-y-3">
                   <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
@@ -204,13 +212,6 @@ export default function MapExplorer() {
               selectedId={selected?.id}
               onMarkerClick={(issue) => setSelected(issue)}
             />
-
-            {/* No-coordinates notice */}
-            {!loading && mappable.length === 0 && filtered.length > 0 && (
-              <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 bg-white/90 dark:bg-[#1A1C20]/90 backdrop-blur border border-black/10 dark:border-white/10 text-xs font-medium px-4 py-2 rounded-full shadow">
-                ⚠️ {filtered.length} issues match but have no GPS coordinates
-              </div>
-            )}
 
             {/* ---- Selected Issue Floating Card ---- */}
             <AnimatePresence>
@@ -247,7 +248,7 @@ export default function MapExplorer() {
                   <h3 className="font-serif text-xl font-bold text-neutral-900 dark:text-white leading-tight mb-1">
                     {selected.title}
                   </h3>
-                  <p className="text-xs text-neutral-500 mb-1">📍 {selected.location || 'Unknown location'}</p>
+                  <p className="text-xs text-neutral-500 mb-1">📍 {selected.address || selected.location || 'Unknown location'}</p>
                   <p className="text-xs text-neutral-400 line-clamp-2 mb-4">{selected.description}</p>
 
                   <button
