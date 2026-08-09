@@ -70,7 +70,7 @@ export const analyzeIssueImageService = async ({ imageUrl = "", title = "", desc
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
   // 1. If Gemini API key is configured and valid, perform REAL AI Multimodal Image Pixel Analysis
-  if (apiKey && apiKey.startsWith("AIzaSy")) {
+  if (apiKey && apiKey.length > 10) {
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
