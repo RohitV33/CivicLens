@@ -503,8 +503,8 @@ export default function Landing() {
   const { user } = useAuth()
   const heroRef = useRef(null)
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
-  const heroY = useTransform(scrollYProgress, [0, 1], ['0%', '20%'])
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0])
+  const heroY = useTransform(scrollYProgress, [0, 1], ['0%', '10%'])
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.85, 1], [1, 0.9, 0])
 
   const handleReportClick = (e) => {
     e.preventDefault()
