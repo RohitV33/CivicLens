@@ -1,34 +1,174 @@
 // ============================================================
 // services/issue.service.js - ISSUE BUSINESS LOGIC
-//
-// Handles all the database operations for civic issues
 // ============================================================
 
 import prisma from "../lib/prisma.js";
 
-// ---- Get all issues from database ----
-export const getAllIssuesService = async () => {
+// ---- Create a new civic issue ----
+export const createIssueService = async (issueData, createdById) => {
+  const {
+    title,
+    description,
+    category,
+    priority,
+    imageUrl,
+    latitude,
+    longitude,
+    location, // legacy fallback for address
+    address,
+    aiClassification,
+    aiConfidence,
+  } = issueData;
+
+  if (!title || !description) {
+    const error = new Error("Title and description are required");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Parse numeric coordinates safely
+  const parsedLat = latitude ? parseFloat(latitude) : null;
+  const parsedLng = longitude ? parseFloat(longitude) : null;
+
+  if (latitude && isNaN(parsedLat)) {
+    const error = new Error("Latitude must be a valid number");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (longitude && isNaN(parsedLng)) {
+    const error = new Error("Longitude must be a valid number");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Use a transaction to create issue & initial history record
+  const result = await prisma.$transaction(async (tx) => {
+    const issue = await tx.issue.create({
+      data: {
+        title,
+        description,
+        category: category || "OTHER",
+        priority: priority || "MEDIUM",
+        imageUrl: imageUrl || null,
+        latitude: parsedLat,
+        longitude: parsedLng,
+        address: address || location || null,
+        aiClassification: aiClassification || null,
+        aiConfidence: aiConfidence ? parseFloat(aiConfidence) : null,
+        createdById,
+      },
+      include: {
+        createdBy: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
+
+    // Create initial audit history record
+    await tx.issueHistory.create({
+      data: {
+        issueId: issue.id,
+        changedById: createdById,
+        newStatus: "PENDING",
+        comment: "Issue reported by citizen.",
+      },
+    });
+
+    return issue;
+  });
+
+  return result;
+};
+
+// ---- Get all public issues with pagination & filters ----
+export const getAllIssuesService = async (query = {}) => {
+  const page = Math.max(1, parseInt(query.page) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(query.limit) || 20));
+  const skip = (page - 1) * limit;
+
+  const where = {};
+
+  if (query.category) where.category = query.category;
+  if (query.status) where.status = query.status;
+  if (query.priority) where.priority = query.priority;
+
+  if (query.search) {
+    where.OR = [
+      { title: { contains: query.search, mode: "insensitive" } },
+      { description: { contains: query.search, mode: "insensitive" } },
+      { address: { contains: query.search, mode: "insensitive" } },
+    ];
+  }
+
+  const [items, total] = await Promise.all([
+    prisma.issue.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+      include: {
+        createdBy: {
+          select: { id: true, name: true, email: true },
+        },
+        assignedTo: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    }),
+    prisma.issue.count({ where }),
+  ]);
+
+  return {
+    items,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit) || 1,
+    },
+  };
+};
+
+// ---- Get issues created by logged-in user ----
+export const getMyIssuesService = async (userId) => {
   const issues = await prisma.issue.findMany({
-    // Also include the user who reported it
+    where: { createdById: userId },
+    orderBy: { createdAt: "desc" },
     include: {
-      reporter: {
+      assignedTo: {
         select: { id: true, name: true, email: true },
       },
     },
-    // Show newest issues first
-    orderBy: { createdAt: "desc" },
   });
 
   return issues;
 };
 
-// ---- Get a single issue by its ID ----
+// ---- Get single issue by ID ----
 export const getIssueByIdService = async (issueId) => {
+  if (isNaN(issueId)) {
+    const error = new Error("Invalid issue ID. Must be an integer");
+    error.statusCode = 400;
+    throw error;
+  }
+
   const issue = await prisma.issue.findUnique({
     where: { id: issueId },
     include: {
-      reporter: {
+      createdBy: {
         select: { id: true, name: true, email: true },
+      },
+      assignedTo: {
+        select: { id: true, name: true, email: true },
+      },
+      histories: {
+        orderBy: { createdAt: "asc" },
+        include: {
+          changedBy: {
+            select: { id: true, name: true, role: true },
+          },
+        },
       },
     },
   });
@@ -42,29 +182,80 @@ export const getIssueByIdService = async (issueId) => {
   return issue;
 };
 
-// ---- Create a new issue ----
-export const createIssueService = async (issueData, reporterId) => {
-  const { title, description, location, lat, lng, category, imageUrl } = issueData;
-
-  // Validate required fields manually (simple version)
-  if (!title || !description) {
-    const error = new Error("Title and description are required");
+// ---- Update an issue ----
+export const updateIssueService = async (issueId, updateData, user) => {
+  if (isNaN(issueId)) {
+    const error = new Error("Invalid issue ID");
     error.statusCode = 400;
     throw error;
   }
 
-  const issue = await prisma.issue.create({
-    data: {
-      title,
-      description,
-      location: location || null,
-      lat: lat ? parseFloat(lat) : null,
-      lng: lng ? parseFloat(lng) : null,
-      category: category || "General",
-      imageUrl: imageUrl || null,
-      reporterId, // the logged-in user's id (from req.user.id)
+  const existingIssue = await prisma.issue.findUnique({
+    where: { id: issueId },
+  });
+
+  if (!existingIssue) {
+    const error = new Error("Issue not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Only owner or ADMIN can update
+  if (existingIssue.createdById !== user.id && user.role !== "ADMIN") {
+    const error = new Error("Forbidden. You can only update your own issues");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const allowedFields = ["title", "description", "category", "address", "imageUrl"];
+  const dataToUpdate = {};
+
+  allowedFields.forEach((field) => {
+    if (updateData[field] !== undefined) {
+      dataToUpdate[field] = updateData[field];
+    }
+  });
+
+  const updatedIssue = await prisma.issue.update({
+    where: { id: issueId },
+    data: dataToUpdate,
+    include: {
+      createdBy: {
+        select: { id: true, name: true, email: true },
+      },
     },
   });
 
-  return issue;
+  return updatedIssue;
+};
+
+// ---- Delete/Reject issue ----
+export const deleteIssueService = async (issueId, user) => {
+  if (isNaN(issueId)) {
+    const error = new Error("Invalid issue ID");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const existingIssue = await prisma.issue.findUnique({
+    where: { id: issueId },
+  });
+
+  if (!existingIssue) {
+    const error = new Error("Issue not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (existingIssue.createdById !== user.id && user.role !== "ADMIN") {
+    const error = new Error("Forbidden. You can only delete your own issues");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  await prisma.issue.delete({
+    where: { id: issueId },
+  });
+
+  return { message: "Issue deleted successfully" };
 };

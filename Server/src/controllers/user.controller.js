@@ -23,6 +23,7 @@ export const getMyProfile = async (req, res, next) => {
         id: true,
         name: true,
         email: true,
+        role: true,
         createdAt: true,
       },
     });
@@ -45,7 +46,7 @@ export const getMyProfile = async (req, res, next) => {
 
 // ---- GET /api/users/all ----
 // Returns ALL users in the database
-// ADMIN ONLY - protected by authorizeRoles("ADMIN") in the route
+// ADMIN ONLY - protected by authorize("ADMIN") in the route
 export const getAllUsers = async (req, res, next) => {
   try {
     // Get all users from database (excluding passwords)
@@ -54,6 +55,7 @@ export const getAllUsers = async (req, res, next) => {
         id: true,
         name: true,
         email: true,
+        role: true,
         createdAt: true,
       },
     });

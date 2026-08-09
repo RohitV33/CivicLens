@@ -1,66 +1,53 @@
 // ============================================================
-// app.js - THE HEART OF YOUR EXPRESS APPLICATION
-// Here we:
-//   1. Create the Express app
-//   2. Add "middleware" (functions that run before your routes)
-//   3. Register all our routes (auth, users, issues)
+// app.js - EXPRESS APPLICATION MOUNTING & SECURITY MIDDLEWARE
 // ============================================================
 
 import express from "express";
-import cors from "cors";             // Allows frontend (different port) to talk to this backend
-import cookieParser from "cookie-parser"; // Lets us read cookies from requests
+import cors from "cors";
+import helmet from "helmet";
+import cookieParser from "cookie-parser";
 
-// ---- Import all our route files ----
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import issueRoutes from "./routes/issue.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
+import uploadRoutes from "./routes/upload.routes.js";
 
-// ---- Import global error handler ----
+import { authRateLimiter, apiRateLimiter } from "./config/rateLimiter.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 
-// Create the express application
 const app = express();
 
-// ============================================================
-// MIDDLEWARE - These run on EVERY request before it hits a route
-// ============================================================
+// 1. HTTP Security Headers
+app.use(helmet());
 
-// Allow requests from the React frontend running on port 5173 (Vite default)
-// credentials: true allows sending cookies if needed in the future
+// 2. CORS configuration
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
   credentials: true,
 }));
 
-
-// Allow the app to read JSON from request body  → req.body
-app.use(express.json());
-
-// Allow the app to read cookies from requests  → req.cookies
+// 3. Body parsers with limits
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 
-// ============================================================
-// ROUTES - Map URL paths to the correct route file
-// ============================================================
+// 4. General Rate Limiter for all APIs
+app.use("/api", apiRateLimiter);
 
-// Health check - just to confirm the server is alive
+// 5. Health check
 app.get("/", (req, res) => {
-  res.json({ message: "✅ CivicLens API is running!" });
+  res.json({ message: "✅ CivicLens API is running securely!" });
 });
 
-// Auth routes  → /api/auth/register, /api/auth/login, /api/auth/logout
-app.use("/api/auth", authRoutes);
-
-// User routes  → /api/users/profile, /api/users/all
+// 6. Routes Mounting
+app.use("/api/auth", authRateLimiter, authRoutes);
 app.use("/api/users", userRoutes);
-
-// Issue routes → /api/issues, /api/issues/:id
 app.use("/api/issues", issueRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/upload", uploadRoutes);
 
-// ============================================================
-// GLOBAL ERROR HANDLER - catches any error thrown in controllers
-// This MUST be the last app.use()
-// ============================================================
+// 7. Global Error Handler (MUST BE LAST)
 app.use(errorHandler);
 
 export default app;

@@ -44,12 +44,14 @@ export const registerService = async (userData) => {
       name,
       email,
       password: hashedPassword, // store the hashed version, not the original
+      role: userData.role || "USER",
     },
-    // Only return these fields (never return the password to the client!)
+    // Only return safe fields (never return password)
     select: {
       id: true,
       name: true,
       email: true,
+      role: true,
       createdAt: true,
     },
   });
@@ -75,7 +77,6 @@ export const loginService = async (userData) => {
   }
 
   // Step 3: Compare the password the user typed with the hashed password in DB
-  // bcrypt.compare() returns true if they match
   const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
   if (!isPasswordCorrect) {
@@ -84,11 +85,11 @@ export const loginService = async (userData) => {
     throw error;
   }
 
-  // Step 4: Create a JWT token with the user's id and role inside it
+  // Step 4: Create a JWT token with user's id, email, and role
   const token = generateToken({
     id: user.id,
     email: user.email,
-    role: user.role || "USER", // role defaults to "USER"
+    role: user.role,
   });
 
   // Step 5: Return token and safe user info (no password)
@@ -98,6 +99,7 @@ export const loginService = async (userData) => {
       id: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
     },
   };
 };

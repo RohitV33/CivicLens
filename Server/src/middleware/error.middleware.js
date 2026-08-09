@@ -1,33 +1,55 @@
 // ============================================================
-// middleware/error.middleware.js - GLOBAL ERROR HANDLER
-//
-// This is a special Express middleware with 4 parameters: (err, req, res, next)
-// Express automatically uses this when you call next(error) from a controller.
-//
-// Instead of putting try/catch in every single controller,
-// you can just throw an error and this function will catch it.
-//
-// HOW TO USE:
-// In any controller, throw an error with a statusCode:
-//   const error = new Error("User not found");
-//   error.statusCode = 404;
-//   throw error;
+// middleware/error.middleware.js - CENTRAL PRODUCTION ERROR HANDLER
 // ============================================================
 
 export const errorHandler = (err, req, res, next) => {
-  // Use the error's statusCode if set, otherwise default to 500 (server error)
-  const statusCode = err.statusCode || 500;
+  let statusCode = err.statusCode || 500;
+  let message = err.message || "Internal Server Error";
+  let errors = err.errors || undefined;
 
-  // Use the error message, or a generic message
-  const message = err.message || "Something went wrong on the server";
+  // 1. Prisma Unique Constraint Violation (P2002)
+  if (err.code === "P2002") {
+    statusCode = 409;
+    const targetField = err.meta?.target?.[0] || "field";
+    message = `A record with this ${targetField} already exists.`;
+  }
 
-  // In development, also return the error stack trace for debugging
+  // 2. Prisma Record Not Found (P2025)
+  if (err.code === "P2025") {
+    statusCode = 404;
+    message = "Resource not found in database.";
+  }
+
+  // 3. JWT Error Handling
+  if (err.name === "JsonWebTokenError") {
+    statusCode = 401;
+    message = "Invalid token. Authentication failed.";
+  }
+
+  if (err.name === "TokenExpiredError") {
+    statusCode = 401;
+    message = "Token has expired. Please login again.";
+  }
+
+  // 4. Zod Validation Errors
+  if (err.name === "ZodError") {
+    statusCode = 422;
+    message = "Validation Error";
+    errors = err.errors?.map((e) => ({
+      field: e.path.join("."),
+      message: e.message,
+    }));
+  }
+
   const isDev = process.env.NODE_ENV === "development";
 
   res.status(statusCode).json({
     success: false,
     message,
-    // Show stack trace only in development (never in production!)
+    errors,
+    // Hide stack trace in production
     stack: isDev ? err.stack : undefined,
   });
 };
+
+export default errorHandler;

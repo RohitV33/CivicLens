@@ -7,35 +7,110 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ---- USER MODEL ----
-// Stores registered users
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Category {
+  POTHOLE
+  GARBAGE
+  STREETLIGHT
+  WATER_LEAKAGE
+  ROAD_DAMAGE
+  SEWAGE
+  DRAINAGE
+  OTHER
+}
+
+enum Status {
+  PENDING
+  REVIEWING
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// ============================================================
+// MODELS
+// ============================================================
+
 model User {
   id        Int      @id @default(autoincrement())
   name      String
   email     String   @unique
-  password  String   // stored as bcrypt hash, never plain text
-  role      String   @default("USER")  // "USER" or "ADMIN"
+  password  String
+  role      Role     @default(USER)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  // A user can report many issues
-  issues    Issue[]  @relation("ReportedIssues")
+  // Relationships
+  issuesReported Issue[]        @relation("CreatedIssues")
+  issuesAssigned Issue[]        @relation("AssignedIssues")
+  histories      IssueHistory[] @relation("UserHistories")
+  notifications  Notification[] @relation("UserNotifications")
 }
 
-// ---- ISSUE MODEL ----
-// Stores civic issues reported by users
 model Issue {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  location    String?  // optional field (the ? means it can be null)
-  lat         Float?   // latitude for map pin
-  lng         Float?   // longitude for map pin
-  category    String   @default("General")  // e.g. Pothole, Garbage, Water, Lights
-  imageUrl    String?  // optional image URL
-  status      String   @default("OPEN")  // OPEN, IN_PROGRESS, RESOLVED
-  createdAt   DateTime @default(now())
+  id               Int      @id @default(autoincrement())
+  title            String
+  description      String
+  category         Category @default(OTHER)
+  status           Status   @default(PENDING)
+  priority         Priority @default(MEDIUM)
+  imageUrl         String?
+  latitude         Float?
+  longitude        Float?
+  address          String?
+  aiClassification String?
+  aiConfidence     Float?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  // Which user reported this issue
-  reporterId  Int
-  reporter    User     @relation("ReportedIssues", fields: [reporterId], references: [id])
+  // Creator Relationship
+  createdById Int
+  createdBy   User @relation("CreatedIssues", fields: [createdById], references: [id])
+
+  // Assigned Admin Relationship
+  assignedToId Int?
+  assignedTo   User? @relation("AssignedIssues", fields: [assignedToId], references: [id])
+
+  // Related Records
+  histories     IssueHistory[]
+  notifications Notification[]
 }
+
+model IssueHistory {
+  id          Int      @id @default(autoincrement())
+  issueId     Int
+  issue       Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  changedById Int
+  changedBy   User     @relation("UserHistories", fields: [changedById], references: [id])
+  oldStatus   Status?
+  newStatus   Status
+  comment     String?
+  createdAt   DateTime @default(now())
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  issueId   Int?
+  issue     Issue?   @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
