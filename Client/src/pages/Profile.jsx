@@ -2,18 +2,20 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   MapPin, Calendar, Edit3, FileText, CheckCircle2, Award, Flag, Layers,
-  Megaphone, ThumbsUp, Flame, Trophy, Save,
+  Megaphone, ThumbsUp, Flame, Trophy, Save, Loader2, PlusCircle
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import AppLayout from '../components/AppLayout'
 import Card from '../components/Card'
 import Button from '../components/Button'
 import Modal from '../components/Modal'
 import ReportCard from '../components/ReportCard'
-import { reports, achievements } from '../data/mockData'
+import { EmptyState } from '../components/EmptyState'
+import { achievements } from '../data/mockData'
 import { useCountUp } from '../hooks/useCountUp'
 import { useToast } from '../context/ToastContext'
-import { useAuth } from '../context/AuthContext'  // ← get real user
-import { getProfileAPI } from '../services/api'   // ← fetch profile from backend
+import { useAuth } from '../context/AuthContext'
+import { getProfileAPI, getMyIssuesAPI } from '../services/api'
 
 const achievementIcons = { Flag, Layers, Megaphone, ThumbsUp, Flame, Trophy }
 
@@ -28,24 +30,57 @@ function ProfileStat({ value, label }) {
 }
 
 export default function Profile() {
-  const [editOpen, setEditOpen] = useState(false)
-  const { user } = useAuth()  // get logged-in user from context
+  const { user } = useAuth()
+  const [profileData, setProfileData] = useState(null)
+  const [myIssues, setMyIssues] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  // Use real name from database, fallback to placeholder while loading
-  const [name, setName] = useState(user?.name || 'Loading...')
-  const [bio, setBio] = useState('Full stack developer & civic tech enthusiast, building a better city one report at a time.')
+  const [editOpen, setEditOpen] = useState(false)
+  const [name, setName] = useState('')
+  const [bio, setBio] = useState('Active citizen contributor on CivicLens platform.')
+  const [locationStr, setLocationStr] = useState('Ghaziabad, UP')
   const { addToast } = useToast()
 
-  // Get initials for avatar (e.g. "Rohit Sharma" → "RS")
-  const initials = (user?.name || 'U')
+  const loadData = async () => {
+    setLoading(true)
+    try {
+      const [profileRes, issuesRes] = await Promise.all([
+        getProfileAPI().catch(() => ({ data: user })),
+        getMyIssuesAPI().catch(() => ({ data: [] })),
+      ])
+
+      const u = profileRes.data || user
+      setProfileData(u)
+      setName(u?.name || 'Citizen')
+      setMyIssues(issuesRes.data || [])
+    } catch (err) {
+      console.error('Failed to load profile data', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const initials = (name || user?.name || 'C')
     .split(' ')
     .map((n) => n[0])
     .join('')
     .toUpperCase()
 
+  const submittedCount = myIssues.length
+  const resolvedCount = myIssues.filter((i) => i.status === 'RESOLVED').length
+  const totalPoints = (submittedCount * 50) + (resolvedCount * 100)
+
+  const joinedDateStr = user?.createdAt
+    ? new Date(user.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })
+    : 'March 2026'
+
   const save = () => {
     setEditOpen(false)
-    addToast('Profile updated successfully.', 'success')
+    addToast('Profile information saved locally.', 'success')
   }
 
   return (
@@ -58,14 +93,19 @@ export default function Profile() {
         </div>
         <div className="px-6 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-10 sm:-mt-12">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-primary text-white flex items-center justify-center text-2xl font-display font-bold border-4 border-surface dark:border-card-dark shrink-0">
-            {initials}
-          </div>
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 flex items-center justify-center text-2xl font-display font-bold border-4 border-surface dark:border-card-dark shrink-0 shadow-lg">
+              {initials}
+            </div>
             <div className="flex-1 min-w-0 pb-1">
-              <h1 className="font-display text-xl font-bold text-text-primary dark:text-text-dark">{name}</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="font-display text-2xl font-bold text-text-primary dark:text-text-dark">{name}</h1>
+                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  {user?.role || 'CITIZEN'}
+                </span>
+              </div>
               <div className="flex items-center gap-4 mt-1 text-xs text-text-secondary dark:text-text-dark/60 flex-wrap">
-                <span className="flex items-center gap-1"><MapPin size={12} /> Ghaziabad, UP</span>
-                <span className="flex items-center gap-1"><Calendar size={12} /> Joined March 2026</span>
+                <span className="flex items-center gap-1"><MapPin size={12} /> {locationStr}</span>
+                <span className="flex items-center gap-1"><Calendar size={12} /> Joined {joinedDateStr}</span>
               </div>
             </div>
             <Button variant="secondary" icon={Edit3} onClick={() => setEditOpen(true)} className="shrink-0">
@@ -75,9 +115,9 @@ export default function Profile() {
           <p className="text-sm text-text-secondary dark:text-text-dark/70 mt-4 max-w-xl leading-relaxed">{bio}</p>
 
           <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-border dark:border-border-dark max-w-sm">
-            <ProfileStat value={2870} label="Total points" />
-            <ProfileStat value={27} label="Reports submitted" />
-            <ProfileStat value={18} label="Reports resolved" />
+            <ProfileStat value={totalPoints} label="Impact points" />
+            <ProfileStat value={submittedCount} label="Reports filed" />
+            <ProfileStat value={resolvedCount} label="Reports resolved" />
           </div>
         </div>
       </Card>
@@ -85,17 +125,54 @@ export default function Profile() {
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <div>
-            <h2 className="font-semibold text-text-primary dark:text-text-dark mb-4">Your reports</h2>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {reports.slice(0, 4).map((r, i) => <ReportCard key={r.id} report={r} index={i} compact />)}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-serif text-2xl font-bold text-text-primary dark:text-text-dark">Your Reported Issues</h2>
+              <span className="text-xs font-semibold text-neutral-400">{myIssues.length} total reports</span>
             </div>
+
+            {loading ? (
+              <div className="py-12 text-center text-neutral-500">
+                <Loader2 className="animate-spin mx-auto mb-2" size={28} />
+                <p className="text-sm font-medium">Loading your live reported issues...</p>
+              </div>
+            ) : myIssues.length > 0 ? (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {myIssues.map((r, i) => (
+                  <ReportCard
+                    key={r.id}
+                    report={{
+                      id: r.id,
+                      title: r.title,
+                      category: r.category,
+                      status: r.status,
+                      severity: r.priority,
+                      location: r.address || r.location || 'Location specified',
+                      reportedAt: r.createdAt,
+                      image: r.imageUrl || r.category,
+                      upvotes: 12,
+                    }}
+                    index={i}
+                    compact
+                  />
+                ))}
+              </div>
+            ) : (
+              <Card className="text-center py-12">
+                <EmptyState
+                  icon={FileText}
+                  title="No reports submitted yet"
+                  description="You haven't filed any civic complaints yet. Submit your first report to help clean up your neighborhood!"
+                  action={<Button as={Link} to="/report" icon={PlusCircle}>Report An Issue</Button>}
+                />
+              </Card>
+            )}
           </div>
         </div>
 
         <div className="space-y-6">
           <Card>
             <h2 className="font-semibold text-text-primary dark:text-text-dark mb-5 flex items-center gap-2">
-              <Award size={16} className="text-primary dark:text-primary-dark" /> Achievement badges
+              <Award size={16} className="text-amber-500" /> Achievement Badges
             </h2>
             <div className="grid grid-cols-3 gap-3">
               {achievements.map((a) => {
@@ -106,11 +183,11 @@ export default function Profile() {
                     whileHover={{ y: -2 }}
                     className={`flex flex-col items-center gap-2 p-3 rounded-xl border text-center ${
                       a.earned
-                        ? 'border-primary/20 bg-primary/5'
+                        ? 'border-emerald-500/20 bg-emerald-500/5'
                         : 'border-border dark:border-border-dark opacity-40 grayscale'
                     }`}
                   >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${a.earned ? 'bg-primary/15 text-primary dark:text-primary-dark' : 'bg-black/5 dark:bg-white/5 text-text-secondary'}`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${a.earned ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-black/5 dark:bg-white/5 text-text-secondary'}`}>
                       <Icon size={17} />
                     </div>
                     <p className="text-[11px] font-medium text-text-primary dark:text-text-dark leading-tight">{a.label}</p>
@@ -121,30 +198,13 @@ export default function Profile() {
           </Card>
 
           <Card>
-            <h2 className="font-semibold text-text-primary dark:text-text-dark mb-4">Contribution breakdown</h2>
-            {[
-              { label: 'Road damage', value: 45, color: '#2563EB' },
-              { label: 'Waste management', value: 28, color: '#22C55E' },
-              { label: 'Street lighting', value: 17, color: '#F59E0B' },
-              { label: 'Others', value: 10, color: '#94A3B8' },
-            ].map((s) => (
-              <div key={s.label} className="mb-3.5 last:mb-0">
-                <div className="flex items-center justify-between text-xs mb-1.5">
-                  <span className="text-text-secondary dark:text-text-dark/70">{s.label}</span>
-                  <span className="font-medium text-text-primary dark:text-text-dark">{s.value}%</span>
-                </div>
-                <div className="h-1.5 rounded-full bg-black/[0.04] dark:bg-white/[0.06] overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    whileInView={{ width: `${s.value}%` }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6 }}
-                    className="h-full rounded-full"
-                    style={{ background: s.color }}
-                  />
-                </div>
-              </div>
-            ))}
+            <h2 className="font-semibold text-text-primary dark:text-text-dark mb-4">Impact Summary</h2>
+            <p className="text-xs text-neutral-500 leading-relaxed mb-4">
+              Every verified civic report accelerates municipal field team dispatch, helping build a safer, cleaner community.
+            </p>
+            <Button as={Link} to="/report" className="w-full justify-center text-xs py-2.5">
+              File New Complaint
+            </Button>
           </Card>
         </div>
       </div>
@@ -152,7 +212,7 @@ export default function Profile() {
       <Modal
         open={editOpen}
         onClose={() => setEditOpen(false)}
-        title="Edit profile"
+        title="Edit Profile"
         footer={
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setEditOpen(false)}>Cancel</Button>
@@ -162,8 +222,8 @@ export default function Profile() {
       >
         <div className="space-y-4">
           <div>
-            <label className="label-text mb-1.5 block">Full name</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className="input-field" />
+            <label className="label-text mb-1.5 block">Full Name</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} className="input-field font-bold" />
           </div>
           <div>
             <label className="label-text mb-1.5 block">Bio</label>
@@ -171,7 +231,7 @@ export default function Profile() {
           </div>
           <div>
             <label className="label-text mb-1.5 block">Location</label>
-            <input defaultValue="Ghaziabad, UP" className="input-field" />
+            <input value={locationStr} onChange={(e) => setLocationStr(e.target.value)} className="input-field" />
           </div>
         </div>
       </Modal>
