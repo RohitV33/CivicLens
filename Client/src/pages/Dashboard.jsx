@@ -113,7 +113,7 @@ export default function Dashboard() {
                       confidence: r.aiConfidence || 92,
                       department: 'Public Works Dept.',
                       upvotes: 12,
-                      image: r.imageUrl || 'pothole',
+                      image: r.imageUrl || r.category,
                     }}
                     index={i}
                     compact
