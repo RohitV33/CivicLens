@@ -12,6 +12,7 @@ import userRoutes from "./routes/user.routes.js";
 import issueRoutes from "./routes/issue.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import uploadRoutes from "./routes/upload.routes.js";
+import locationRoutes from "./routes/location.routes.js";
 
 import { authRateLimiter, apiRateLimiter } from "./config/rateLimiter.js";
 import { errorHandler } from "./middleware/error.middleware.js";
@@ -46,6 +47,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/issues", issueRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/location", locationRoutes);
 
 // 7. Global Error Handler (MUST BE LAST)
 app.use(errorHandler);
