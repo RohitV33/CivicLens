@@ -1,7 +1,8 @@
 // ============================================================
-// services/ai.service.js - AI COMPUTER VISION & DUPLICATE DETECTION
+// services/ai.service.js - REAL MULTI-MODAL GEMINI VISION AI & DUPLICATE DETECTION
 // ============================================================
 
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import prisma from "../lib/prisma.js";
 
 // Haversine formula to calculate distance between two GPS coordinates in kilometers
@@ -21,32 +22,114 @@ export const calculateHaversineDistance = (lat1, lon1, lat2, lon2) => {
   return R * c; // Distance in kilometers
 };
 
-// List of non-civic image keywords (Anime, Games, Art, Wallpapers, Personal Photos)
-const NON_CIVIC_KEYWORDS = [
-  "demon-slayer",
-  "anime",
-  "manga",
-  "wallpaper",
-  "fanart",
-  "game",
-  "avatar",
-  "portrait",
-  "selfie",
-  "illustration",
-  "drawing",
-  "artwork",
-  "character",
-  "naruto",
-  "goku",
-  "screenshot",
-];
+// Helper: Convert URL or Data URI to Base64 Buffer for Gemini Vision
+const fetchImagePart = async (imageUrl) => {
+  if (!imageUrl) return null;
+
+  try {
+    if (imageUrl.startsWith("data:")) {
+      const mimeType = imageUrl.substring(imageUrl.indexOf(":") + 1, imageUrl.indexOf(";"));
+      const base64Data = imageUrl.substring(imageUrl.indexOf(",") + 1);
+      return {
+        inlineData: {
+          data: base64Data,
+          mimeType: mimeType || "image/jpeg",
+        },
+      };
+    }
+
+    const response = await fetch(imageUrl);
+    if (!response.ok) return null;
+    const arrayBuffer = await response.arrayBuffer();
+    const base64Data = Buffer.from(arrayBuffer).toString("base64");
+    const mimeType = response.headers.get("content-type") || "image/jpeg";
+
+    return {
+      inlineData: {
+        data: base64Data,
+        mimeType: mimeType.split(";")[0],
+      },
+    };
+  } catch (err) {
+    console.error("⚠️ Failed to fetch image buffer for Gemini Vision:", err.message);
+    return null;
+  }
+};
 
 // ---- AI Computer Vision & Classification Engine ----
 export const analyzeIssueImageService = async ({ imageUrl = "", title = "", description = "" }) => {
-  const fullText = `${imageUrl} ${title} ${description}`.toLowerCase();
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
-  // 1. Check if the image or text is non-civic (Anime, Artwork, Personal Wallpaper, Game)
-  const isNonCivic = NON_CIVIC_KEYWORDS.some((keyword) => fullText.includes(keyword));
+  // 1. If Gemini API key is configured, perform REAL AI Multimodal Image Pixel Analysis
+  if (apiKey) {
+    try {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+      const imagePart = await fetchImagePart(imageUrl);
+
+      const prompt = `You are an expert AI Computer Vision System for CivicLens, an urban civic issue reporting platform.
+Examine the provided image pixels and text metadata ("${title} ${description}").
+
+Tasks:
+1. Determine if this image shows a real civic/urban infrastructure problem (such as a road pothole, overflowing garbage bin, broken streetlight, water pipe leak, road asphalt crack, sewage overflow, blocked drainage, or damaged public property).
+2. If it is NOT a civic issue (e.g. an anime character/cartoon, personal selfie, pet, food, car wallpaper, game screenshot, meme, nature landscape, or artwork):
+   - Set isCivicIssue = false
+   - Set category = "OTHER"
+   - Set priority = "LOW"
+   - Set confidence = 15.0
+   - Set aiClassification = "Non-Civic Photo Detected (Anime / Artwork / Personal Wallpaper)"
+   - Set warning = "⚠️ AI Vision Alert: The scanned photo does NOT show a civic infrastructure defect. Please upload a clear photo of a pothole, garbage dump, broken streetlight, or water leakage."
+3. If it IS a civic issue:
+   - Set isCivicIssue = true
+   - Choose category from: ["POTHOLE", "GARBAGE", "STREETLIGHT", "WATER_LEAKAGE", "ROAD_DAMAGE", "SEWAGE", "DRAINAGE", "OTHER"]
+   - Choose priority from: ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+   - Calculate confidence (percentage between 70.0 and 99.0)
+   - Write a concise technical aiClassification sentence.
+   - Set warning = null
+
+Return strictly valid JSON only with NO markdown formatting, adhering to this format:
+{
+  "isCivicIssue": boolean,
+  "category": "POTHOLE" | "GARBAGE" | "STREETLIGHT" | "WATER_LEAKAGE" | "ROAD_DAMAGE" | "SEWAGE" | "DRAINAGE" | "OTHER",
+  "priority": "LOW" | "MEDIUM" | "HIGH" | "CRITICAL",
+  "confidence": number,
+  "aiClassification": "string",
+  "warning": "string" | null,
+  "summary": "string"
+}`;
+
+      const contents = imagePart ? [prompt, imagePart] : [prompt];
+      const result = await model.generateContent(contents);
+      const rawText = result.response.text().trim();
+
+      // Clean markdown ```json blocks if returned
+      const cleanJson = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+      const parsed = JSON.parse(cleanJson);
+
+      return {
+        isCivicIssue: parsed.isCivicIssue ?? true,
+        category: parsed.category || "OTHER",
+        priority: parsed.priority || "MEDIUM",
+        confidence: parseFloat(parsed.confidence) || 90.0,
+        aiClassification: parsed.aiClassification || "Analyzed by Gemini Vision AI",
+        warning: parsed.warning || null,
+        summary: parsed.summary || "Gemini Vision AI completed image scan.",
+      };
+    } catch (err) {
+      console.error("⚠️ Gemini Vision API call failed, using heuristic vision engine:", err.message);
+    }
+  }
+
+  // 2. Fallback Smart Heuristic & Keyword Inspection Engine
+  const fullText = `${imageUrl} ${title} ${description}`.toLowerCase();
+  const nonCivicTerms = [
+    "demon-slayer", "anime", "manga", "wallpaper", "fanart", "game",
+    "avatar", "portrait", "selfie", "illustration", "drawing", "artwork",
+    "character", "naruto", "goku", "screenshot", "5120x2880", "1920x1080"
+  ];
+
+  const isNonCivic = nonCivicTerms.some((term) => fullText.includes(term));
 
   if (isNonCivic) {
     return {
@@ -57,20 +140,16 @@ export const analyzeIssueImageService = async ({ imageUrl = "", title = "", desc
       aiClassification: "Irrelevant / Non-Civic Photo (Anime / Artwork / Personal Wallpaper)",
       warning:
         "⚠️ AI Vision Alert: The uploaded image appears to be an Anime/Art wallpaper rather than a civic infrastructure defect. Please upload a clear photo of a pothole, garbage, streetlight, or water leakage.",
-      summary:
-        "Non-civic image detected. AI recommends uploading genuine photo evidence of municipal defects.",
+      summary: "Non-civic image detected. AI recommends uploading genuine photo evidence of municipal defects.",
     };
   }
 
   const text = `${title} ${description}`.toLowerCase();
-
   let category = "OTHER";
   let priority = "MEDIUM";
   let confidence = 88.5;
   let classification = "General Civic Issue";
-  let isCivicIssue = true;
 
-  // 2. Heuristic Keyword & Visual Pattern Recognition Engine
   if (text.includes("pothole") || text.includes("hole") || text.includes("crater") || text.includes("asphalt")) {
     category = "POTHOLE";
     priority = "HIGH";
@@ -109,7 +188,7 @@ export const analyzeIssueImageService = async ({ imageUrl = "", title = "", desc
   }
 
   return {
-    isCivicIssue,
+    isCivicIssue: true,
     category,
     priority,
     confidence,
@@ -127,7 +206,6 @@ export const detectDuplicateIssueService = async (latitude, longitude, category,
     return { isDuplicate: false };
   }
 
-  // Find all open / in-progress issues
   const activeIssues = await prisma.issue.findMany({
     where: {
       status: { in: ["PENDING", "REVIEWING", "ASSIGNED", "IN_PROGRESS"] },
@@ -147,7 +225,6 @@ export const detectDuplicateIssueService = async (latitude, longitude, category,
     },
   });
 
-  // Calculate distance for each active issue
   const nearbyDuplicates = activeIssues
     .map((issue) => {
       const distance = calculateHaversineDistance(lat, lng, issue.latitude, issue.longitude);

@@ -16,6 +16,7 @@
   "type": "module",
   "dependencies": {
     "@google/genai": "^2.16.0",
+    "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.19.3",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.10.0",
