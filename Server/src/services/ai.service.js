@@ -65,6 +65,52 @@ const NON_CIVIC_TERMS = [
   "document", "paper", "presentation", "slide", "code", "table", "bar"
 ];
 
+// Default title and description generators by category
+const GENERATE_CIVIC_TEXT = (category) => {
+  switch (category) {
+    case "POTHOLE":
+      return {
+        title: "Severe Road Pothole & Asphalt Damage",
+        description: "A deep crater pothole was detected on the road surface, causing traffic slowdown and posing severe safety hazards to commuter vehicles and two-wheelers.",
+      };
+    case "GARBAGE":
+      return {
+        title: "Overflowing Garbage Dump & Solid Waste",
+        description: "An uncollected accumulation of municipal solid waste was detected spilling onto public walkways, creating unhygienic conditions and foul odor.",
+      };
+    case "STREETLIGHT":
+      return {
+        title: "Non-Functional Street Light Fixture",
+        description: "A damaged or faulty public street light pole was reported, resulting in poor nighttime visibility and pedestrian safety concerns.",
+      };
+    case "WATER_LEAKAGE":
+      return {
+        title: "Pressurized Water Supply Line Burst",
+        description: "A clean water supply pipeline leak was detected flooding the street, leading to water wastage and potential road sub-base erosion.",
+      };
+    case "DRAINAGE":
+      return {
+        title: "Blocked Stormwater Drainage Channel",
+        description: "A clogged roadside drainage gutter was detected filled with debris and silt, increasing risk of urban waterlogging during rainfall.",
+      };
+    case "SEWAGE":
+      return {
+        title: "Underground Sewage Overflow Hazard",
+        description: "A manhole sewage overflow was detected releasing contaminated wastewater onto the public street, posing immediate public health concerns.",
+      };
+    case "ROAD_DAMAGE":
+      return {
+        title: "Broken Road Divider & Surface Fissures",
+        description: "Structural road damage and median divider displacement were observed, requiring immediate municipal Public Works repair.",
+      };
+    default:
+      return {
+        title: "Civic Infrastructure Defect",
+        description: "A municipal infrastructure issue requiring city authority inspection was reported by a citizen.",
+      };
+  }
+};
+
 // ---- AI Computer Vision & Classification Engine ----
 export const analyzeIssueImageService = async ({ imageUrl = "", title = "", description = "" }) => {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
@@ -88,6 +134,8 @@ Tasks:
    - Set priority = "LOW"
    - Set confidence = 15.0
    - Set aiClassification = "Non-Civic Photo / Document / Graph Image Detected"
+   - Set suggestedTitle = "Non-Civic Photo Uploaded"
+   - Set suggestedDescription = "This photo does not depict a municipal defect."
    - Set warning = "⚠️ AI Vision Alert: The scanned image shows a graph/chart/document or non-civic media rather than a physical civic infrastructure defect. Please upload a clear photo of a pothole, garbage dump, broken streetlight, or water leakage."
 3. If it IS a civic issue:
    - Set isCivicIssue = true
@@ -95,6 +143,8 @@ Tasks:
    - Choose priority from: ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
    - Calculate confidence (percentage between 70.0 and 99.0)
    - Write a concise technical aiClassification sentence.
+   - Generate a professional 4-8 word suggestedTitle describing the defect.
+   - Generate a detailed 2-3 sentence suggestedDescription describing the problem, hazard, and recommended municipal repair action.
    - Set warning = null
 
 Return strictly valid JSON only with NO markdown formatting, adhering to this format:
@@ -104,6 +154,8 @@ Return strictly valid JSON only with NO markdown formatting, adhering to this fo
   "priority": "LOW" | "MEDIUM" | "HIGH" | "CRITICAL",
   "confidence": number,
   "aiClassification": "string",
+  "suggestedTitle": "string",
+  "suggestedDescription": "string",
   "warning": "string" | null,
   "summary": "string"
 }`;
@@ -115,12 +167,16 @@ Return strictly valid JSON only with NO markdown formatting, adhering to this fo
       const cleanJson = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
       const parsed = JSON.parse(cleanJson);
 
+      const defaults = GENERATE_CIVIC_TEXT(parsed.category || "OTHER");
+
       return {
         isCivicIssue: parsed.isCivicIssue ?? true,
         category: parsed.category || "OTHER",
         priority: parsed.priority || "MEDIUM",
         confidence: parseFloat(parsed.confidence) || 90.0,
         aiClassification: parsed.aiClassification || "Analyzed by Gemini Vision AI",
+        suggestedTitle: parsed.suggestedTitle || defaults.title,
+        suggestedDescription: parsed.suggestedDescription || defaults.description,
         warning: parsed.warning || null,
         summary: parsed.summary || "Gemini Vision AI completed image scan.",
       };
@@ -129,7 +185,7 @@ Return strictly valid JSON only with NO markdown formatting, adhering to this fo
     }
   }
 
-  // 2. Fallback Heuristic Inspection Engine (for Non-Civic Media, Graphs, Documents)
+  // 2. Fallback Heuristic Inspection Engine
   const fullText = `${imageUrl} ${title} ${description}`.toLowerCase();
   const isNonCivic = NON_CIVIC_TERMS.some((term) => fullText.includes(term));
 
@@ -140,6 +196,8 @@ Return strictly valid JSON only with NO markdown formatting, adhering to this fo
       priority: "LOW",
       confidence: 15.0,
       aiClassification: "Irrelevant / Non-Civic Image Detected (Graph / Chart / Document / Artwork)",
+      suggestedTitle: "Non-Civic Image Uploaded",
+      suggestedDescription: "The uploaded image does not appear to show a municipal infrastructure issue.",
       warning:
         "⚠️ AI Vision Alert: The uploaded image appears to be a Graph/Chart/Document rather than a physical civic infrastructure defect. Please upload a clear photo of a pothole, garbage, streetlight, or water leakage.",
       summary: "Non-civic image detected. AI recommends uploading genuine photo evidence of municipal defects.",
@@ -189,12 +247,16 @@ Return strictly valid JSON only with NO markdown formatting, adhering to this fo
     classification = "Structural Asphalt Degradation & Surface Fissures";
   }
 
+  const generated = GENERATE_CIVIC_TEXT(category);
+
   return {
     isCivicIssue: true,
     category,
     priority,
     confidence,
     aiClassification: classification,
+    suggestedTitle: generated.title,
+    suggestedDescription: generated.description,
     summary: `AI verified issue as ${category} with ${confidence}% confidence. Initial recommended priority: ${priority}.`,
   };
 };

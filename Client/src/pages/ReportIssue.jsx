@@ -100,8 +100,14 @@ export default function ReportIssue() {
       })
       setAiResult(aiRes.data)
 
-      if (!title) {
+      if (aiRes.data.suggestedTitle) {
+        setTitle(aiRes.data.suggestedTitle)
+      } else if (!title) {
         setTitle(`Reported ${aiRes.data.category.replace('_', ' ')} Issue`)
+      }
+
+      if (aiRes.data.suggestedDescription) {
+        setDescription(aiRes.data.suggestedDescription)
       }
 
       // 3. Trigger Geo Duplicate Check
@@ -120,6 +126,12 @@ export default function ReportIssue() {
       setUploadingImage(false)
       setAnalyzing(false)
     }
+  }
+
+  const handleAiAutoFill = () => {
+    if (aiResult?.suggestedTitle) setTitle(aiResult.suggestedTitle)
+    if (aiResult?.suggestedDescription) setDescription(aiResult.suggestedDescription)
+    addToast('Title and Description auto-filled using AI Vision analysis!', 'success')
   }
 
   // Handle Official Report Submission
@@ -174,7 +186,18 @@ export default function ReportIssue() {
           </Card>
 
           <Card className="bg-white dark:bg-[#1A1C20] rounded-3xl p-7 border border-black/5 dark:border-white/10 shadow-soft space-y-4">
-            <h2 className="font-serif text-2xl text-neutral-900 dark:text-white mb-2">Report Details</h2>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="font-serif text-2xl text-neutral-900 dark:text-white">Report Details</h2>
+              {aiResult && (
+                <button
+                  type="button"
+                  onClick={handleAiAutoFill}
+                  className="text-xs font-bold px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-violet-600 text-white flex items-center gap-1.5 shadow-sm hover:scale-[1.02] transition-transform"
+                >
+                  <Sparkles size={13} /> AI Auto-Fill
+                </button>
+              )}
+            </div>
 
             <div>
               <label className="label-text mb-1.5 block font-semibold">Issue Title</label>
@@ -184,12 +207,15 @@ export default function ReportIssue() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Deep crater pothole near market"
-                className="input-field rounded-2xl"
+                className="input-field rounded-2xl font-bold"
               />
             </div>
 
             <div>
-              <label className="label-text mb-1.5 block font-semibold">Detailed Description</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="label-text font-semibold">Detailed Description</label>
+                <span className="text-[11px] text-neutral-400">Editable AI Generated Draft</span>
+              </div>
               <textarea
                 required
                 rows={4}
