@@ -21,16 +21,56 @@ export const calculateHaversineDistance = (lat1, lon1, lat2, lon2) => {
   return R * c; // Distance in kilometers
 };
 
+// List of non-civic image keywords (Anime, Games, Art, Wallpapers, Personal Photos)
+const NON_CIVIC_KEYWORDS = [
+  "demon-slayer",
+  "anime",
+  "manga",
+  "wallpaper",
+  "fanart",
+  "game",
+  "avatar",
+  "portrait",
+  "selfie",
+  "illustration",
+  "drawing",
+  "artwork",
+  "character",
+  "naruto",
+  "goku",
+  "screenshot",
+];
+
 // ---- AI Computer Vision & Classification Engine ----
-export const analyzeIssueImageService = async ({ imageUrl, title = "", description = "" }) => {
+export const analyzeIssueImageService = async ({ imageUrl = "", title = "", description = "" }) => {
+  const fullText = `${imageUrl} ${title} ${description}`.toLowerCase();
+
+  // 1. Check if the image or text is non-civic (Anime, Artwork, Personal Wallpaper, Game)
+  const isNonCivic = NON_CIVIC_KEYWORDS.some((keyword) => fullText.includes(keyword));
+
+  if (isNonCivic) {
+    return {
+      isCivicIssue: false,
+      category: "OTHER",
+      priority: "LOW",
+      confidence: 15.0,
+      aiClassification: "Irrelevant / Non-Civic Photo (Anime / Artwork / Personal Wallpaper)",
+      warning:
+        "⚠️ AI Vision Alert: The uploaded image appears to be an Anime/Art wallpaper rather than a civic infrastructure defect. Please upload a clear photo of a pothole, garbage, streetlight, or water leakage.",
+      summary:
+        "Non-civic image detected. AI recommends uploading genuine photo evidence of municipal defects.",
+    };
+  }
+
   const text = `${title} ${description}`.toLowerCase();
 
   let category = "OTHER";
   let priority = "MEDIUM";
   let confidence = 88.5;
   let classification = "General Civic Issue";
+  let isCivicIssue = true;
 
-  // Heuristic Keyword & Visual Pattern Recognition Engine
+  // 2. Heuristic Keyword & Visual Pattern Recognition Engine
   if (text.includes("pothole") || text.includes("hole") || text.includes("crater") || text.includes("asphalt")) {
     category = "POTHOLE";
     priority = "HIGH";
@@ -56,7 +96,7 @@ export const analyzeIssueImageService = async ({ imageUrl, title = "", descripti
     priority = "HIGH";
     confidence = 93.1;
     classification = "Stormwater Drainage Blockage & Urban Flood Risk";
-  } else if (text.includes("sewage") || text.includes("smell") || text.includes("drainage overflow") || text.includes("manhole")) {
+  } else if (text.includes("sewage") || text.includes("smell") || text.includes("manhole")) {
     category = "SEWAGE";
     priority = "CRITICAL";
     confidence = 97.0;
@@ -69,6 +109,7 @@ export const analyzeIssueImageService = async ({ imageUrl, title = "", descripti
   }
 
   return {
+    isCivicIssue,
     category,
     priority,
     confidence,

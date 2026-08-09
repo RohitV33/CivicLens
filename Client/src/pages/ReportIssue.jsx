@@ -253,17 +253,35 @@ export default function ReportIssue() {
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-3xl bg-[#C2ECD8] dark:bg-[#153428] p-7 space-y-4 border border-emerald-300/60 dark:border-emerald-900/40 shadow-soft"
+                className={`rounded-3xl p-7 space-y-4 shadow-soft border ${
+                  aiResult.isCivicIssue === false
+                    ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900 text-rose-900 dark:text-rose-100'
+                    : 'bg-[#C2ECD8] dark:bg-[#153428] border-emerald-300/60 dark:border-emerald-900/40'
+                }`}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-emerald-900 dark:text-emerald-100 font-serif text-xl">
-                    <Sparkles size={20} className="text-emerald-700 dark:text-emerald-300" />
-                    AI Vision Verified
+                  <div className="flex items-center gap-2 font-serif text-xl">
+                    {aiResult.isCivicIssue === false ? (
+                      <AlertTriangle size={20} className="text-rose-600 dark:text-rose-400" />
+                    ) : (
+                      <Sparkles size={20} className="text-emerald-700 dark:text-emerald-300" />
+                    )}
+                    {aiResult.isCivicIssue === false ? 'Non-Civic Photo Detected' : 'AI Vision Verified'}
                   </div>
-                  <span className="text-xs font-bold bg-white/80 dark:bg-black/40 text-emerald-900 dark:text-emerald-200 px-3 py-1 rounded-full">
+                  <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                    aiResult.isCivicIssue === false
+                      ? 'bg-rose-200 dark:bg-rose-900 text-rose-900 dark:text-rose-100'
+                      : 'bg-white/80 dark:bg-black/40 text-emerald-900 dark:text-emerald-200'
+                  }`}>
                     {aiResult.confidence}% Confidence
                   </span>
                 </div>
+
+                {aiResult.warning && (
+                  <div className="p-3.5 rounded-2xl bg-rose-100/80 dark:bg-rose-900/40 border border-rose-300/60 dark:border-rose-800 text-xs font-medium text-rose-900 dark:text-rose-200 leading-relaxed">
+                    {aiResult.warning}
+                  </div>
+                )}
 
                 <div className="p-4 rounded-2xl bg-white/90 dark:bg-[#1C2D24] space-y-2 text-sm text-neutral-800 dark:text-neutral-200">
                   <div className="flex justify-between">
