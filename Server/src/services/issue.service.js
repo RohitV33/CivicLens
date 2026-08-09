@@ -3,6 +3,7 @@
 // ============================================================
 
 import prisma from "../lib/prisma.js";
+import { analyzeIssueImageService } from "./ai.service.js";
 
 // ---- Create a new civic issue ----
 export const createIssueService = async (issueData, createdById) => {
@@ -14,7 +15,7 @@ export const createIssueService = async (issueData, createdById) => {
     imageUrl,
     latitude,
     longitude,
-    location, // legacy fallback for address
+    location,
     address,
     aiClassification,
     aiConfidence,
@@ -42,20 +43,32 @@ export const createIssueService = async (issueData, createdById) => {
     throw error;
   }
 
+  // Run AI analysis to automatically classify and suggest priority if missing
+  const aiAnalysis = await analyzeIssueImageService({
+    imageUrl,
+    title,
+    description,
+  });
+
+  const finalCategory = category && category !== "OTHER" ? category : aiAnalysis.category;
+  const finalPriority = priority || aiAnalysis.priority;
+  const finalAiClassification = aiClassification || aiAnalysis.aiClassification;
+  const finalAiConfidence = aiConfidence ? parseFloat(aiConfidence) : aiAnalysis.confidence;
+
   // Use a transaction to create issue & initial history record
   const result = await prisma.$transaction(async (tx) => {
     const issue = await tx.issue.create({
       data: {
         title,
         description,
-        category: category || "OTHER",
-        priority: priority || "MEDIUM",
+        category: finalCategory,
+        priority: finalPriority,
         imageUrl: imageUrl || null,
         latitude: parsedLat,
         longitude: parsedLng,
         address: address || location || null,
-        aiClassification: aiClassification || null,
-        aiConfidence: aiConfidence ? parseFloat(aiConfidence) : null,
+        aiClassification: finalAiClassification,
+        aiConfidence: finalAiConfidence,
         createdById,
       },
       include: {
@@ -71,7 +84,7 @@ export const createIssueService = async (issueData, createdById) => {
         issueId: issue.id,
         changedById: createdById,
         newStatus: "PENDING",
-        comment: "Issue reported by citizen.",
+        comment: `Issue reported by citizen. AI auto-classified as ${finalCategory} (${finalAiConfidence}% confidence).`,
       },
     });
 

@@ -28,9 +28,7 @@ const apiFetch = async (url, options = {}) => {
   return data
 }
 
-// ============================================================
-// AUTH API CALLS
-// ============================================================
+// ---- AUTH API CALLS ----
 export const registerAPI = (name, email, password) =>
   apiFetch('/api/auth/register', {
     method: 'POST',
@@ -46,14 +44,10 @@ export const loginAPI = (email, password) =>
 export const logoutAPI = () =>
   apiFetch('/api/auth/logout', { method: 'POST' })
 
-// ============================================================
-// USER API CALLS
-// ============================================================
+// ---- USER API CALLS ----
 export const getProfileAPI = () => apiFetch('/api/users/profile')
 
-// ============================================================
-// ISSUE API CALLS
-// ============================================================
+// ---- ISSUE API CALLS ----
 export const getAllIssuesAPI = (params = {}) => {
   const query = new URLSearchParams(params).toString()
   return apiFetch(`/api/issues${query ? `?${query}` : ''}`)
@@ -64,7 +58,6 @@ export const getMyIssuesAPI = () => apiFetch('/api/issues/my')
 export const getIssueByIdAPI = (id) => apiFetch(`/api/issues/${id}`)
 
 export const createIssueAPI = (issueData) => {
-  // Accepts full object or title/description/location string
   const body =
     typeof issueData === 'string'
       ? { title: issueData, description: arguments[1], location: arguments[2] }
@@ -76,15 +69,24 @@ export const createIssueAPI = (issueData) => {
   })
 }
 
-// ============================================================
-// LOCATION & REVERSE GEOCODING API CALLS
-// ============================================================
+// ---- AI & DUPLICATE DETECTION API CALLS ----
+export const analyzeIssueAIAPI = ({ imageUrl, title, description }) =>
+  apiFetch('/api/ai/analyze', {
+    method: 'POST',
+    body: JSON.stringify({ imageUrl, title, description }),
+  })
+
+export const checkDuplicateAIAPI = ({ latitude, longitude, category, radiusInKm }) =>
+  apiFetch('/api/ai/check-duplicate', {
+    method: 'POST',
+    body: JSON.stringify({ latitude, longitude, category, radiusInKm }),
+  })
+
+// ---- LOCATION & REVERSE GEOCODING API CALLS ----
 export const reverseGeocodeAPI = (lat, lng) =>
   apiFetch(`/api/location/reverse?lat=${lat}&lng=${lng}`)
 
-// ============================================================
-// IMAGE UPLOAD API CALLS
-// ============================================================
+// ---- IMAGE UPLOAD API CALLS ----
 export const uploadImageAPI = (file) => {
   const formData = new FormData()
   formData.append('image', file)
@@ -95,9 +97,7 @@ export const uploadImageAPI = (file) => {
   })
 }
 
-// ============================================================
-// ADMIN API CALLS
-// ============================================================
+// ---- ADMIN API CALLS ----
 export const getAdminIssuesAPI = (params = {}) => {
   const query = new URLSearchParams(params).toString()
   return apiFetch(`/api/admin/issues${query ? `?${query}` : ''}`)
