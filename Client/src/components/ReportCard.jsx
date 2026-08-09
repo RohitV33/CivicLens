@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { MapPin, ThumbsUp, MessageSquare } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -7,24 +8,30 @@ import { StatusChip, SeverityChip } from './StatusChip'
 const CATEGORY_FALLBACK_IMAGES = {
   POTHOLE: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?q=80&w=800&auto=format&fit=crop',
   GARBAGE: 'https://images.unsplash.com/photo-1605600659908-0ef719419d41?q=80&w=800&auto=format&fit=crop',
+  WASTE_MANAGEMENT: 'https://images.unsplash.com/photo-1605600659908-0ef719419d41?q=80&w=800&auto=format&fit=crop',
   STREETLIGHT: 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?q=80&w=800&auto=format&fit=crop',
+  STREET_LIGHTING: 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?q=80&w=800&auto=format&fit=crop',
   WATER_LEAKAGE: 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?q=80&w=800&auto=format&fit=crop',
   ROAD_DAMAGE: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=800&auto=format&fit=crop',
   DRAINAGE: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=800&auto=format&fit=crop',
+  WATERLOGGING: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=800&auto=format&fit=crop',
   SEWAGE: 'https://images.unsplash.com/photo-1584467735815-f778f274e296?q=80&w=800&auto=format&fit=crop',
   OTHER: 'https://images.unsplash.com/photo-1477959858617-67f30ac4ce78?q=80&w=800&auto=format&fit=crop',
 }
 
 export default function ReportCard({ report, index = 0, compact = false }) {
-  // Determine if report.image is an actual image URL or Data URI
+  const [imgError, setImgError] = useState(false)
+
+  // Normalize category key for lookup (handles "ROAD DAMAGE", "WASTE MANAGEMENT", etc.)
+  const rawCat = report.category || report.image || ''
+  const catKey = rawCat.toUpperCase().trim().replace(/\s+/g, '_')
+
   const isActualUrl =
     report.image &&
     (report.image.startsWith('http') || report.image.startsWith('data:') || report.image.startsWith('/'))
 
-  const fallbackUrl =
-    CATEGORY_FALLBACK_IMAGES[report.category?.toUpperCase()] || CATEGORY_FALLBACK_IMAGES.OTHER
-
-  const displaySrc = isActualUrl ? report.image : fallbackUrl
+  const fallbackUrl = CATEGORY_FALLBACK_IMAGES[catKey] || CATEGORY_FALLBACK_IMAGES.OTHER
+  const displaySrc = isActualUrl && !imgError ? report.image : fallbackUrl
 
   return (
     <motion.div
@@ -38,15 +45,18 @@ export default function ReportCard({ report, index = 0, compact = false }) {
         to={`/complaint/${report.id}`}
         className="group block bg-white dark:bg-[#1C1D20] border border-black/5 dark:border-white/10 rounded-3xl overflow-hidden shadow-soft transition-all duration-300 hover:shadow-craft"
       >
-        <div className="relative h-48 overflow-hidden bg-neutral-900">
-          <img
-            src={displaySrc}
-            alt={report.title}
-            onError={(e) => {
-              e.target.src = fallbackUrl
-            }}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
+        <div className="relative h-48 overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900">
+          {!imgError ? (
+            <img
+              src={displaySrc}
+              alt={report.title}
+              onError={() => setImgError(true)}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <IssueThumb type={catKey.toLowerCase()} className="w-full h-full object-cover" />
+          )}
+
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
 
           <div className="absolute top-3 left-3">
