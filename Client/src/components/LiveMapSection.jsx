@@ -1,21 +1,23 @@
 // components/LiveMapSection.jsx
 // Landing-page live map section — fetches real issues from backend
 import { useState, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { MapPin, ArrowRight, RefreshCw } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { MapPin, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import LeafletMap from './LeafletMap'
 import { getAllIssuesAPI } from '../services/api'
 
 const STATUS_META = {
-  OPEN:        { label: 'Open',        color: 'bg-red-500',   dot: '#EF4444' },
+  PENDING:     { label: 'Pending',     color: 'bg-red-500',   dot: '#EF4444' },
+  ASSIGNED:    { label: 'Assigned',    color: 'bg-blue-500',  dot: '#3B82F6' },
   IN_PROGRESS: { label: 'In Progress', color: 'bg-amber-500', dot: '#F59E0B' },
   RESOLVED:    { label: 'Resolved',    color: 'bg-green-500', dot: '#22C55E' },
 }
 
 const FILTER_OPTIONS = [
   { id: 'all',         label: 'All Issues',     color: 'bg-neutral-800 text-white' },
-  { id: 'OPEN',        label: '🔴 Open',        color: 'bg-red-500 text-white'     },
+  { id: 'PENDING',     label: '🔴 Pending',     color: 'bg-red-500 text-white'     },
+  { id: 'ASSIGNED',    label: '🔵 Assigned',    color: 'bg-blue-500 text-white'    },
   { id: 'IN_PROGRESS', label: '🟡 In Progress', color: 'bg-amber-500 text-white'   },
   { id: 'RESOLVED',    label: '🟢 Resolved',    color: 'bg-green-500 text-white'   },
 ]
@@ -29,11 +31,16 @@ export default function LiveMapSection() {
   const fetchIssues = useCallback(async () => {
     try {
       const res = await getAllIssuesAPI()
-      const data = (res.data || []).filter((r) => r.lat && r.lng)
+      const raw = res.items || res.data || []
+      const data = raw.filter((r) => {
+        const lat = parseFloat(r.latitude ?? r.lat)
+        const lng = parseFloat(r.longitude ?? r.lng)
+        return !isNaN(lat) && !isNaN(lng)
+      })
       setIssues(data)
       if (data.length > 0 && !selected) setSelected(data[0])
     } catch {
-      // Silently fail in landing page context — show nothing
+      // Silently fail in landing page context
     } finally {
       setLoading(false)
     }
@@ -125,7 +132,7 @@ export default function LiveMapSection() {
 
             <div className="space-y-3">
               {filtered.slice(0, 6).map((r) => {
-                const cfg = STATUS_META[r.status] || STATUS_META.OPEN
+                const cfg = STATUS_META[r.status] || STATUS_META.PENDING
                 return (
                   <div
                     key={r.id}
@@ -150,7 +157,7 @@ export default function LiveMapSection() {
                       {r.title}
                     </h4>
                     <div className="flex items-center justify-between mt-2 text-xs text-neutral-500 font-medium">
-                      <span>📍 {r.location || 'Unknown'}</span>
+                      <span>📍 {r.address || r.location || 'Location specified'}</span>
                       <span className="text-[10px] bg-neutral-100 dark:bg-white/10 px-1.5 py-0.5 rounded-full">
                         {r.category || 'General'}
                       </span>
