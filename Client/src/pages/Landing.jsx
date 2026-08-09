@@ -15,6 +15,7 @@ import AiDetectionDemo from '../components/AiDetectionDemo'
 import LiveMapSection from '../components/LiveMapSection'
 import CityAnalytics from '../components/CityAnalytics'
 import { useCountUp } from '../hooks/useCountUp'
+import { useAuth } from '../context/AuthContext'
 
 /* ─── Animated Reveal Wrapper ────────────────────────────────────── */
 function FadeUp({ children, delay = 0, className = '' }) {
@@ -499,6 +500,7 @@ export default function Landing() {
   const [openFaq, setOpenFaq] = useState(0)
   const [activeTab, setActiveTab] = useState('All Docs')
   const navigate = useNavigate()
+  const { user } = useAuth()
   const heroRef = useRef(null)
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
   const heroY = useTransform(scrollYProgress, [0, 1], ['0%', '20%'])
@@ -506,7 +508,11 @@ export default function Landing() {
 
   const handleReportClick = (e) => {
     e.preventDefault()
-    navigate('/login')
+    if (user) {
+      navigate('/report')
+    } else {
+      navigate('/login')
+    }
   }
 
   return (
@@ -1065,8 +1071,8 @@ export default function Landing() {
               <h4 className="text-xs font-bold uppercase tracking-widest text-neutral-400">Product</h4>
               <ul className="space-y-2 text-xs text-neutral-400">
                 <li><button onClick={handleReportClick} className="hover:text-white transition-colors text-left">Report Issue</button></li>
-                <li><a href="/map" className="hover:text-white transition-colors">Live Map</a></li>
-                <li><a href="/dashboard" className="hover:text-white transition-colors">Dashboard</a></li>
+                <li><Link to="/map" className="hover:text-white transition-colors">Live Map</Link></li>
+                <li><Link to="/dashboard" className="hover:text-white transition-colors">Dashboard</Link></li>
               </ul>
             </div>
             <div className="space-y-3">
