@@ -1,66 +1,154 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  MapPin, Sparkles, Loader2, CheckCircle2, AlertTriangle, Send, RefreshCw,
+  MapPin, Sparkles, Loader2, AlertTriangle, Send, RefreshCw, CheckCircle2
 } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
 import Card from '../components/Card'
 import Button from '../components/Button'
 import ImageUploader from '../components/ImageUploader'
 import MapCard from '../components/MapCard'
-import { SeverityChip } from '../components/StatusChip'
 import { useToast } from '../context/ToastContext'
-import { createIssueAPI } from '../services/api'  // ← real API call
-
-// Fake AI detection results (the actual AI feature can be added later)
-const AI_RESULTS = [
-  { issue: 'Pothole', category: 'Road Damage', department: 'Public Works Dept.', confidence: 96, severity: 'high' },
-  { issue: 'Overflowing garbage bin', category: 'Waste Management', department: 'Sanitation Dept.', confidence: 91, severity: 'medium' },
-  { issue: 'Damaged streetlight', category: 'Street Lighting', department: 'Electrical Dept.', confidence: 88, severity: 'low' },
-]
+import {
+  createIssueAPI,
+  uploadImageAPI,
+  reverseGeocodeAPI,
+  analyzeIssueAIAPI,
+  checkDuplicateAIAPI,
+} from '../services/api'
 
 export default function ReportIssue() {
   const [file, setFile] = useState(null)
+  const [imageUrl, setImageUrl] = useState(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
+
   const [analyzing, setAnalyzing] = useState(false)
-  const [result, setResult] = useState(null)
-  const [submitting, setSubmitting] = useState(false)
+  const [aiResult, setAiResult] = useState(null)
+  const [duplicateWarning, setDuplicateWarning] = useState(null)
+
+  const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  // Geolocation & Reverse Geocoding State
+  const [locationAddress, setLocationAddress] = useState('Detecting your GPS location...')
+  const [coords, setCoords] = useState({ lat: 28.6692, lng: 77.4538 }) // Default: Ghaziabad / Delhi NCR
+  const [locating, setLocating] = useState(false)
+
   const navigate = useNavigate()
   const { addToast } = useToast()
 
-  // When user uploads a photo, simulate AI analysis (real AI can be added later)
-  const handleFile = (f) => {
-    setFile(f)
-    setResult(null)
-    setDescription('')
-    if (!f) return
-    setAnalyzing(true)
-    setTimeout(() => {
-      const r = AI_RESULTS[Math.floor(Math.random() * AI_RESULTS.length)]
-      setResult(r)
-      setDescription(
-        `A ${r.issue.toLowerCase()} was detected at the reported location, classified under ${r.category} with ${r.severity} severity. Immediate attention from the ${r.department} is recommended.`
-      )
-      setAnalyzing(false)
-    }, 1800)
+  // Get current GPS position on mount
+  const detectUserLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationAddress('GT Road, Sector 14, Ghaziabad')
+      return
+    }
+
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude
+        const lng = pos.coords.longitude
+        setCoords({ lat, lng })
+
+        try {
+          const res = await reverseGeocodeAPI(lat, lng)
+          setLocationAddress(res.data.address)
+        } catch (err) {
+          setLocationAddress(`${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E`)
+        } finally {
+          setLocating(false)
+        }
+      },
+      (err) => {
+        setLocationAddress('GT Road, Sector 14, Ghaziabad (Default)')
+        setLocating(false)
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    )
   }
 
-  // When user clicks "Submit Official Report" → call real backend API
-  const submit = async () => {
-    if (!result) return
+  useEffect(() => {
+    detectUserLocation()
+  }, [])
+
+  // Handle Photo Selection & Auto AI Audit + Upload
+  const handleFileSelect = async (selectedFile) => {
+    setFile(selectedFile)
+    setAiResult(null)
+    setDuplicateWarning(null)
+    setImageUrl(null)
+
+    if (!selectedFile) return
+
+    setUploadingImage(true)
+    setAnalyzing(true)
+
+    try {
+      // 1. Upload photo to Cloudinary
+      const uploadRes = await uploadImageAPI(selectedFile)
+      const uploadedUrl = uploadRes.data.url
+      setImageUrl(uploadedUrl)
+
+      // 2. Trigger AI Computer Vision Classification
+      const aiRes = await analyzeIssueAIAPI({
+        imageUrl: uploadedUrl,
+        title: title || selectedFile.name,
+        description: description || 'Citizen reported issue',
+      })
+      setAiResult(aiRes.data)
+
+      if (!title) {
+        setTitle(`Reported ${aiRes.data.category.replace('_', ' ')} Issue`)
+      }
+
+      // 3. Trigger Geo Duplicate Check
+      const dupRes = await checkDuplicateAIAPI({
+        latitude: coords.lat,
+        longitude: coords.lng,
+        category: aiRes.data.category,
+      })
+
+      if (dupRes.data.isDuplicate) {
+        setDuplicateWarning(dupRes.data.message)
+      }
+    } catch (err) {
+      addToast(err.message || 'Image upload or AI analysis failed', 'error')
+    } finally {
+      setUploadingImage(false)
+      setAnalyzing(false)
+    }
+  }
+
+  // Handle Official Report Submission
+  const submit = async (e) => {
+    e.preventDefault()
+    if (!title.trim() || !description.trim()) {
+      addToast('Please enter a title and description for the report', 'error')
+      return
+    }
+
     setSubmitting(true)
     try {
-      const res = await createIssueAPI(
-        result.issue,                  // title
-        description,                   // description
-        'GT Road, Sector 14, Ghaziabad' // location (hardcoded for now — GPS can be added)
-      )
-      addToast('Report submitted successfully — you can track it from your dashboard.', 'success')
-      // Navigate to dashboard (the real issue ID from DB is res.data.id)
+      await createIssueAPI({
+        title,
+        description,
+        category: aiResult?.category || 'OTHER',
+        priority: aiResult?.priority || 'MEDIUM',
+        imageUrl,
+        latitude: coords.lat,
+        longitude: coords.lng,
+        address: locationAddress,
+        aiClassification: aiResult?.aiClassification,
+        aiConfidence: aiResult?.confidence,
+      })
+
+      addToast('Report submitted successfully! Municipal officer assigned.', 'success')
       navigate('/dashboard')
     } catch (err) {
-      addToast(err.message || 'Failed to submit report. Please login first.', 'error')
+      addToast(err.message || 'Failed to submit report. Please try logging in again.', 'error')
     } finally {
       setSubmitting(false)
     }
@@ -73,48 +161,79 @@ export default function ReportIssue() {
           Report a <span className="font-serif-italic">civic issue</span>
         </h1>
         <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-          Upload a photo — AI detects the problem, measures severity, and drafts the municipal complaint in under 3 seconds.
+          Upload a photo — AI detects the problem, pinpoints your GPS location, checks for duplicates, and routes to municipal officers in seconds.
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-8">
-        {/* LEFT: Uploader */}
+      <form onSubmit={submit} className="grid lg:grid-cols-2 gap-8">
+        {/* LEFT COLUMN: Upload & Fields */}
         <div className="space-y-6">
           <Card className="bg-white dark:bg-[#1A1C20] rounded-3xl p-7 shadow-soft border border-black/5 dark:border-white/10">
             <h2 className="font-serif text-2xl text-neutral-900 dark:text-white mb-4">Photo Evidence</h2>
-            <ImageUploader onFileSelect={handleFile} />
+            <ImageUploader onFileSelect={handleFileSelect} />
           </Card>
 
-          {file && (
-            <Card className="bg-[#FAF8F5] dark:bg-[#16171A] rounded-3xl p-7 border border-black/5 dark:border-white/10 shadow-soft">
-              <label className="label-text mb-2 block">Additional Notes (Optional)</label>
+          <Card className="bg-white dark:bg-[#1A1C20] rounded-3xl p-7 border border-black/5 dark:border-white/10 shadow-soft space-y-4">
+            <h2 className="font-serif text-2xl text-neutral-900 dark:text-white mb-2">Report Details</h2>
+
+            <div>
+              <label className="label-text mb-1.5 block font-semibold">Issue Title</label>
+              <input
+                type="text"
+                required
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Deep crater pothole near market"
+                className="input-field rounded-2xl"
+              />
+            </div>
+
+            <div>
+              <label className="label-text mb-1.5 block font-semibold">Detailed Description</label>
               <textarea
+                required
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Add any extra context that could help the department respond faster…"
+                placeholder="Describe the issue, hazards caused, or specific location landmarks..."
                 className="input-field resize-none rounded-2xl"
               />
-            </Card>
-          )}
+            </div>
+          </Card>
         </div>
 
-        {/* RIGHT: Location & AI analysis */}
+        {/* RIGHT COLUMN: Location, AI Analysis & Submit */}
         <div className="space-y-6">
           <Card className="bg-white dark:bg-[#1A1C20] rounded-3xl p-7 border border-black/5 dark:border-white/10 shadow-soft">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-serif text-2xl text-neutral-900 dark:text-white flex items-center gap-2">
                 <MapPin size={20} className="text-emerald-600" />
-                Current Location
+                Detected GPS Location
               </h2>
-              <button className="text-xs font-semibold uppercase tracking-wider text-neutral-500 hover:text-black dark:hover:text-white flex items-center gap-1">
-                <RefreshCw size={12} /> Refresh
+              <button
+                type="button"
+                onClick={detectUserLocation}
+                disabled={locating}
+                className="text-xs font-semibold uppercase tracking-wider text-neutral-500 hover:text-black dark:hover:text-white flex items-center gap-1"
+              >
+                <RefreshCw size={12} className={locating ? 'animate-spin' : ''} />
+                {locating ? 'Locating...' : 'Refresh GPS'}
               </button>
             </div>
-            <MapCard markers={[{ id: 'me', x: 45, y: 48, status: 'pending' }]} height="h-48" interactive={false} />
-            <p className="text-sm font-semibold text-neutral-900 dark:text-white mt-3">GT Road, Sector 14, Ghaziabad</p>
-            <p className="text-xs text-neutral-500 font-mono mt-0.5">28.6692° N, 77.4538° E · ±6m accuracy</p>
+            <MapCard markers={[{ id: 'me', x: 50, y: 50, status: 'pending' }]} height="h-48" interactive={false} />
+            <p className="text-sm font-bold text-neutral-900 dark:text-white mt-3 leading-snug">{locationAddress}</p>
+            <p className="text-xs text-neutral-500 font-mono mt-0.5">{coords.lat.toFixed(4)}° N, {coords.lng.toFixed(4)}° E · GPS High Precision</p>
           </Card>
+
+          {duplicateWarning && (
+            <div className="rounded-3xl bg-amber-50 dark:bg-amber-950/40 p-5 border border-amber-200 dark:border-amber-900 text-amber-900 dark:text-amber-200 flex items-start gap-3 text-xs leading-relaxed">
+              <AlertTriangle size={20} className="text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-sm mb-0.5">Potential Duplicate Detected</p>
+                {duplicateWarning}
+              </div>
+            </div>
+          )}
 
           <AnimatePresence mode="wait">
             {analyzing && (
@@ -126,50 +245,49 @@ export default function ReportIssue() {
               >
                 <Loader2 size={32} className="animate-spin text-blue-700 dark:text-blue-300 mx-auto" />
                 <h3 className="font-serif text-2xl text-blue-950 dark:text-blue-100">AI Computer Vision Audit in Progress...</h3>
-                <p className="text-xs text-blue-800 dark:text-blue-300 font-medium">Extracting issue severity, category, and municipal department routing rules</p>
+                <p className="text-xs text-blue-800 dark:text-blue-300 font-medium">Uploading to Cloudinary CDN & analyzing issue category & severity</p>
               </motion.div>
             )}
 
-            {result && !analyzing && (
+            {aiResult && !analyzing && (
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-3xl bg-[#C2ECD8] dark:bg-[#153428] p-8 space-y-5 border border-emerald-300/60 dark:border-emerald-900/40 shadow-soft"
+                className="rounded-3xl bg-[#C2ECD8] dark:bg-[#153428] p-7 space-y-4 border border-emerald-300/60 dark:border-emerald-900/40 shadow-soft"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-emerald-900 dark:text-emerald-100 font-serif text-xl">
                     <Sparkles size={20} className="text-emerald-700 dark:text-emerald-300" />
-                    AI Issue Auto-Detected
+                    AI Vision Verified
                   </div>
                   <span className="text-xs font-bold bg-white/80 dark:bg-black/40 text-emerald-900 dark:text-emerald-200 px-3 py-1 rounded-full">
-                    {result.confidence}% Match
+                    {aiResult.confidence}% Confidence
                   </span>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-white/90 dark:bg-[#1C2D24] space-y-2 text-sm text-neutral-800 dark:text-neutral-200">
                   <div className="flex justify-between">
-                    <span className="font-medium text-neutral-500">Detected Problem</span>
-                    <span className="font-bold text-neutral-900 dark:text-white">{result.issue}</span>
-                  </div>
-                  <div className="flex justify-between">
                     <span className="font-medium text-neutral-500">Category</span>
-                    <span className="font-bold">{result.category}</span>
+                    <span className="font-bold">{aiResult.category}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="font-medium text-neutral-500">Responsible Dept</span>
-                    <span className="font-bold">{result.department}</span>
+                    <span className="font-medium text-neutral-500">Recommended Priority</span>
+                    <span className="font-bold text-rose-600 dark:text-rose-400">{aiResult.priority}</span>
+                  </div>
+                  <div className="pt-2 border-t border-black/5 dark:border-white/10 text-xs text-neutral-600 dark:text-neutral-300">
+                    {aiResult.aiClassification}
                   </div>
                 </div>
-
-                <Button onClick={submit} disabled={submitting} className="w-full justify-center shadow-craft text-base py-3">
-                  {submitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-                  {submitting ? 'Submitting to Department...' : 'Submit Official Report'}
-                </Button>
               </motion.div>
             )}
           </AnimatePresence>
+
+          <Button type="submit" disabled={submitting || uploadingImage} className="w-full justify-center shadow-craft text-base py-3.5">
+            {submitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+            {submitting ? 'Submitting Report...' : 'Submit Official Complaint'}
+          </Button>
         </div>
-      </div>
+      </form>
     </AppLayout>
   )
 }

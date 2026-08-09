@@ -13,6 +13,7 @@ import ReportIssue from './pages/ReportIssue'
 import ComplaintDetails from './pages/ComplaintDetails'
 import MapExplorer from './pages/MapExplorer'
 import Profile from './pages/Profile'
+import Admin from './pages/Admin'
 import NotFound from './pages/NotFound'
 
 function AnimatedRoutes() {
@@ -28,6 +29,7 @@ function AnimatedRoutes() {
         <Route path="/complaint/:id" element={<PageTransition><ComplaintDetails /></PageTransition>} />
         <Route path="/map" element={<PageTransition><MapExplorer /></PageTransition>} />
         <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />
+        <Route path="/admin" element={<PageTransition><Admin /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>

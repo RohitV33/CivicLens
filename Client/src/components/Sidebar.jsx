@@ -1,19 +1,24 @@
 import { NavLink } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  LayoutGrid, PlusCircle, Map, User, Trophy, Settings, LogOut, X,
+  LayoutGrid, PlusCircle, Map, User, Trophy, Settings, LogOut, X, ShieldAlert
 } from 'lucide-react'
 import Logo from './Logo'
-
-const items = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
-  { to: '/report', label: 'Report Issue', icon: PlusCircle },
-  { to: '/map', label: 'Map Explorer', icon: Map },
-  { to: '/profile', label: 'Profile', icon: User },
-  { to: '/dashboard', label: 'Leaderboard', icon: Trophy, hash: '#leaderboard' },
-]
+import { useAuth } from '../context/AuthContext'
 
 export default function Sidebar({ open, onClose }) {
+  const { user, logout } = useAuth()
+
+  const items = [
+    { to: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
+    { to: '/report', label: 'Report Issue', icon: PlusCircle },
+    { to: '/map', label: 'Map Explorer', icon: Map },
+    { to: '/profile', label: 'Profile', icon: User },
+    ...(user?.role === 'ADMIN'
+      ? [{ to: '/admin', label: 'Admin Portal', icon: ShieldAlert }]
+      : []),
+  ]
+
   const content = (
     <div className="h-full flex flex-col">
       <div className="px-5 h-16 flex items-center justify-between shrink-0 border-b border-border dark:border-border-dark">
@@ -32,7 +37,7 @@ export default function Sidebar({ open, onClose }) {
             className={({ isActive }) =>
               `relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                 isActive
-                  ? 'bg-primary/10 text-primary dark:text-primary-dark'
+                  ? 'bg-primary/10 text-primary dark:text-primary-dark font-bold'
                   : 'text-text-secondary dark:text-text-dark/70 hover:bg-black/[0.03] dark:hover:bg-white/[0.05] hover:text-text-primary dark:hover:text-text-dark'
               }`
             }
@@ -42,8 +47,13 @@ export default function Sidebar({ open, onClose }) {
                 {isActive && (
                   <motion.span layoutId="sidebar-active" className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-full bg-primary dark:bg-primary-dark" />
                 )}
-                <item.icon size={17} strokeWidth={2} />
+                <item.icon size={17} strokeWidth={2} className={item.to === '/admin' ? 'text-rose-500' : ''} />
                 {item.label}
+                {item.to === '/admin' && (
+                  <span className="ml-auto text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                    Admin
+                  </span>
+                )}
               </>
             )}
           </NavLink>
@@ -51,10 +61,7 @@ export default function Sidebar({ open, onClose }) {
       </nav>
 
       <div className="px-3 py-4 border-t border-border dark:border-border-dark flex flex-col gap-1">
-        <button className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-text-secondary dark:text-text-dark/70 hover:bg-black/[0.03] dark:hover:bg-white/[0.05] hover:text-text-primary dark:hover:text-text-dark transition-colors">
-          <Settings size={17} /> Settings
-        </button>
-        <button className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-danger hover:bg-danger/5 transition-colors">
+        <button onClick={logout} className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-danger hover:bg-danger/5 transition-colors">
           <LogOut size={17} /> Sign out
         </button>
       </div>
@@ -63,12 +70,10 @@ export default function Sidebar({ open, onClose }) {
 
   return (
     <>
-      {/* desktop */}
       <aside className="hidden md:flex md:w-64 md:shrink-0 border-r border-border dark:border-border-dark bg-surface dark:bg-bg-dark sticky top-0 h-screen">
         {content}
       </aside>
 
-      {/* mobile */}
       {open && (
         <div className="fixed inset-0 z-[85] md:hidden">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
