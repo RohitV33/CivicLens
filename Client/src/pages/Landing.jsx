@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence, useScroll, useTransform, useSpring, useInView } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import {
@@ -7,7 +7,7 @@ import {
   Calendar, Edit3, Circle, Search, Bell, Grid, ChevronRight, Layers,
   Sliders, Map, Plus, Check, ChevronDown, Github, Code, Flame, Radio,
   BellRing, WifiOff, Award, Repeat, Zap, AlertCircle, ArrowUpRight,
-  Star, TrendingUp, Shield, Globe, Cpu
+  Star, TrendingUp, Shield, Globe, Cpu, ChevronUp
 } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import BeforeAfterSlider from '../components/BeforeAfterSlider'
@@ -19,7 +19,7 @@ import { useCountUp } from '../hooks/useCountUp'
 /* ─── Animated Reveal Wrapper ────────────────────────────────────── */
 function FadeUp({ children, delay = 0, className = '' }) {
   const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: '-60px' })
+  const isInView = useInView(ref, { once: true, amount: 0.15 })
   return (
     <motion.div
       ref={ref}
@@ -35,7 +35,7 @@ function FadeUp({ children, delay = 0, className = '' }) {
 
 function FadeIn({ children, delay = 0, className = '' }) {
   const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: '-40px' })
+  const isInView = useInView(ref, { once: true, amount: 0.12 })
   return (
     <motion.div
       ref={ref}
@@ -46,6 +46,38 @@ function FadeIn({ children, delay = 0, className = '' }) {
     >
       {children}
     </motion.div>
+  )
+}
+
+/* ─── Scroll To Top Button ──────────────────────────────────────── */
+function ScrollToTop() {
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 400)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.button
+          key="scroll-top"
+          initial={{ opacity: 0, y: 20, scale: 0.8 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.8 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          whileHover={{ scale: 1.1, y: -2 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-xl shadow-black/20 flex items-center justify-center hover:shadow-black/30 transition-shadow"
+          aria-label="Scroll to top"
+        >
+          <ChevronUp size={20} strokeWidth={2.5} />
+        </motion.button>
+      )}
+    </AnimatePresence>
   )
 }
 
@@ -156,6 +188,312 @@ function GradientText({ children, className = '' }) {
     </span>
   )
 }
+
+/* ─── 3D Stack Card Data ─────────────────────────────────────────── */
+const stackCardData = [
+  {
+    steps: [
+      { num: '01', label: 'Take Photo', icon: '📸' },
+      { num: '02', label: 'AI Detects Issue', icon: '🤖' },
+    ],
+    title: 'Capture & Detect',
+    desc: 'Snap a photo from your phone. Neural vision AI instantly identifies the civic issue with bounding-box precision in under 2 seconds.',
+    tag: 'Step 01 – 02',
+    accent: '#10B981',
+    cardBg: 'bg-white dark:bg-[#14161A]',
+  },
+  {
+    steps: [
+      { num: '03', label: 'Auto GPS Tag', icon: '📍' },
+      { num: '04', label: 'Ticket Created', icon: '📋' },
+    ],
+    title: 'Tag & Generate',
+    desc: 'High-accuracy EXIF GPS coordinates are extracted automatically. AI drafts an official municipal complaint ticket in seconds.',
+    tag: 'Step 03 – 04',
+    accent: '#6366F1',
+    cardBg: 'bg-[#FAFBFF] dark:bg-[#12131C]',
+  },
+  {
+    steps: [
+      { num: '05', label: 'Dept Assigned', icon: '🏛️' },
+      { num: '06', label: 'Track Fix', icon: '✅' },
+    ],
+    title: 'Dispatch & Resolve',
+    desc: 'Routed directly to the correct municipal officer team. Real-time status tracking from assignment to verified field resolution.',
+    tag: 'Step 05 – 06',
+    accent: '#3B82F6',
+    cardBg: 'bg-[#F8FFFE] dark:bg-[#101820]',
+  },
+]
+
+// Visual position config per stack depth (0 = top card, 2 = deepest)
+const STACK_CFG = [
+  { x: 0,  y: 0,  scale: 1,    rotateZ:  0,   rotateX: 2, z: 30 },
+  { x: 14, y: 18, scale: 0.95, rotateZ:  2.5, rotateX: 2, z: 20 },
+  { x: 28, y: 36, scale: 0.90, rotateZ:  5,   rotateX: 2, z: 10 },
+]
+
+function HowItWorksSection() {
+  const [dismissed, setDismissed] = useState(0) // how many top cards removed
+  const [exiting, setExiting]     = useState(false)
+  const cooldown = useRef(false)
+  const total = stackCardData.length
+  const allGone = dismissed >= total
+
+  const triggerNext = () => {
+    if (cooldown.current) return
+    if (allGone) {
+      // Reset the stack
+      cooldown.current = true
+      setDismissed(0)
+      setTimeout(() => { cooldown.current = false }, 700)
+      return
+    }
+    cooldown.current = true
+    setExiting(true)
+    setTimeout(() => {
+      setDismissed(d => d + 1)
+      setExiting(false)
+      setTimeout(() => { cooldown.current = false }, 220)
+    }, 520)
+  }
+
+  return (
+    <section id="how-it-works" className="py-20 sm:py-28 px-4 sm:px-6 max-w-7xl mx-auto relative z-10">
+      <FadeUp className="text-center mb-20">
+        <SectionLabel color="emerald">
+          <Zap size={12} /> Automated Workflow
+        </SectionLabel>
+        <h2 className="text-3xl sm:text-5xl font-serif mt-4 text-neutral-900 dark:text-white">
+          How CivicLens AI Works
+        </h2>
+        <p className="mt-3 text-neutral-500 dark:text-neutral-400 max-w-md mx-auto text-sm">
+          Hover the card stack to step through each phase of the workflow.
+        </p>
+      </FadeUp>
+
+      <div className="flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-24">
+
+        {/* ── 3D Card Stack ───────────────────────────────────────── */}
+        <div
+          className="relative flex-shrink-0"
+          style={{ width: 360, height: 280, perspective: '900px', perspectiveOrigin: '50% 40%' }}
+          onMouseEnter={triggerNext}
+        >
+          {stackCardData.map((card, rawIdx) => {
+            if (rawIdx < dismissed) return null
+            const posFromTop = rawIdx - dismissed   // 0=top, 1=mid, 2=back
+            const cfg        = STACK_CFG[Math.min(posFromTop, 2)]
+            const isTop      = posFromTop === 0
+            const isOut      = isTop && exiting
+
+            return (
+              <motion.div
+                key={card.tag}
+                initial={false}
+                animate={isOut
+                  ? {
+                      y:       -230,
+                      x:       cfg.x - 10,
+                      rotateX: -42,
+                      rotateZ: cfg.rotateZ - 6,
+                      scale:   cfg.scale * 0.85,
+                      opacity: 0,
+                    }
+                  : {
+                      y:       cfg.y,
+                      x:       cfg.x,
+                      scale:   cfg.scale,
+                      rotateX: cfg.rotateX,
+                      rotateZ: cfg.rotateZ,
+                      opacity: 1,
+                    }
+                }
+                transition={{
+                  duration:     isOut ? 0.50 : 0.52,
+                  ease:         isOut ? [0.55, 0, 0.45, 1] : [0.22, 1, 0.36, 1],
+                }}
+                style={{
+                  position:       'absolute',
+                  top:            0,
+                  left:           0,
+                  width:          '100%',
+                  height:         '100%',
+                  zIndex:         cfg.z,
+                  transformOrigin:'50% 100%',
+                  transformStyle: 'preserve-3d',
+                  boxShadow:      posFromTop === 0
+                    ? '0 24px 64px rgba(0,0,0,0.13)'
+                    : posFromTop === 1
+                    ? '0 12px 32px rgba(0,0,0,0.08)'
+                    : '0 4px 16px rgba(0,0,0,0.05)',
+                }}
+                className={`rounded-[24px] border border-black/8 dark:border-white/8 ${card.cardBg} cursor-default overflow-hidden`}
+              >
+                {/* Accent top stripe */}
+                <div
+                  className="absolute top-0 left-0 right-0 h-[3px]"
+                  style={{ background: `linear-gradient(90deg, ${card.accent}, ${card.accent}60)` }}
+                />
+
+                <div className="p-7 pt-8 h-full flex flex-col justify-between relative">
+                  {/* Tag */}
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-[0.18em]"
+                      style={{ color: card.accent }}>
+                      {card.tag}
+                    </span>
+                    <h3 className="text-xl font-bold text-neutral-900 dark:text-white mt-2 font-serif leading-snug">
+                      {card.title}
+                    </h3>
+                    {/* Mini step pills */}
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {card.steps.map(s => (
+                        <span key={s.num}
+                          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] text-neutral-700 dark:text-neutral-300">
+                          {s.icon} {s.label}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-[13px] text-neutral-500 dark:text-neutral-400 mt-4 leading-relaxed">
+                      {card.desc}
+                    </p>
+                  </div>
+
+                  {/* Big number watermark */}
+                  <span
+                    className="absolute bottom-3 right-5 text-[72px] font-black leading-none select-none pointer-events-none opacity-[0.04]"
+                    style={{ color: card.accent }}
+                  >
+                    {rawIdx + 1}
+                  </span>
+                </div>
+              </motion.div>
+            )
+          })}
+
+          {/* Empty state — all cards gone */}
+          <AnimatePresence>
+            {allGone && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                className="absolute inset-0 flex flex-col items-center justify-center rounded-[24px] border-2 border-dashed border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900/50 cursor-pointer"
+                onMouseEnter={triggerNext}
+              >
+                <div className="text-4xl mb-3">✨</div>
+                <p className="font-bold text-neutral-700 dark:text-neutral-300 text-sm">Workflow Complete!</p>
+                <p className="text-xs text-neutral-400 mt-1.5">Hover to replay the stack</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Hover hint */}
+          <AnimatePresence>
+            {!allGone && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: exiting ? 0 : 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute -bottom-9 left-0 right-0 text-center text-xs text-neutral-400 pointer-events-none"
+              >
+                hover the stack →
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* ── Right: Live Step Tracker ─────────────────────────────── */}
+        <div className="space-y-3 w-full max-w-xs">
+          {stackCardData.map((card, idx) => {
+            const isDone    = idx < dismissed
+            const isCurrent = idx === dismissed && !allGone
+            return (
+              <motion.div
+                key={card.tag}
+                animate={{
+                  opacity: isDone ? 0.4 : 1,
+                  x:       isCurrent ? 6 : 0,
+                }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                className={`flex items-start gap-4 p-4 rounded-2xl transition-all duration-300 ${
+                  isCurrent
+                    ? 'bg-white dark:bg-[#14161A] border border-black/8 dark:border-white/8 shadow-sm'
+                    : ''
+                }`}
+              >
+                {/* Step indicator */}
+                <motion.div
+                  animate={{
+                    background: isDone
+                      ? 'linear-gradient(135deg,#10B981,#059669)'
+                      : isCurrent
+                      ? `linear-gradient(135deg,${card.accent},${card.accent}BB)`
+                      : undefined,
+                  }}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0 ${
+                    isDone || isCurrent
+                      ? 'text-white'
+                      : 'bg-neutral-100 dark:bg-white/8 text-neutral-400 dark:text-neutral-500'
+                  }`}
+                  style={isDone
+                    ? { background: 'linear-gradient(135deg,#10B981,#059669)' }
+                    : isCurrent
+                    ? { background: `linear-gradient(135deg,${card.accent},${card.accent}BB)` }
+                    : {}}
+                >
+                  {isDone ? '✓' : idx + 1}
+                </motion.div>
+
+                <div className="flex-1 min-w-0">
+                  <h4 className={`font-bold text-sm leading-snug ${
+                    isDone
+                      ? 'line-through text-neutral-400 dark:text-neutral-500'
+                      : 'text-neutral-900 dark:text-white'
+                  }`}>
+                    {card.title}
+                  </h4>
+                  <div className="flex flex-wrap gap-2 mt-1.5">
+                    {card.steps.map(s => (
+                      <span key={s.num} className="text-[11px] text-neutral-400 dark:text-neutral-500">
+                        {s.icon} {s.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Current pulse indicator */}
+                {isCurrent && (
+                  <div className="flex-shrink-0 mt-1">
+                    <span className="block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+                  </div>
+                )}
+              </motion.div>
+            )
+          })}
+
+          {/* Progress bar */}
+          <div className="mt-4 px-4">
+            <div className="h-1 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
+              <motion.div
+                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-blue-500"
+                animate={{ width: `${(dismissed / total) * 100}%` }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              />
+            </div>
+            <div className="flex justify-between mt-1.5 text-[10px] text-neutral-400 font-medium">
+              <span>Progress</span>
+              <span>{dismissed}/{total} phases</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 
 export default function Landing() {
   const [openFaq, setOpenFaq] = useState(0)
@@ -407,23 +745,6 @@ export default function Landing() {
                 </div>
               </div>
             </motion.div>
-
-            {/* Social Proof + Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 1.1 }}
-              className="mt-12 pt-8 border-t border-black/5 dark:border-white/10 max-w-3xl mx-auto space-y-5"
-            >
-              <p className="text-xs font-extrabold uppercase tracking-widest text-amber-600 dark:text-amber-400">
-                ★★★★★ Trusted by Early Testers & City Contributors
-              </p>
-              <div className="grid grid-cols-3 gap-4 pt-2">
-                <CountStat value={2000} suffix="+" label="Reports Submitted" icon={FileText} />
-                <CountStat value={94} suffix="%" label="Detection Accuracy" icon={Cpu} />
-                <CountStat value={12} label="Cities Tested" icon={Globe} />
-              </div>
-            </motion.div>
           </div>
         </motion.div>
       </section>
@@ -438,44 +759,10 @@ export default function Landing() {
       </section>
 
       {/* ════════════════════════════════════════════════════════
-          3. HOW IT WORKS
+          3. HOW IT WORKS — Sequential hover-disappear interaction
       ════════════════════════════════════════════════════════ */}
-      <section id="how-it-works" className="py-20 sm:py-28 px-4 sm:px-6 max-w-7xl mx-auto relative z-10">
-        <FadeUp className="text-center mb-16">
-          <SectionLabel color="emerald">
-            <Zap size={12} /> Automated Workflow
-          </SectionLabel>
-          <h2 className="text-3xl sm:text-5xl font-serif mt-4 text-neutral-900 dark:text-white">
-            How CivicLens AI Works
-          </h2>
-          <p className="mt-4 text-neutral-500 dark:text-neutral-400 max-w-xl mx-auto">Six intelligent steps from photo to resolution — fully automated.</p>
-        </FadeUp>
+      <HowItWorksSection />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-          {[
-            { step: '01', title: 'Take Photo', desc: 'Snap photo from phone or gallery.', color: 'blue' },
-            { step: '02', title: 'AI Detects Issue', desc: 'Neural vision bounding box scan.', color: 'violet' },
-            { step: '03', title: 'Auto GPS', desc: 'Extracts exact ward coordinates.', color: 'emerald' },
-            { step: '04', title: 'Ticket Created', desc: 'AI drafts official complaint text.', color: 'amber' },
-            { step: '05', title: 'Dept Assigned', desc: 'Routed to correct municipal team.', color: 'rose' },
-            { step: '06', title: 'Track Fix', desc: 'Live status timeline updates.', color: 'blue' },
-          ].map((s, idx) => (
-            <FadeUp key={s.step} delay={idx * 0.08}>
-              <motion.div
-                whileHover={{ y: -8, scale: 1.02 }}
-                className="p-5 rounded-[20px] bg-white dark:bg-[#14161A] border border-black/8 dark:border-white/8 shadow-sm text-left relative overflow-hidden h-full group"
-              >
-                {/* Step glow */}
-                <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <span className="text-2xl font-black text-neutral-100 dark:text-white/5 select-none absolute top-2 right-3">{s.step}</span>
-                <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 tabular-nums">{s.step}</span>
-                <h3 className="font-bold text-base mt-2 text-neutral-900 dark:text-white">{s.title}</h3>
-                <p className="text-xs text-neutral-500 mt-1 leading-relaxed">{s.desc}</p>
-              </motion.div>
-            </FadeUp>
-          ))}
-        </div>
-      </section>
 
       {/* ════════════════════════════════════════════════════════
           4. AI DETECTION DEMO
@@ -832,6 +1119,8 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+      {/* ── Floating Scroll-To-Top Button ── */}
+      <ScrollToTop />
 
     </div>
   )
