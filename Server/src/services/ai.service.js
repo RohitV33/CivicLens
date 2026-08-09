@@ -56,12 +56,21 @@ const fetchImagePart = async (imageUrl) => {
   }
 };
 
+// Non-Civic Terms (Anime, Artwork, Wallpapers, Screenshots, Bar Charts, Graphs, Documents, Code)
+const NON_CIVIC_TERMS = [
+  "demon-slayer", "anime", "manga", "wallpaper", "fanart", "game",
+  "avatar", "portrait", "selfie", "illustration", "drawing", "artwork",
+  "character", "naruto", "goku", "screenshot", "5120x2880", "1920x1080",
+  "graph", "chart", "diagram", "figure", "accuracy", "plot", "metrics",
+  "document", "paper", "presentation", "slide", "code", "table", "bar"
+];
+
 // ---- AI Computer Vision & Classification Engine ----
 export const analyzeIssueImageService = async ({ imageUrl = "", title = "", description = "" }) => {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
-  // 1. If Gemini API key is configured, perform REAL AI Multimodal Image Pixel Analysis
-  if (apiKey) {
+  // 1. If Gemini API key is configured and valid, perform REAL AI Multimodal Image Pixel Analysis
+  if (apiKey && apiKey.startsWith("AIzaSy")) {
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -73,13 +82,13 @@ Examine the provided image pixels and text metadata ("${title} ${description}").
 
 Tasks:
 1. Determine if this image shows a real civic/urban infrastructure problem (such as a road pothole, overflowing garbage bin, broken streetlight, water pipe leak, road asphalt crack, sewage overflow, blocked drainage, or damaged public property).
-2. If it is NOT a civic issue (e.g. an anime character/cartoon, personal selfie, pet, food, car wallpaper, game screenshot, meme, nature landscape, or artwork):
+2. If it is NOT a civic issue (e.g. an anime character, graph/chart diagram, document, code screenshot, personal selfie, pet, food, car wallpaper, game, meme, or artwork):
    - Set isCivicIssue = false
    - Set category = "OTHER"
    - Set priority = "LOW"
    - Set confidence = 15.0
-   - Set aiClassification = "Non-Civic Photo Detected (Anime / Artwork / Personal Wallpaper)"
-   - Set warning = "⚠️ AI Vision Alert: The scanned photo does NOT show a civic infrastructure defect. Please upload a clear photo of a pothole, garbage dump, broken streetlight, or water leakage."
+   - Set aiClassification = "Non-Civic Photo / Document / Graph Image Detected"
+   - Set warning = "⚠️ AI Vision Alert: The scanned image shows a graph/chart/document or non-civic media rather than a physical civic infrastructure defect. Please upload a clear photo of a pothole, garbage dump, broken streetlight, or water leakage."
 3. If it IS a civic issue:
    - Set isCivicIssue = true
    - Choose category from: ["POTHOLE", "GARBAGE", "STREETLIGHT", "WATER_LEAKAGE", "ROAD_DAMAGE", "SEWAGE", "DRAINAGE", "OTHER"]
@@ -103,7 +112,6 @@ Return strictly valid JSON only with NO markdown formatting, adhering to this fo
       const result = await model.generateContent(contents);
       const rawText = result.response.text().trim();
 
-      // Clean markdown ```json blocks if returned
       const cleanJson = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
       const parsed = JSON.parse(cleanJson);
 
@@ -117,19 +125,13 @@ Return strictly valid JSON only with NO markdown formatting, adhering to this fo
         summary: parsed.summary || "Gemini Vision AI completed image scan.",
       };
     } catch (err) {
-      console.error("⚠️ Gemini Vision API call failed, using heuristic vision engine:", err.message);
+      console.error("⚠️ Gemini Vision API call failed:", err.message);
     }
   }
 
-  // 2. Fallback Smart Heuristic & Keyword Inspection Engine
+  // 2. Fallback Heuristic Inspection Engine (for Non-Civic Media, Graphs, Documents)
   const fullText = `${imageUrl} ${title} ${description}`.toLowerCase();
-  const nonCivicTerms = [
-    "demon-slayer", "anime", "manga", "wallpaper", "fanart", "game",
-    "avatar", "portrait", "selfie", "illustration", "drawing", "artwork",
-    "character", "naruto", "goku", "screenshot", "5120x2880", "1920x1080"
-  ];
-
-  const isNonCivic = nonCivicTerms.some((term) => fullText.includes(term));
+  const isNonCivic = NON_CIVIC_TERMS.some((term) => fullText.includes(term));
 
   if (isNonCivic) {
     return {
@@ -137,9 +139,9 @@ Return strictly valid JSON only with NO markdown formatting, adhering to this fo
       category: "OTHER",
       priority: "LOW",
       confidence: 15.0,
-      aiClassification: "Irrelevant / Non-Civic Photo (Anime / Artwork / Personal Wallpaper)",
+      aiClassification: "Irrelevant / Non-Civic Image Detected (Graph / Chart / Document / Artwork)",
       warning:
-        "⚠️ AI Vision Alert: The uploaded image appears to be an Anime/Art wallpaper rather than a civic infrastructure defect. Please upload a clear photo of a pothole, garbage, streetlight, or water leakage.",
+        "⚠️ AI Vision Alert: The uploaded image appears to be a Graph/Chart/Document rather than a physical civic infrastructure defect. Please upload a clear photo of a pothole, garbage, streetlight, or water leakage.",
       summary: "Non-civic image detected. AI recommends uploading genuine photo evidence of municipal defects.",
     };
   }
