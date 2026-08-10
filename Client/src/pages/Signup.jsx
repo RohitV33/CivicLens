@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight, CheckCircle2 } from 'lucide-react'
 import Logo from '../components/Logo'
@@ -21,7 +21,14 @@ export default function Signup() {
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const { addToast } = useToast()
-  const { login } = useAuth() // login() saves token + redirects to dashboard
+  const { user, login } = useAuth() // login() saves token + redirects to dashboard
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [user, navigate])
 
   const validate = () => {
     const e = {}

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Mail, Lock, Eye, EyeOff, ShieldCheck, MapPinned, Sparkles } from 'lucide-react'
 import Logo from '../components/Logo'
@@ -15,7 +15,14 @@ export default function Login() {
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const { addToast } = useToast()
-  const { login } = useAuth()  // login() saves token + redirects to dashboard
+  const { user, login } = useAuth()  // login() saves token + redirects to dashboard
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [user, navigate])
 
   const validate = () => {
     const e = {}
@@ -37,7 +44,7 @@ export default function Login() {
       login(res.token, res.data)
     } catch (err) {
       // Show the error message from the server (e.g. "Invalid email or password")
-      addToast(err.message, 'error')
+      addToast(err.message || 'Login failed', 'error')
     } finally {
       setLoading(false)
     }
@@ -65,14 +72,17 @@ export default function Login() {
               { icon: Sparkles, text: 'AI detects issues from a single photo' },
               { icon: MapPinned, text: 'Precise geolocation on every report' },
               { icon: ShieldCheck, text: 'Transparent, trackable resolution timeline' },
-            ].map((f) => (
-              <div key={f.text} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-white/80 dark:bg-white/10 flex items-center justify-center shrink-0 shadow-sm">
-                  <f.icon size={16} className="text-neutral-900 dark:text-white" />
+            ].map((f) => {
+              const Icon = f.icon
+              return (
+                <div key={f.text} className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-white/80 dark:bg-white/10 flex items-center justify-center shrink-0 shadow-sm">
+                    <Icon size={16} className="text-neutral-900 dark:text-white" />
+                  </div>
+                  <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{f.text}</p>
                 </div>
-                <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{f.text}</p>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 

@@ -8,6 +8,7 @@ const ICONS = {
   success: CheckCircle2,
   warning: AlertTriangle,
   danger: XCircle,
+  error: XCircle,
   info: Info,
 }
 
@@ -15,6 +16,7 @@ const COLORS = {
   success: 'text-success',
   warning: 'text-warning',
   danger: 'text-danger',
+  error: 'text-danger',
   info: 'text-primary dark:text-primary-dark',
 }
 
