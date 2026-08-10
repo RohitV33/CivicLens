@@ -1,0 +1,17 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+
+# OS / Editor junk
+.DS_Store
+Thumbs.db
