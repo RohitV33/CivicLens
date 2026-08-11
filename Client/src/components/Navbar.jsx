@@ -90,7 +90,7 @@ export default function Navbar() {
     <div className="w-full z-50 sticky top-0 font-sans">
       {/* ── Floating Capsule Header ── */}
       <header className="max-w-6xl mx-auto px-4 pt-3 pb-2 transition-all duration-300">
-        <div className={`w-full rounded-full transition-all duration-500 px-5 sm:px-7 py-2.5 flex items-center justify-between ${
+        <div className={`w-full rounded-full transition-all duration-500 px-5 sm:px-7 py-1.5 flex items-center justify-between ${
           scrolled
             ? 'bg-white/95 dark:bg-[#18191C]/95 backdrop-blur-2xl shadow-[0_8px_40px_rgba(0,0,0,0.12)] border border-black/10 dark:border-white/10'
             : 'bg-white/85 dark:bg-[#18191C]/85 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.07)] border border-white/70 dark:border-white/10'
@@ -98,9 +98,9 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link to="/" className="shrink-0 flex items-center group">
-            <Logo size={58} />
-
+            <Logo size={85} />
           </Link>
+
 
           {/* Desktop Nav Links with Sliding Indicator */}
           <nav ref={navRef} className="hidden md:flex items-center gap-0.5 relative">
