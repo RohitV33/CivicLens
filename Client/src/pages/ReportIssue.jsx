@@ -18,10 +18,14 @@ import {
   checkDuplicateAIAPI,
 } from '../services/api'
 
+import { useLanguage } from '../context/LanguageContext'
+
 export default function ReportIssue() {
+  const { t } = useLanguage()
   const [file, setFile] = useState(null)
   const [imageUrl, setImageUrl] = useState(null)
   const [uploadingImage, setUploadingImage] = useState(false)
+
 
   const [analyzing, setAnalyzing] = useState(false)
   const [aiResult, setAiResult] = useState(null)
@@ -174,13 +178,13 @@ export default function ReportIssue() {
   }
 
   return (
-    <AppLayout title="Report Issue">
+    <AppLayout title={t('navReport')}>
       <div className="mb-8 pb-6 border-b border-black/5 dark:border-white/10">
         <h1 className="font-serif text-3xl sm:text-4xl text-neutral-900 dark:text-white">
-          Report a <span className="font-serif-italic">civic issue</span>
+          {t('reportHeaderTitle')}
         </h1>
         <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-          Upload a photo — AI detects the problem, pinpoints your GPS location, checks for duplicates, and routes to municipal officers in seconds.
+          {t('reportHeaderSub')}
         </p>
       </div>
 
@@ -188,13 +192,13 @@ export default function ReportIssue() {
         {/* LEFT COLUMN: Upload & Fields */}
         <div className="space-y-6">
           <Card className="bg-white dark:bg-[#1A1C20] rounded-3xl p-7 shadow-soft border border-black/5 dark:border-white/10">
-            <h2 className="font-serif text-2xl text-neutral-900 dark:text-white mb-4">Photo Evidence</h2>
+            <h2 className="font-serif text-2xl text-neutral-900 dark:text-white mb-4">{t('step1Title')}</h2>
             <ImageUploader onFileSelect={handleFileSelect} />
           </Card>
 
           <Card className="bg-white dark:bg-[#1A1C20] rounded-3xl p-7 border border-black/5 dark:border-white/10 shadow-soft space-y-4">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="font-serif text-2xl text-neutral-900 dark:text-white">Report Details</h2>
+              <h2 className="font-serif text-2xl text-neutral-900 dark:text-white">{t('step2Title')}</h2>
               {aiResult && (
                 <button
                   type="button"
@@ -207,7 +211,7 @@ export default function ReportIssue() {
             </div>
 
             <div>
-              <label className="label-text mb-1.5 block font-semibold">Issue Title</label>
+              <label className="label-text mb-1.5 block font-semibold">{t('titleLabel')}</label>
               <input
                 type="text"
                 required
@@ -220,7 +224,7 @@ export default function ReportIssue() {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="label-text font-semibold">Detailed Description</label>
+                <label className="label-text font-semibold">{t('descLabel')}</label>
                 <span className="text-[11px] text-neutral-400">Editable AI Generated Draft</span>
               </div>
               <textarea
@@ -240,22 +244,23 @@ export default function ReportIssue() {
           <Card className="bg-white dark:bg-[#1A1C20] rounded-3xl p-7 border border-black/5 dark:border-white/10 shadow-soft">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-serif text-2xl text-neutral-900 dark:text-white flex items-center gap-2">
-                <MapPin size={20} className="text-emerald-600" />
-                Detected GPS Location
+                <MapPin size={20} className="text-emerald-600" /> {t('locationLabel')}
               </h2>
               <button
                 type="button"
                 onClick={detectUserLocation}
                 disabled={locating}
-                className="text-xs font-semibold uppercase tracking-wider text-neutral-500 hover:text-black dark:hover:text-white flex items-center gap-1"
+                className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 hover:underline"
               >
-                <RefreshCw size={12} className={locating ? 'animate-spin' : ''} />
-                {locating ? 'Locating...' : 'Refresh GPS'}
+                <RefreshCw size={13} className={locating ? 'animate-spin' : ''} />
+                {locating ? 'Locating...' : t('btnLocateMe')}
               </button>
             </div>
-            <MapCard markers={[{ id: 'me', x: 50, y: 50, status: 'pending' }]} height="h-48" interactive={false} />
-            <p className="text-sm font-bold text-neutral-900 dark:text-white mt-3 leading-snug">{locationAddress}</p>
-            <p className="text-xs text-neutral-500 font-mono mt-0.5">{coords.lat.toFixed(4)}° N, {coords.lng.toFixed(4)}° E · GPS High Precision</p>
+            <MapCard
+              markers={[{ id: 'new', x: 50, y: 50, status: 'pending', title: title || 'New Location' }]}
+              height="h-44"
+            />
+            <p className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-3">{locationAddress}</p>
           </Card>
 
           {duplicateWarning && (
@@ -318,11 +323,11 @@ export default function ReportIssue() {
 
                 <div className="p-4 rounded-2xl bg-white/90 dark:bg-[#1C2D24] space-y-2 text-sm text-neutral-800 dark:text-neutral-200">
                   <div className="flex justify-between">
-                    <span className="font-medium text-neutral-500">Category</span>
+                    <span className="font-medium text-neutral-500">{t('categoryLabel')}</span>
                     <span className="font-bold">{aiResult.category}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="font-medium text-neutral-500">Recommended Priority</span>
+                    <span className="font-medium text-neutral-500">{t('priorityLabel')}</span>
                     <span className="font-bold text-rose-600 dark:text-rose-400">{aiResult.priority}</span>
                   </div>
                   <div className="pt-2 border-t border-black/5 dark:border-white/10 text-xs text-neutral-600 dark:text-neutral-300">
@@ -335,7 +340,7 @@ export default function ReportIssue() {
 
           <Button type="submit" disabled={submitting || uploadingImage} className="w-full justify-center shadow-craft text-base py-3.5">
             {submitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-            {submitting ? 'Submitting Report...' : 'Submit Official Complaint'}
+            {submitting ? t('btnSubmitting') : t('btnSubmitReport')}
           </Button>
         </div>
       </form>

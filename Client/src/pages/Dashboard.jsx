@@ -11,6 +11,8 @@ import { useCountUp } from '../hooks/useCountUp'
 import { useAuth } from '../context/AuthContext'
 import { getAllIssuesAPI, getMyIssuesAPI } from '../services/api'
 
+import { useLanguage } from '../context/LanguageContext'
+
 function StatCard({ icon: Icon, label, value, bgClass = 'bg-white dark:bg-[#1A1C20]', tone = 'text-black dark:text-white', delta }) {
   const { ref, value: animated } = useCountUp(value)
   return (
@@ -29,6 +31,7 @@ function StatCard({ icon: Icon, label, value, bgClass = 'bg-white dark:bg-[#1A1C
 
 export default function Dashboard() {
   const { user } = useAuth()
+  const { t } = useLanguage()
   const [allIssues, setAllIssues] = useState([])
   const [myIssues, setMyIssues] = useState([])
   const [loading, setLoading] = useState(true)
@@ -59,35 +62,35 @@ export default function Dashboard() {
   const pendingCount = allIssues.filter((i) => i.status === 'PENDING' || i.status === 'ASSIGNED' || i.status === 'IN_PROGRESS').length
 
   return (
-    <AppLayout title="Dashboard">
+    <AppLayout title={t('navDashboard')}>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-6 border-b border-black/5 dark:border-white/10 gap-4">
         <div>
           <h1 className="font-serif text-3xl sm:text-4xl text-neutral-900 dark:text-white">
-            Welcome back, <span className="font-serif-italic">{firstName}</span>
+            {t('dashTitle')}, <span className="font-serif-italic">{firstName}</span>
           </h1>
           <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1 font-normal">
-            Your space for civic reports, resolution progress, and city transformation.
+            {t('dashSubtitle')}
           </p>
         </div>
         <Button as={Link} to="/report" icon={PlusCircle} className="shadow-craft">
-          New Report
+          {t('btnNewReport')}
         </Button>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard icon={FileText} label="Total City Issues" value={allIssues.length || 3} bgClass="bg-[#D9E8FC] dark:bg-[#162538]" tone="text-blue-900 dark:text-blue-100" delta="Live" />
-        <StatCard icon={CheckCircle2} label="Resolved Issues" value={resolvedCount || 1} bgClass="bg-[#C2ECD8] dark:bg-[#163428]" tone="text-emerald-900 dark:text-emerald-100" />
-        <StatCard icon={Clock} label="Active Work Units" value={pendingCount || 2} bgClass="bg-[#FDE8B3] dark:bg-[#2E2416]" tone="text-amber-900 dark:text-amber-100" />
-        <StatCard icon={Award} label="My Reported Issues" value={myIssues.length} bgClass="bg-[#FCE5E6] dark:bg-[#2B1B1E]" tone="text-rose-900 dark:text-rose-100" />
+        <StatCard icon={FileText} label={t('statTotal')} value={allIssues.length || 3} bgClass="bg-[#D9E8FC] dark:bg-[#162538]" tone="text-blue-900 dark:text-blue-100" delta="Live" />
+        <StatCard icon={CheckCircle2} label={t('statResolved')} value={resolvedCount || 1} bgClass="bg-[#C2ECD8] dark:bg-[#163428]" tone="text-emerald-900 dark:text-emerald-100" />
+        <StatCard icon={Clock} label={t('statActive')} value={pendingCount || 2} bgClass="bg-[#FDE8B3] dark:bg-[#2E2416]" tone="text-amber-900 dark:text-amber-100" />
+        <StatCard icon={Award} label={t('statMine')} value={myIssues.length} bgClass="bg-[#FCE5E6] dark:bg-[#2B1B1E]" tone="text-rose-900 dark:text-rose-100" />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-serif text-2xl text-neutral-900 dark:text-white">Recent Public Reports</h2>
+              <h2 className="font-serif text-2xl text-neutral-900 dark:text-white">{t('recentReports')}</h2>
               <Link to="/map" className="text-xs font-bold uppercase tracking-wider text-black dark:text-white flex items-center gap-1 hover:gap-2 transition-all">
-                View All Map <ArrowRight size={14} />
+                {t('viewAllMap')} <ArrowRight size={14} />
               </Link>
             </div>
 
@@ -124,9 +127,9 @@ export default function Dashboard() {
               <Card className="text-center py-12">
                 <EmptyState
                   icon={FileText}
-                  title="No reports yet"
-                  description="Your submitted civic reports will show up here once you file your first one."
-                  action={<Button as={Link} to="/report" icon={PlusCircle}>Report an issue</Button>}
+                  title={t('noReportsYet')}
+                  description={t('noReportsDesc')}
+                  action={<Button as={Link} to="/report" icon={PlusCircle}>{t('btnReportIssue')}</Button>}
                 />
               </Card>
             )}
@@ -137,13 +140,13 @@ export default function Dashboard() {
           <Card className="bg-[#FAF8F5] dark:bg-[#151619] rounded-3xl p-7 border border-black/5 dark:border-white/10 shadow-soft">
             <div className="flex items-center gap-2 mb-6">
               <Trophy size={20} className="text-amber-500" />
-              <h2 className="font-serif text-2xl text-neutral-900 dark:text-white font-bold">Community Impact</h2>
+              <h2 className="font-serif text-2xl text-neutral-900 dark:text-white font-bold">{t('communityImpactTitle')}</h2>
             </div>
             <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4 leading-relaxed">
-              CivicLens empowers citizens to transform their neighborhood by holding municipal authorities accountable in real-time.
+              {t('communityImpactDesc')}
             </p>
             <Button as={Link} to="/report" className="w-full justify-center shadow-craft">
-              File a New Complaint
+              {t('btnFileComplaint')}
             </Button>
           </Card>
         </div>
@@ -151,3 +154,4 @@ export default function Dashboard() {
     </AppLayout>
   )
 }
+

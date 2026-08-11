@@ -13,10 +13,12 @@ import { StatusChip, SeverityChip } from '../components/StatusChip'
 import { useToast } from '../context/ToastContext'
 import { getIssueByIdAPI, toggleUpvoteIssueAPI, getIssueCommentsAPI, createCommentAPI } from '../services/api'
 import { getSLAStatus } from '../utils/sla'
+import { useLanguage } from '../context/LanguageContext'
 
 
 export default function ComplaintDetails() {
   const { id } = useParams()
+  const { t } = useLanguage()
   const [issue, setIssue] = useState(null)
   const [loading, setLoading] = useState(true)
   const [comment, setComment] = useState('')
@@ -130,23 +132,23 @@ export default function ComplaintDetails() {
               <div className="p-5 sm:p-6 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border-b border-black/5 dark:border-white/10 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
-                    <CheckCircle2 size={18} /> Proof of Resolution (Before &amp; After)
+                    <CheckCircle2 size={18} /> {t('proofTitle')}
                   </div>
                   <span className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-300 px-2.5 py-0.5 rounded-full bg-emerald-500/20 uppercase">
-                    Verified Resolved
+                    {t('proofVerified')}
                   </span>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div className="relative h-48 sm:h-56 rounded-2xl overflow-hidden border border-black/10 dark:border-white/10 shadow-sm">
                     <img src={issue.imageUrl} alt="Before" className="w-full h-full object-cover" />
                     <span className="absolute bottom-2 left-2 bg-black/75 text-white font-mono font-bold text-[10px] uppercase px-2.5 py-1 rounded-md backdrop-blur-md">
-                      BEFORE (Reported Defect)
+                      {t('beforeLabel')}
                     </span>
                   </div>
                   <div className="relative h-48 sm:h-56 rounded-2xl overflow-hidden border-2 border-emerald-500 shadow-md">
                     <img src={issue.resolvedImageUrl} alt="After" className="w-full h-full object-cover" />
                     <span className="absolute bottom-2 left-2 bg-emerald-600 text-white font-mono font-bold text-[10px] uppercase px-2.5 py-1 rounded-md shadow-sm">
-                      AFTER (Repaired / Cleaned)
+                      {t('afterLabel')}
                     </span>
                   </div>
                 </div>
@@ -175,7 +177,6 @@ export default function ComplaintDetails() {
                 </div>
               </div>
             ) : null}
-
 
             <div className="p-6 sm:p-8 space-y-4">
               <div className="flex items-center justify-between text-xs font-mono text-neutral-400">
@@ -215,7 +216,7 @@ export default function ComplaintDetails() {
                   }`}
                 >
                   <ThumbsUp size={14} className={hasUpvoted ? 'fill-current' : ''} />
-                  <span>{hasUpvoted ? 'Upvoted' : 'Endorse & Upvote'}</span>
+                  <span>{hasUpvoted ? t('btnUpvoted') : t('btnEndorseUpvote')}</span>
                   <span className="px-2 py-0.5 rounded-full bg-black/10 dark:bg-white/10 text-[11px]">
                     {upvoteCount}
                   </span>
@@ -227,7 +228,7 @@ export default function ComplaintDetails() {
 
           {/* Timeline Audit Trail */}
           <Card className="bg-white dark:bg-[#1A1C20] rounded-3xl p-7 border border-black/5 dark:border-white/10 shadow-soft">
-            <h2 className="font-serif text-2xl text-neutral-900 dark:text-white mb-6">Resolution Audit Timeline</h2>
+            <h2 className="font-serif text-2xl text-neutral-900 dark:text-white mb-6">{t('auditTimelineTitle')}</h2>
             {timelineItems.length > 0 ? (
               <Timeline items={timelineItems} />
             ) : (
@@ -238,7 +239,7 @@ export default function ComplaintDetails() {
           {/* Comments Section */}
           <Card className="bg-white dark:bg-[#1A1C20] rounded-3xl p-7 border border-black/5 dark:border-white/10 shadow-soft">
             <h2 className="font-serif text-2xl text-neutral-900 dark:text-white mb-5 flex items-center gap-2">
-              <MessageSquare size={20} /> Discussion & Field Notes ({comments.length})
+              <MessageSquare size={20} /> {t('discussionTitle')} ({comments.length})
             </h2>
             <div className="space-y-4 mb-5">
               {comments.length === 0 ? (
@@ -278,17 +279,18 @@ export default function ComplaintDetails() {
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && postComment()}
-                placeholder="Add a comment or inquiry for municipal officers…"
+                placeholder={t('commentPlaceholder')}
                 className="input-field rounded-2xl"
                 disabled={postingComment}
               />
               <Button onClick={postComment} disabled={postingComment} icon={Send} className="shrink-0 rounded-2xl shadow-craft">
-                {postingComment ? 'Posting...' : 'Post'}
+                {postingComment ? t('btnPosting') : t('btnPost')}
               </Button>
             </div>
           </Card>
-
         </div>
+
+
 
         {/* RIGHT COLUMN: Sidebar Info */}
         <div className="space-y-6">

@@ -23,9 +23,13 @@ import {
 import { getSLAStatus } from '../utils/sla'
 
 
+import { useLanguage } from '../context/LanguageContext'
+
 export default function AdminPortal() {
+  const { t } = useLanguage()
   const [issues, setIssues] = useState([])
   const [analytics, setAnalytics] = useState(null)
+
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [searchQuery, setSearchQuery] = useState('')
@@ -124,7 +128,7 @@ export default function AdminPortal() {
 
 
   return (
-    <AppLayout title="Admin Command Center">
+    <AppLayout title={t('navAdmin')}>
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-6 border-b border-black/5 dark:border-white/10 gap-4">
         <div>
@@ -134,16 +138,17 @@ export default function AdminPortal() {
             </span>
           </div>
           <h1 className="font-serif text-3xl sm:text-4xl text-neutral-900 dark:text-white">
-            Municipal Operations <span className="font-serif-italic">Command Center</span>
+            {t('adminHeaderTitle')}
           </h1>
           <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-            Review citizen complaints, override priorities, dispatch field officers, and resolve city infrastructure issues.
+            {t('adminHeaderSub')}
           </p>
         </div>
         <Button onClick={loadAdminData} icon={RefreshCw} className="shadow-craft">
-          Refresh Live Data
+          {t('btnRefreshData')}
         </Button>
       </div>
+
 
       {/* Analytics KPI Cards */}
       {analytics && (
@@ -251,13 +256,13 @@ export default function AdminPortal() {
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-black/10 dark:border-white/10 text-neutral-500 font-bold uppercase tracking-wider">
-                  <th className="py-3 px-4">ID & Date</th>
-                  <th className="py-3 px-4">Issue Details</th>
-                  <th className="py-3 px-4">Dept & Category</th>
-                  <th className="py-3 px-4">SLA Status</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Priority</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="py-3 px-4">{t('tableIdDate')}</th>
+                  <th className="py-3 px-4">{t('tableDetails')}</th>
+                  <th className="py-3 px-4">{t('tableDeptCategory')}</th>
+                  <th className="py-3 px-4">{t('tableSla')}</th>
+                  <th className="py-3 px-4">{t('tableStatus')}</th>
+                  <th className="py-3 px-4">{t('tablePriority')}</th>
+                  <th className="py-3 px-4 text-right">{t('tableActions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/5 dark:divide-white/5">
@@ -304,7 +309,6 @@ export default function AdminPortal() {
                       <StatusChip status={issue.status} />
                     </td>
 
-
                     <td className="py-4 px-4 align-top">
                       <select
                         value={issue.priority}
@@ -327,9 +331,10 @@ export default function AdminPortal() {
                         }}
                         className="py-1.5 px-3 text-xs shadow-sm"
                       >
-                        Update Status
+                        {t('btnUpdateStatus')}
                       </Button>
                     </td>
+
                   </tr>
                 ))}
               </tbody>
