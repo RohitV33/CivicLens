@@ -14,8 +14,9 @@ import BeforeAfterSlider from '../components/BeforeAfterSlider'
 import AiDetectionDemo from '../components/AiDetectionDemo'
 import LiveMapSection from '../components/LiveMapSection'
 import CityAnalytics from '../components/CityAnalytics'
-import { useCountUp } from '../hooks/useCountUp'
 import { useAuth } from '../context/AuthContext'
+import { getAllIssuesAPI } from '../services/api'
+
 
 /* ─── Animated Reveal Wrapper ────────────────────────────────────── */
 function FadeUp({ children, delay = 0, className = '' }) {
@@ -500,12 +501,23 @@ function HowItWorksSection() {
 export default function Landing() {
   const [openFaq, setOpenFaq] = useState(0)
   const [activeTab, setActiveTab] = useState('All Docs')
+  const [realIssues, setRealIssues] = useState([])
   const navigate = useNavigate()
   const { user } = useAuth()
+
+  useEffect(() => {
+    getAllIssuesAPI()
+      .then((res) => {
+        setRealIssues(res.items || res.data || [])
+      })
+      .catch(() => setRealIssues([]))
+  }, [])
+
   const heroRef = useRef(null)
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
   const heroY = useTransform(scrollYProgress, [0, 1], ['0%', '10%'])
   const heroOpacity = useTransform(scrollYProgress, [0, 0.85, 1], [1, 0.9, 0])
+
 
   const handleReportClick = (e) => {
     e.preventDefault()
@@ -811,36 +823,38 @@ export default function Landing() {
         </FadeUp>
 
         <div className="space-y-3">
-          {liveFeed.map((item, idx) => (
-            <FadeUp key={idx} delay={idx * 0.07}>
-              <motion.div
-                whileHover={{ x: 4, scale: 1.005 }}
-                className="p-4 sm:p-5 rounded-[20px] bg-white dark:bg-[#14161A] border border-black/5 dark:border-white/8 shadow-sm flex items-center justify-between gap-4 group cursor-pointer"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-2xl bg-neutral-100 dark:bg-white/5 flex items-center justify-center text-xl flex-shrink-0">
-                    {item.icon}
+          {realIssues.length === 0 ? (
+            <div className="p-8 rounded-[20px] bg-white dark:bg-[#14161A] border border-black/5 dark:border-white/8 text-center text-neutral-500">
+              <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">No live reports submitted yet.</p>
+              <p className="text-xs text-neutral-400 mt-1">Be the first citizen to report a civic issue in your city!</p>
+            </div>
+          ) : (
+            realIssues.slice(0, 5).map((item, idx) => (
+              <FadeUp key={item.id} delay={idx * 0.07}>
+                <Link
+                  to={`/issue/${item.id}`}
+                  className="p-4 sm:p-5 rounded-[20px] bg-white dark:bg-[#14161A] border border-black/5 dark:border-white/8 shadow-sm flex items-center justify-between gap-4 group cursor-pointer hover:border-black/20 dark:hover:border-white/20 transition-all block"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-11 h-11 rounded-2xl bg-neutral-100 dark:bg-white/5 flex items-center justify-center text-sm font-extrabold text-neutral-900 dark:text-white flex-shrink-0 font-mono">
+                      #{item.id}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm text-neutral-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{item.title}</h4>
+                      <span className="text-xs text-neutral-500">📍 {item.address || item.location || 'City Location'} · {new Date(item.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-neutral-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{item.title}</h4>
-                    <span className="text-xs text-neutral-500">📍 {item.location} · {item.time}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="hidden sm:flex flex-col items-end gap-1">
-                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Severity</span>
-                    <span className={`text-sm font-black ${item.severity >= 80 ? 'text-rose-600' : item.severity >= 60 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                      {item.severity}
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-extrabold px-3 py-1.5 rounded-full whitespace-nowrap bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200 uppercase">
+                      {item.status}
                     </span>
                   </div>
-                  <span className={`text-xs font-extrabold px-3 py-1.5 rounded-full whitespace-nowrap ${item.statusColor}`}>
-                    {item.status}
-                  </span>
-                </div>
-              </motion.div>
-            </FadeUp>
-          ))}
+                </Link>
+              </FadeUp>
+            ))
+          )}
         </div>
+
       </section>
 
       {/* ════════════════════════════════════════════════════════

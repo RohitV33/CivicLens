@@ -78,9 +78,9 @@ export default function Dashboard() {
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard icon={FileText} label={t('statTotal')} value={allIssues.length || 3} bgClass="bg-[#D9E8FC] dark:bg-[#162538]" tone="text-blue-900 dark:text-blue-100" delta="Live" />
-        <StatCard icon={CheckCircle2} label={t('statResolved')} value={resolvedCount || 1} bgClass="bg-[#C2ECD8] dark:bg-[#163428]" tone="text-emerald-900 dark:text-emerald-100" />
-        <StatCard icon={Clock} label={t('statActive')} value={pendingCount || 2} bgClass="bg-[#FDE8B3] dark:bg-[#2E2416]" tone="text-amber-900 dark:text-amber-100" />
+        <StatCard icon={FileText} label={t('statTotal')} value={allIssues.length} bgClass="bg-[#D9E8FC] dark:bg-[#162538]" tone="text-blue-900 dark:text-blue-100" delta="Live" />
+        <StatCard icon={CheckCircle2} label={t('statResolved')} value={resolvedCount} bgClass="bg-[#C2ECD8] dark:bg-[#163428]" tone="text-emerald-900 dark:text-emerald-100" />
+        <StatCard icon={Clock} label={t('statActive')} value={pendingCount} bgClass="bg-[#FDE8B3] dark:bg-[#2E2416]" tone="text-amber-900 dark:text-amber-100" />
         <StatCard icon={Award} label={t('statMine')} value={myIssues.length} bgClass="bg-[#FCE5E6] dark:bg-[#2B1B1E]" tone="text-rose-900 dark:text-rose-100" />
       </div>
 
@@ -101,7 +101,7 @@ export default function Dashboard() {
               </div>
             ) : allIssues.length ? (
               <div className="grid sm:grid-cols-2 gap-4">
-                {allIssues.slice(0, 4).map((r, i) => (
+                {allIssues.slice(0, 6).map((r, i) => (
                   <ReportCard
                     key={r.id}
                     report={{
@@ -114,8 +114,8 @@ export default function Dashboard() {
                       reportedBy: r.createdBy?.name || 'Citizen',
                       reportedAt: r.createdAt,
                       confidence: r.aiConfidence || 92,
-                      department: 'Public Works Dept.',
-                      upvotes: 12,
+                      department: r.department ? r.department.replace('_', ' ') : 'PUBLIC WORKS',
+                      upvotes: r.upvoteCount || 0,
                       image: r.imageUrl || r.category,
                     }}
                     index={i}
@@ -124,6 +124,7 @@ export default function Dashboard() {
                 ))}
               </div>
             ) : (
+
               <Card className="text-center py-12">
                 <EmptyState
                   icon={FileText}
