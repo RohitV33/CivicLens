@@ -98,7 +98,8 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link to="/" className="shrink-0 flex items-center group">
-            <Logo showWordmark={true} />
+            <Logo size={58} />
+
           </Link>
 
           {/* Desktop Nav Links with Sliding Indicator */}
