@@ -12,6 +12,8 @@ import Timeline from '../components/Timeline'
 import { StatusChip, SeverityChip } from '../components/StatusChip'
 import { useToast } from '../context/ToastContext'
 import { getIssueByIdAPI, toggleUpvoteIssueAPI } from '../services/api'
+import { getSLAStatus } from '../utils/sla'
+
 
 export default function ComplaintDetails() {
   const { id } = useParams()
@@ -288,16 +290,43 @@ export default function ComplaintDetails() {
 
           <Card className="bg-white dark:bg-[#1A1C20] rounded-3xl p-7 border border-black/5 dark:border-white/10 shadow-soft">
             <h2 className="font-serif text-xl text-neutral-900 dark:text-white mb-4 flex items-center gap-2">
-              <Building2 size={18} className="text-blue-600" /> Assigned Officer
+              <Building2 size={18} className="text-blue-600" /> Department &amp; SLA Status
             </h2>
-            <p className="text-sm font-bold text-neutral-900 dark:text-white">
-              {issue.assignedTo ? issue.assignedTo.name : 'Unassigned (Pending Dispatch)'}
-            </p>
-            <p className="text-xs text-neutral-500 mt-1">
-              {issue.assignedTo ? issue.assignedTo.email : 'Public Works Department Dispatch Queue'}
-            </p>
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-neutral-50 dark:bg-white/5 border border-black/5 dark:border-white/10 mb-4">
+              <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300">Department</span>
+              <span className="text-xs font-bold text-blue-600 dark:text-blue-400 font-mono uppercase">
+                {issue.department ? issue.department.replace('_', ' ') : 'PUBLIC WORKS'}
+              </span>
+            </div>
+
+            {(() => {
+              const sla = getSLAStatus(issue.createdAt, issue.slaHours, issue.status)
+              return (
+                <div className="p-3.5 rounded-2xl bg-[#FAF8F5] dark:bg-[#16171A] border border-black/5 dark:border-white/10 space-y-1">
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-neutral-700 dark:text-neutral-300">Resolution SLA</span>
+                    <span className={sla.isOverdue ? 'text-rose-600 font-extrabold' : 'text-emerald-600 dark:text-emerald-400'}>
+                      {sla.text}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-neutral-400">
+                    Resolution target: {issue.slaHours || 48}h from report submission.
+                  </p>
+                </div>
+              )
+            })()}
+
+            <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/10">
+              <p className="text-xs font-bold text-neutral-900 dark:text-white">
+                Assigned Officer: {issue.assignedTo ? issue.assignedTo.name : 'Unassigned (Pending Dispatch)'}
+              </p>
+              <p className="text-xs text-neutral-500 mt-0.5">
+                {issue.assignedTo ? issue.assignedTo.email : 'Municipal Operations Dispatch Queue'}
+              </p>
+            </div>
           </Card>
         </div>
+
       </div>
     </AppLayout>
   )

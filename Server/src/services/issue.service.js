@@ -55,6 +55,26 @@ export const createIssueService = async (issueData, createdById) => {
   const finalAiClassification = aiClassification || aiAnalysis.aiClassification;
   const finalAiConfidence = aiConfidence ? parseFloat(aiConfidence) : aiAnalysis.confidence;
 
+  const mapCategoryToDepartment = (cat) => {
+    const c = (cat || "").toUpperCase();
+    if (c.includes("GARBAGE") || c.includes("WASTE")) return "SANITATION";
+    if (c.includes("STREETLIGHT") || c.includes("LIGHT")) return "ELECTRICAL";
+    if (c.includes("POTHOLE") || c.includes("ROAD") || c.includes("TRAFFIC")) return "TRAFFIC_ROADS";
+    if (c.includes("WATER") || c.includes("SEWAGE") || c.includes("DRAIN")) return "WATER_SEWER";
+    return "PUBLIC_WORKS";
+  };
+
+  const mapPriorityToSLAHours = (prio) => {
+    const p = (prio || "").toUpperCase();
+    if (p === "CRITICAL") return 24;
+    if (p === "HIGH") return 48;
+    if (p === "MEDIUM") return 72;
+    return 96;
+  };
+
+  const finalDepartment = mapCategoryToDepartment(finalCategory);
+  const finalSlaHours = mapPriorityToSLAHours(finalPriority);
+
   // Use a transaction to create issue & initial history record
   const result = await prisma.$transaction(async (tx) => {
     const issue = await tx.issue.create({
@@ -62,7 +82,9 @@ export const createIssueService = async (issueData, createdById) => {
         title,
         description,
         category: finalCategory,
+        department: finalDepartment,
         priority: finalPriority,
+        slaHours: finalSlaHours,
         imageUrl: imageUrl || null,
         latitude: parsedLat,
         longitude: parsedLng,
@@ -77,6 +99,7 @@ export const createIssueService = async (issueData, createdById) => {
         },
       },
     });
+
 
     // Create initial audit history record
     await tx.issueHistory.create({

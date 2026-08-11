@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { MapPin, ThumbsUp, MessageSquare } from 'lucide-react'
+import { MapPin, ThumbsUp, MessageSquare, Clock, Building2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import IssueThumb from './IssueThumb'
 import { StatusChip, SeverityChip } from './StatusChip'
 import { toggleUpvoteIssueAPI } from '../services/api'
 import { useToast } from '../context/ToastContext'
+import { getSLAStatus } from '../utils/sla'
 
 const CATEGORY_FALLBACK_IMAGES = {
   POTHOLE: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?q=80&w=800&auto=format&fit=crop',
@@ -27,6 +28,8 @@ export default function ReportCard({ report, index = 0, compact = false }) {
   const [hasUpvoted, setHasUpvoted] = useState(Boolean(report.hasUpvoted))
   const [upvoting, setUpvoting] = useState(false)
   const { addToast } = useToast()
+
+  const sla = getSLAStatus(report.createdAt || report.reportedAt, report.slaHours, report.status)
 
   const handleUpvote = async (e) => {
     e.preventDefault()
@@ -90,8 +93,13 @@ export default function ReportCard({ report, index = 0, compact = false }) {
 
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
 
-          <div className="absolute top-3 left-3">
+          <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
             <StatusChip status={report.status} />
+            {sla.isOverdue && (
+              <span className="bg-rose-600 text-white font-bold text-[10px] uppercase px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                <Clock size={10} /> Overdue
+              </span>
+            )}
           </div>
           <div className="absolute top-3 right-3">
             <SeverityChip severity={report.severity} />
@@ -99,9 +107,18 @@ export default function ReportCard({ report, index = 0, compact = false }) {
         </div>
 
         <div className="p-5">
-          <p className="text-[11px] font-mono font-bold text-neutral-400 dark:text-neutral-500 uppercase mb-1">
-            #{report.id} · {report.category}
-          </p>
+          <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-neutral-400 dark:text-neutral-500 uppercase mb-1 flex-wrap">
+            <span>#{report.id}</span>
+            <span>·</span>
+            <span>{report.category}</span>
+            {report.department && (
+              <>
+                <span>·</span>
+                <span className="text-blue-600 dark:text-blue-400 font-bold">{report.department.replace('_', ' ')}</span>
+              </>
+            )}
+          </div>
+
           <h3 className="font-serif text-lg font-bold text-neutral-900 dark:text-white leading-snug mb-2 line-clamp-2">
             {report.title}
           </h3>

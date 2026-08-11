@@ -43,9 +43,19 @@ enum Priority {
   CRITICAL
 }
 
+enum Department {
+  SANITATION
+  PUBLIC_WORKS
+  ELECTRICAL
+  WATER_SEWER
+  TRAFFIC_ROADS
+  OTHER
+}
+
 // ============================================================
 // MODELS
 // ============================================================
+
 
 model User {
   id        Int      @id @default(autoincrement())
@@ -70,23 +80,25 @@ model User {
 }
 
 model Issue {
-  id               Int      @id @default(autoincrement())
+  id               Int        @id @default(autoincrement())
   title            String
   description      String
-  category         Category @default(OTHER)
-  status           Status   @default(PENDING)
-  priority         Priority @default(MEDIUM)
+  category         Category   @default(OTHER)
+  department       Department @default(OTHER)
+  status           Status     @default(PENDING)
+  priority         Priority   @default(MEDIUM)
+  slaHours         Int        @default(48)
   imageUrl         String?
   latitude         Float?
   longitude        Float?
   address          String?
   aiClassification String?
   aiConfidence     Float?
-  upvoteCount      Int      @default(0)
+  upvoteCount      Int        @default(0)
   resolvedImageUrl String?
   resolvedComment  String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   // Creator Relationship
   createdById Int

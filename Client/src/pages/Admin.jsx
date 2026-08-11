@@ -20,6 +20,8 @@ import {
   assignIssueAPI,
   getAdminAnalyticsAPI,
 } from '../services/api'
+import { getSLAStatus } from '../utils/sla'
+
 
 export default function AdminPortal() {
   const [issues, setIssues] = useState([])
@@ -251,9 +253,10 @@ export default function AdminPortal() {
                 <tr className="border-b border-black/10 dark:border-white/10 text-neutral-500 font-bold uppercase tracking-wider">
                   <th className="py-3 px-4">ID & Date</th>
                   <th className="py-3 px-4">Issue Details</th>
-                  <th className="py-3 px-4">Category</th>
+                  <th className="py-3 px-4">Dept & Category</th>
+                  <th className="py-3 px-4">SLA Status</th>
                   <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Priority Override</th>
+                  <th className="py-3 px-4">Priority</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -274,17 +277,33 @@ export default function AdminPortal() {
                     </td>
 
                     <td className="py-4 px-4 align-top">
-                      <span className="inline-block bg-neutral-100 dark:bg-white/10 text-neutral-800 dark:text-neutral-200 px-2.5 py-1 rounded-md font-bold text-[11px]">
+                      <span className="inline-block bg-neutral-100 dark:bg-white/10 text-neutral-800 dark:text-neutral-200 px-2.5 py-1 rounded-md font-bold text-[11px] mb-1">
                         {issue.category}
                       </span>
-                      {issue.aiConfidence && (
-                        <p className="text-[10px] text-emerald-600 font-semibold mt-1">AI {issue.aiConfidence}% match</p>
-                      )}
+                      <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase">
+                        {issue.department ? issue.department.replace('_', ' ') : 'PUBLIC WORKS'}
+                      </p>
+                    </td>
+
+                    <td className="py-4 px-4 align-top">
+                      {(() => {
+                        const sla = getSLAStatus(issue.createdAt, issue.slaHours, issue.status)
+                        return (
+                          <span className={`inline-flex items-center gap-1 font-bold text-[11px] px-2.5 py-1 rounded-full ${
+                            sla.isOverdue
+                              ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 font-extrabold'
+                              : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                          }`}>
+                            <Clock size={11} /> {sla.text}
+                          </span>
+                        )
+                      })()}
                     </td>
 
                     <td className="py-4 px-4 align-top">
                       <StatusChip status={issue.status} />
                     </td>
+
 
                     <td className="py-4 px-4 align-top">
                       <select
