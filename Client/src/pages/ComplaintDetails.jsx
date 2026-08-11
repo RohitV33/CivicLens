@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  MapPin, Building2, MessageSquare, Send, Sparkles, Calendar, User, Loader2, CheckCircle2
+  MapPin, Building2, MessageSquare, Send, Sparkles, Calendar, User, Loader2, CheckCircle2, ThumbsUp
 } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
 import Card from '../components/Card'
@@ -11,7 +11,7 @@ import MapCard from '../components/MapCard'
 import Timeline from '../components/Timeline'
 import { StatusChip, SeverityChip } from '../components/StatusChip'
 import { useToast } from '../context/ToastContext'
-import { getIssueByIdAPI } from '../services/api'
+import { getIssueByIdAPI, toggleUpvoteIssueAPI } from '../services/api'
 
 export default function ComplaintDetails() {
   const { id } = useParams()
@@ -19,6 +19,9 @@ export default function ComplaintDetails() {
   const [loading, setLoading] = useState(true)
   const [comment, setComment] = useState('')
   const [comments, setComments] = useState([])
+  const [upvoteCount, setUpvoteCount] = useState(0)
+  const [hasUpvoted, setHasUpvoted] = useState(false)
+  const [upvoting, setUpvoting] = useState(false)
   const { addToast } = useToast()
 
   const loadIssue = async () => {
@@ -26,12 +29,37 @@ export default function ComplaintDetails() {
     try {
       const res = await getIssueByIdAPI(id)
       setIssue(res.data)
+      setUpvoteCount(res.data.upvoteCount || 0)
+      setHasUpvoted(Boolean(res.data.hasUpvoted))
     } catch (err) {
       addToast(err.message || 'Failed to load issue details', 'error')
     } finally {
       setLoading(false)
     }
   }
+
+  const handleUpvote = async () => {
+    if (upvoting || !issue) return
+    setUpvoting(true)
+    const nextHasUpvoted = !hasUpvoted
+    const nextCount = nextHasUpvoted ? upvoteCount + 1 : Math.max(0, upvoteCount - 1)
+    setHasUpvoted(nextHasUpvoted)
+    setUpvoteCount(nextCount)
+
+    try {
+      const res = await toggleUpvoteIssueAPI(issue.id)
+      setUpvoteCount(res.data.upvoteCount)
+      setHasUpvoted(res.data.hasUpvoted)
+      addToast(res.data.message || (nextHasUpvoted ? 'Upvoted report!' : 'Removed upvote'), 'success')
+    } catch (err) {
+      setHasUpvoted(hasUpvoted)
+      setUpvoteCount(upvoteCount)
+      addToast(err.message || 'Please log in to upvote reports', 'error')
+    } finally {
+      setUpvoting(false)
+    }
+  }
+
 
   useEffect(() => {
     loadIssue()
@@ -132,10 +160,30 @@ export default function ComplaintDetails() {
                 </div>
               )}
 
-              <div className="flex items-center gap-6 pt-4 border-t border-black/5 dark:border-white/10 text-xs text-neutral-500">
-                <span className="flex items-center gap-1.5 font-medium"><User size={14} /> Reported by: {issue.createdBy?.name || 'Citizen'}</span>
-                <span className="flex items-center gap-1.5 font-medium"><Calendar size={14} /> {new Date(issue.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+              <div className="flex items-center justify-between pt-4 border-t border-black/5 dark:border-white/10 text-xs text-neutral-500 flex-wrap gap-3">
+                <div className="flex items-center gap-6">
+                  <span className="flex items-center gap-1.5 font-medium"><User size={14} /> Reported by: {issue.createdBy?.name || 'Citizen'}</span>
+                  <span className="flex items-center gap-1.5 font-medium"><Calendar size={14} /> {new Date(issue.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleUpvote}
+                  disabled={upvoting}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold transition-all shadow-sm active:scale-95 ${
+                    hasUpvoted
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-emerald-500/20'
+                      : 'bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400'
+                  }`}
+                >
+                  <ThumbsUp size={14} className={hasUpvoted ? 'fill-current' : ''} />
+                  <span>{hasUpvoted ? 'Upvoted' : 'Endorse & Upvote'}</span>
+                  <span className="px-2 py-0.5 rounded-full bg-black/10 dark:bg-white/10 text-[11px]">
+                    {upvoteCount}
+                  </span>
+                </button>
               </div>
+
             </div>
           </Card>
 

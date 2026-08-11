@@ -10,6 +10,7 @@ import {
   getIssueById,
   updateIssue,
   deleteIssue,
+  toggleUpvoteIssue,
 } from "../controllers/issue.controller.js";
 import authMiddleware from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validate.js";
@@ -29,10 +30,14 @@ router.get("/:id", getIssueById);
 // POST /api/issues -> Report issue with Zod validation
 router.post("/", authMiddleware, validate(createIssueSchema), createIssue);
 
+// POST /api/issues/:id/upvote -> Toggle upvote / endorse issue
+router.post("/:id/upvote", authMiddleware, toggleUpvoteIssue);
+
 // PATCH /api/issues/:id -> Update issue with validation
 router.patch("/:id", authMiddleware, validate(updateIssueSchema), updateIssue);
 
 // DELETE /api/issues/:id -> Delete issue
 router.delete("/:id", authMiddleware, deleteIssue);
+
 
 export default router;

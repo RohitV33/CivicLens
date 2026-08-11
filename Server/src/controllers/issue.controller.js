@@ -9,6 +9,7 @@ import {
   getIssueByIdService,
   updateIssueService,
   deleteIssueService,
+  toggleUpvoteIssueService,
 } from "../services/issue.service.js";
 
 // ---- POST /api/issues ----
@@ -88,6 +89,22 @@ export const updateIssue = async (req, res, next) => {
   }
 };
 
+// ---- POST /api/issues/:id/upvote ----
+export const toggleUpvoteIssue = async (req, res, next) => {
+  try {
+    const issueId = parseInt(req.params.id);
+    const userId = req.user.id;
+    const result = await toggleUpvoteIssueService(issueId, userId);
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // ---- DELETE /api/issues/:id ----
 export const deleteIssue = async (req, res, next) => {
   try {
@@ -102,3 +119,4 @@ export const deleteIssue = async (req, res, next) => {
     next(error);
   }
 };
+

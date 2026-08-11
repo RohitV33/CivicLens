@@ -113,8 +113,8 @@ const GENERATE_CIVIC_TEXT = (category) => {
 export const analyzeIssueImageService = async ({ imageUrl = "", title = "", description = "" }) => {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
-  // 1. If Gemini API key is configured and valid, perform REAL AI Multimodal Image Pixel Analysis
-  if (apiKey && apiKey.length > 10) {
+  // 1. If real Gemini API key is configured and valid, perform REAL AI Multimodal Image Pixel Analysis
+  if (apiKey && apiKey.length > 10 && !apiKey.includes("your_gemini_api_key")) {
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -183,7 +183,7 @@ Return strictly valid JSON only with NO markdown formatting, adhering to this fo
     }
   }
 
-  // 2. Fallback Heuristic Inspection Engine
+  // 2. Enhanced Fallback Heuristic Inspection Engine
   const fullText = `${imageUrl} ${title} ${description}`.toLowerCase();
   const isNonCivic = NON_CIVIC_TERMS.some((term) => fullText.includes(term));
 
@@ -202,43 +202,43 @@ Return strictly valid JSON only with NO markdown formatting, adhering to this fo
     };
   }
 
-  const text = `${title} ${description}`.toLowerCase();
+  const text = `${imageUrl} ${title} ${description}`.toLowerCase();
   let category = "OTHER";
   let priority = "MEDIUM";
-  let confidence = 88.5;
+  let confidence = 92.5;
   let classification = "General Civic Issue";
 
-  if (text.includes("pothole") || text.includes("hole") || text.includes("crater") || text.includes("asphalt")) {
+  if (text.includes("pothole") || text.includes("hole") || text.includes("crater") || text.includes("asphalt") || text.includes("tarmac")) {
     category = "POTHOLE";
     priority = "HIGH";
     confidence = 96.4;
     classification = "Severe Road Surface Degradation / Deep Crater Pothole";
-  } else if (text.includes("garbage") || text.includes("trash") || text.includes("waste") || text.includes("dump") || text.includes("overflow")) {
+  } else if (text.includes("garb") || text.includes("trash") || text.includes("waste") || text.includes("dump") || text.includes("overflow") || text.includes("litter") || text.includes("rubbish") || text.includes("plastic") || text.includes("bin")) {
     category = "GARBAGE";
-    priority = text.includes("overflow") ? "CRITICAL" : "HIGH";
-    confidence = 94.2;
+    priority = (text.includes("overflow") || text.includes("dump")) ? "CRITICAL" : "HIGH";
+    confidence = 95.8;
     classification = "Municipal Solid Waste Accumulation & Container Overflow";
-  } else if (text.includes("light") || text.includes("lamp") || text.includes("pole") || text.includes("dark") || text.includes("street light")) {
+  } else if (text.includes("light") || text.includes("lamp") || text.includes("pole") || text.includes("dark") || text.includes("bulb")) {
     category = "STREETLIGHT";
     priority = "MEDIUM";
     confidence = 91.8;
     classification = "Public Lighting Fixture Electrical Failure";
-  } else if (text.includes("water") || text.includes("leak") || text.includes("pipe") || text.includes("burst")) {
+  } else if (text.includes("water") || text.includes("leak") || text.includes("pipe") || text.includes("burst") || text.includes("spill") || text.includes("tap")) {
     category = "WATER_LEAKAGE";
     priority = "CRITICAL";
     confidence = 95.7;
     classification = "Pressurized Water Distribution Pipe Burst / Clean Water Leakage";
-  } else if (text.includes("drain") || text.includes("gutter") || text.includes("flood") || text.includes("block")) {
+  } else if (text.includes("drain") || text.includes("gutter") || text.includes("flood") || text.includes("block") || text.includes("clog")) {
     category = "DRAINAGE";
     priority = "HIGH";
     confidence = 93.1;
     classification = "Stormwater Drainage Blockage & Urban Flood Risk";
-  } else if (text.includes("sewage") || text.includes("smell") || text.includes("manhole")) {
+  } else if (text.includes("sewage") || text.includes("sewer") || text.includes("smell") || text.includes("manhole")) {
     category = "SEWAGE";
     priority = "CRITICAL";
     confidence = 97.0;
     classification = "Underground Sewage Overflow & Biohazard Contamination";
-  } else if (text.includes("road") || text.includes("divider") || text.includes("tar") || text.includes("crack")) {
+  } else if (text.includes("road") || text.includes("divider") || text.includes("tar") || text.includes("crack") || text.includes("pavement")) {
     category = "ROAD_DAMAGE";
     priority = "MEDIUM";
     confidence = 89.6;
@@ -271,9 +271,12 @@ export const detectDuplicateIssueService = async (latitude, longitude, category,
   const activeIssues = await prisma.issue.findMany({
     where: {
       status: { in: ["PENDING", "REVIEWING", "ASSIGNED", "IN_PROGRESS"] },
-      ...(category ? { category } : {}),
+      ...(category && category !== "OTHER" ? { category } : {}),
       latitude: { not: null },
       longitude: { not: null },
+      NOT: {
+        title: { contains: "Non-Civic" }
+      }
     },
     select: {
       id: true,
@@ -316,3 +319,4 @@ export const detectDuplicateIssueService = async (latitude, longitude, category,
     message: "No existing duplicate issues found nearby.",
   };
 };
+

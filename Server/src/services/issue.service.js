@@ -272,3 +272,70 @@ export const deleteIssueService = async (issueId, user) => {
 
   return { message: "Issue deleted successfully" };
 };
+
+// ---- Toggle Upvote / Endorse Issue ----
+export const toggleUpvoteIssueService = async (issueId, userId) => {
+  if (isNaN(issueId)) {
+    const error = new Error("Invalid issue ID");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const existingIssue = await prisma.issue.findUnique({
+    where: { id: issueId },
+  });
+
+  if (!existingIssue) {
+    const error = new Error("Issue not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const existingUpvote = await prisma.upvote.findUnique({
+    where: {
+      userId_issueId: {
+        userId,
+        issueId,
+      },
+    },
+  });
+
+  let hasUpvoted = false;
+  let newCount = existingIssue.upvoteCount || 0;
+
+  if (existingUpvote) {
+    // Remove upvote
+    await prisma.$transaction([
+      prisma.upvote.delete({
+        where: { id: existingUpvote.id },
+      }),
+      prisma.issue.update({
+        where: { id: issueId },
+        data: { upvoteCount: { decrement: 1 } },
+      }),
+    ]);
+    hasUpvoted = false;
+    newCount = Math.max(0, newCount - 1);
+  } else {
+    // Add upvote
+    await prisma.$transaction([
+      prisma.upvote.create({
+        data: { userId, issueId },
+      }),
+      prisma.issue.update({
+        where: { id: issueId },
+        data: { upvoteCount: { increment: 1 } },
+      }),
+    ]);
+    hasUpvoted = true;
+    newCount = newCount + 1;
+  }
+
+  return {
+    issueId,
+    upvoteCount: newCount,
+    hasUpvoted,
+    message: hasUpvoted ? "Upvoted issue!" : "Removed upvote",
+  };
+};
+

@@ -65,6 +65,7 @@ model User {
   issuesAssigned Issue[]        @relation("AssignedIssues")
   histories      IssueHistory[] @relation("UserHistories")
   notifications  Notification[] @relation("UserNotifications")
+  upvotes        Upvote[]       @relation("UserUpvotes")
 }
 
 model Issue {
@@ -80,6 +81,7 @@ model Issue {
   address          String?
   aiClassification String?
   aiConfidence     Float?
+  upvoteCount      Int      @default(0)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -94,6 +96,18 @@ model Issue {
   // Related Records
   histories     IssueHistory[]
   notifications Notification[]
+  upvotes       Upvote[]       @relation("IssueUpvotes")
+}
+
+model Upvote {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation("UserUpvotes", fields: [userId], references: [id], onDelete: Cascade)
+  issueId   Int
+  issue     Issue    @relation("IssueUpvotes", fields: [issueId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, issueId])
 }
 
 model IssueHistory {
@@ -115,6 +129,7 @@ model Notification {
   issueId   Int?
   issue     Issue?   @relation(fields: [issueId], references: [id], onDelete: Cascade)
   message   String
+
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 }

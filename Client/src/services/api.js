@@ -71,7 +71,11 @@ export const getMyIssuesAPI = () => apiFetch('/api/issues/my')
 
 export const getIssueByIdAPI = (id) => apiFetch(`/api/issues/${id}`)
 
+export const toggleUpvoteIssueAPI = (id) =>
+  apiFetch(`/api/issues/${id}/upvote`, { method: 'POST' })
+
 export const createIssueAPI = (issueData) => {
+
   const body =
     typeof issueData === 'string'
       ? { title: issueData, description: arguments[1], location: arguments[2] }

@@ -4,6 +4,8 @@ import { MapPin, ThumbsUp, MessageSquare } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import IssueThumb from './IssueThumb'
 import { StatusChip, SeverityChip } from './StatusChip'
+import { toggleUpvoteIssueAPI } from '../services/api'
+import { useToast } from '../context/ToastContext'
 
 const CATEGORY_FALLBACK_IMAGES = {
   POTHOLE: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?q=80&w=800&auto=format&fit=crop',
@@ -21,6 +23,35 @@ const CATEGORY_FALLBACK_IMAGES = {
 
 export default function ReportCard({ report, index = 0, compact = false }) {
   const [imgError, setImgError] = useState(false)
+  const [upvotes, setUpvotes] = useState(report.upvoteCount ?? report.upvotes ?? 0)
+  const [hasUpvoted, setHasUpvoted] = useState(Boolean(report.hasUpvoted))
+  const [upvoting, setUpvoting] = useState(false)
+  const { addToast } = useToast()
+
+  const handleUpvote = async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (upvoting) return
+
+    setUpvoting(true)
+    const nextHasUpvoted = !hasUpvoted
+    const nextCount = nextHasUpvoted ? upvotes + 1 : Math.max(0, upvotes - 1)
+    setHasUpvoted(nextHasUpvoted)
+    setUpvotes(nextCount)
+
+    try {
+      const res = await toggleUpvoteIssueAPI(report.id)
+      setUpvotes(res.data.upvoteCount)
+      setHasUpvoted(res.data.hasUpvoted)
+      addToast(res.data.message || (nextHasUpvoted ? 'Upvoted report!' : 'Removed upvote'), 'success')
+    } catch (err) {
+      setHasUpvoted(hasUpvoted)
+      setUpvotes(upvotes)
+      addToast(err.message || 'Please log in to upvote reports', 'error')
+    } finally {
+      setUpvoting(false)
+    }
+  }
 
   // Normalize category key for lookup (handles "ROAD DAMAGE", "WASTE MANAGEMENT", etc.)
   const rawCat = report.category || report.image || ''
@@ -82,7 +113,17 @@ export default function ReportCard({ report, index = 0, compact = false }) {
           )}
           <div className="flex items-center justify-between pt-3 border-t border-black/5 dark:border-white/10 text-xs font-semibold text-neutral-500">
             <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1 hover:text-black dark:hover:text-white"><ThumbsUp size={13} /> {report.upvotes || 12}</span>
+              <button
+                type="button"
+                onClick={handleUpvote}
+                className={`flex items-center gap-1 px-2 py-1 rounded-full transition-colors ${
+                  hasUpvoted
+                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold'
+                    : 'hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-black dark:hover:text-white'
+                }`}
+              >
+                <ThumbsUp size={13} className={hasUpvoted ? 'fill-current' : ''} /> {upvotes}
+              </button>
               <span className="flex items-center gap-1 hover:text-black dark:hover:text-white"><MessageSquare size={13} /> {report.comments || 0}</span>
             </div>
             <span>
@@ -94,3 +135,4 @@ export default function ReportCard({ report, index = 0, compact = false }) {
     </motion.div>
   )
 }
+
