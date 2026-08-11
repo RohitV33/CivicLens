@@ -4,6 +4,8 @@
 
 const getToken = () => localStorage.getItem('token')
 
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+
 const apiFetch = async (url, options = {}) => {
   const token = getToken()
   const isFormData = options.body instanceof FormData
@@ -14,12 +16,20 @@ const apiFetch = async (url, options = {}) => {
     ...options.headers,
   }
 
-  const response = await fetch(url, {
+  const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`
+
+  const response = await fetch(fullUrl, {
     ...options,
     headers,
   })
 
-  const data = await response.json()
+  const text = await response.text()
+  let data = {}
+  try {
+    data = text ? JSON.parse(text) : {}
+  } catch (err) {
+    data = { message: 'Server is waking up or returned an invalid response. Please try again in 10 seconds.' }
+  }
 
   if (!response.ok) {
     throw new Error(data.message || 'Something went wrong')
@@ -27,6 +37,7 @@ const apiFetch = async (url, options = {}) => {
 
   return data
 }
+
 
 // ---- AUTH API CALLS ----
 export const registerAPI = (name, email, password) =>
