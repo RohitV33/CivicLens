@@ -150,15 +150,12 @@ export default function Navbar() {
             >
               Log in
             </Link>
-            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-              <Link
-                to="/report"
-                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-600 to-violet-600 text-white font-semibold px-5 py-2 text-sm shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.03] transition-all duration-200"
-              >
-                <Zap size={13} className="fill-white" />
-                Report Issue Free
-              </Link>
-            </motion.div>
+            <Link
+              to="/report"
+              className="inline-flex items-center justify-center rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold px-4 py-2 text-sm hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-sm"
+            >
+              Report Issue
+            </Link>
           </div>
 
           {/* Mobile Hamburger */}
@@ -222,16 +219,16 @@ export default function Navbar() {
                   <Link
                     to="/report"
                     onClick={() => setOpen(false)}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-blue-600 to-violet-600 text-white font-semibold px-5 py-2.5 text-sm shadow-lg"
+                    className="inline-flex items-center justify-center rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold px-5 py-2.5 text-sm shadow-sm"
                   >
-                    <Zap size={13} className="fill-white" />
-                    Report Issue Free
+                    Report Issue
                   </Link>
                 </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
+
       </header>
     </div>
   )

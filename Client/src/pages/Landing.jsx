@@ -184,11 +184,12 @@ const faqs = [
 /* ─── Animated Gradient Text ────────────────────────────────────── */
 function GradientText({ children, className = '' }) {
   return (
-    <span className={`bg-gradient-to-r from-blue-600 via-violet-600 to-purple-600 bg-clip-text text-transparent ${className}`}>
+    <span className={`text-slate-900 dark:text-white font-bold ${className}`}>
       {children}
     </span>
   )
 }
+
 
 /* ─── 3D Stack Card Data ─────────────────────────────────────────── */
 const stackCardData = [
@@ -892,8 +893,7 @@ export default function Landing() {
       ════════════════════════════════════════════════════════ */}
       <section className="py-10 px-4 sm:px-6 max-w-7xl mx-auto z-10 relative">
         <FadeIn>
-          <div className="rounded-[24px] bg-gradient-to-br from-[#1a2a4a] via-[#1e3258] to-[#1a2a4a] dark:from-[#0D1826] dark:via-[#101F35] dark:to-[#0D1826] p-8 sm:p-14 border border-blue-900/40 shadow-[0_20px_60px_rgba(37,99,235,0.2)] grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(99,102,241,0.15),_transparent_60%)]" />
+          <div className="rounded-[24px] bg-slate-900 dark:bg-[#121316] text-white p-8 sm:p-12 border border-slate-800 shadow-sm grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center relative overflow-hidden">
             {[
               { value: '94%', label: 'AI Detection Accuracy', icon: Cpu },
               { value: '< 25s', label: 'Average Report Time', icon: Timer },
@@ -901,14 +901,15 @@ export default function Landing() {
               { value: '100%', label: 'Auto Dept Assignment', icon: Send },
             ].map((m, i) => (
               <FadeUp key={m.label} delay={i * 0.1} className="space-y-2 relative z-10">
-                <m.icon size={22} className="mx-auto text-blue-300/60" />
-                <p className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight">{m.value}</p>
-                <p className="text-xs font-bold uppercase tracking-wider text-blue-300/80">{m.label}</p>
+                <m.icon size={20} className="mx-auto text-slate-400" />
+                <p className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">{m.value}</p>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{m.label}</p>
               </FadeUp>
             ))}
           </div>
         </FadeIn>
       </section>
+
 
       {/* ════════════════════════════════════════════════════════
           10. TESTIMONIALS
@@ -999,39 +1000,27 @@ export default function Landing() {
       ════════════════════════════════════════════════════════ */}
       <section className="py-12 px-4 sm:px-6 max-w-7xl mx-auto z-10 relative">
         <FadeIn>
-          <div className="rounded-[28px] relative overflow-hidden p-8 sm:p-16 flex flex-col md:flex-row items-center justify-between gap-8 border border-emerald-200/40 dark:border-emerald-800/20">
-            {/* Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-100 via-teal-50 to-emerald-100 dark:from-[#0D2A1E] dark:via-[#102416] dark:to-[#0D2A1E]" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(52,211,153,0.2),_transparent_60%)]" />
-            <motion.div
-              animate={{ scale: [1, 1.05, 1], rotate: [0, 3, 0] }}
-              transition={{ duration: 12, repeat: Infinity }}
-              className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-emerald-400/10 blur-3xl"
-            />
-
+          <div className="rounded-[28px] relative overflow-hidden p-8 sm:p-14 flex flex-col md:flex-row items-center justify-between gap-8 bg-neutral-100 dark:bg-[#14161A] border border-neutral-200/80 dark:border-neutral-800 shadow-sm">
             <div className="space-y-3 text-center md:text-left relative z-10">
-              <SectionLabel color="emerald">
-                <Shield size={12} /> Free Forever for Citizens
-              </SectionLabel>
-              <h2 className="text-3xl sm:text-5xl font-serif text-neutral-900 dark:text-white leading-tight">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-200/70 dark:bg-white/10 text-slate-800 dark:text-slate-200 text-xs font-bold uppercase tracking-wider">
+                <Shield size={12} /> Civic Empowerment Platform
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-serif text-neutral-900 dark:text-white leading-tight">
                 Help Build Better Cities.
               </h2>
-              <p className="text-base sm:text-lg text-neutral-700 dark:text-neutral-200">
+              <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-400">
                 Join thousands of citizens reporting and resolving civic issues.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4 relative z-10">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.97 }}
+            <div className="flex flex-wrap items-center gap-3 relative z-10">
+              <button
                 onClick={handleReportClick}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-violet-600 text-white font-bold px-8 py-3.5 text-base shadow-xl shadow-blue-500/25 hover:shadow-blue-500/40 transition-all"
+                className="inline-flex items-center justify-center rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold px-6 py-3 text-sm hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-sm"
               >
-                <Zap size={15} className="fill-white" />
                 Report an Issue
-              </motion.button>
-              <Link to="/map" className="inline-flex items-center gap-2 rounded-full bg-white/80 dark:bg-white/10 backdrop-blur-sm text-neutral-900 dark:text-white font-semibold px-8 py-3.5 text-base border border-black/10 dark:border-white/20 hover:bg-white dark:hover:bg-white/15 transition-all">
+              </button>
+              <Link to="/map" className="inline-flex items-center justify-center rounded-full bg-white dark:bg-white/10 text-neutral-900 dark:text-white font-semibold px-6 py-3 text-sm border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-white/15 transition-colors">
                 <Globe size={15} />
                 Explore Live Map
               </Link>
@@ -1044,27 +1033,26 @@ export default function Landing() {
           13. FOOTER
       ════════════════════════════════════════════════════════ */}
       <footer className="px-3 sm:px-6 pb-6 max-w-7xl mx-auto z-10 relative">
-        <div className="rounded-[24px] bg-[#0A0A0B] dark:bg-[#050507] text-white p-8 sm:p-16 shadow-2xl border border-neutral-800/80">
+        <div className="rounded-[24px] bg-[#0A0A0B] dark:bg-[#050507] text-white p-8 sm:p-14 shadow-2xl border border-neutral-800/80">
           {/* Top Brand Row */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-12 pb-10 border-b border-neutral-800">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
-                  <Zap size={15} className="fill-white text-white" />
+                <div className="w-8 h-8 rounded-xl bg-slate-800 flex items-center justify-center">
+                  <Shield size={16} className="text-white" />
                 </div>
                 <span className="font-extrabold text-lg tracking-tight">CivicLens AI</span>
               </div>
               <p className="text-xs text-neutral-400 max-w-xs">Building smarter cities with AI computer vision and real-time civic intelligence.</p>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.04 }}
+            <button
               onClick={handleReportClick}
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-violet-600 text-white font-semibold px-6 py-2.5 text-sm shadow-lg"
+              className="inline-flex items-center justify-center rounded-full bg-white text-slate-900 font-semibold px-5 py-2 text-sm hover:bg-slate-100 transition-colors"
             >
-              <Zap size={13} className="fill-white" />
-              Report Issue Free
-            </motion.button>
+              Report Issue
+            </button>
           </div>
+
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-16 text-sm">
             <div className="space-y-3">
@@ -1116,13 +1104,14 @@ export default function Landing() {
           </div>
 
           <div className="pt-8 border-t border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-500 font-medium">
-            <div>© {new Date().getFullYear()} CivicLens AI Inc. All rights reserved. · 🆓 Free for all citizens</div>
+            <div>© {new Date().getFullYear()} CivicLens AI Inc. All rights reserved.</div>
             <div className="flex items-center gap-6">
               <a href="#" className="hover:text-neutral-300 transition-colors">GitHub</a>
               <a href="#" className="hover:text-neutral-300 transition-colors">Privacy</a>
               <a href="#" className="hover:text-neutral-300 transition-colors">Terms</a>
             </div>
           </div>
+
         </div>
       </footer>
       {/* ── Floating Scroll-To-Top Button ── */}
