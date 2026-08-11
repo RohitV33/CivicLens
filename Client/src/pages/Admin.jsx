@@ -78,14 +78,40 @@ export default function AdminPortal() {
     }
   }
 
+  const [resolvedImageUrl, setResolvedImageUrl] = useState('')
+  const [uploadingResolutionImg, setUploadingResolutionImg] = useState(false)
+
+  const handleResolutionPhotoUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingResolutionImg(true)
+    try {
+      const res = await uploadImageAPI(file)
+      const url = res.url || res.data?.url
+      setResolvedImageUrl(url)
+      addToast('Resolution proof photo uploaded!', 'success')
+    } catch (err) {
+      addToast(err.message || 'Failed to upload resolution proof photo', 'error')
+    } finally {
+      setUploadingResolutionImg(false)
+    }
+  }
+
   const handleStatusSubmit = async () => {
     if (!selectedIssueModal || !newStatus) return
     setSubmittingStatus(true)
     try {
-      await updateIssueStatusAPI(selectedIssueModal.id, newStatus, statusComment)
+      await updateIssueStatusAPI(
+        selectedIssueModal.id,
+        newStatus,
+        statusComment,
+        resolvedImageUrl,
+        statusComment
+      )
       addToast(`Issue #${selectedIssueModal.id} status updated to ${newStatus}`, 'success')
       setSelectedIssueModal(null)
       setStatusComment('')
+      setResolvedImageUrl('')
       loadAdminData()
     } catch (err) {
       addToast(err.message || 'Failed to update status', 'error')
@@ -93,6 +119,7 @@ export default function AdminPortal() {
       setSubmittingStatus(false)
     }
   }
+
 
   return (
     <AppLayout title="Admin Command Center">
@@ -329,7 +356,37 @@ export default function AdminPortal() {
                   </select>
                 </div>
 
+                {newStatus === 'RESOLVED' && (
+                  <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-2">
+                    <label className="label-text block font-bold text-emerald-800 dark:text-emerald-300">
+                      📸 Resolution Proof Photo (Proof of Work)
+                    </label>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                      Upload proof image showing the resolved issue (e.g. repaired pothole, cleaned street).
+                    </p>
+                    <div className="flex items-center gap-3 pt-1">
+                      {resolvedImageUrl ? (
+                        <div className="flex items-center gap-2">
+                          <img src={resolvedImageUrl} alt="Proof" className="w-12 h-12 rounded-xl object-cover border border-emerald-500" />
+                          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">Proof Uploaded ✓</span>
+                        </div>
+                      ) : null}
+                      <label className="btn-secondary py-1.5 px-3 text-xs rounded-xl cursor-pointer inline-flex items-center gap-1.5 font-bold">
+                        {uploadingResolutionImg ? 'Uploading...' : resolvedImageUrl ? 'Change Proof Photo' : 'Upload Proof Photo'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleResolutionPhotoUpload}
+                          disabled={uploadingResolutionImg}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                )}
+
                 <div>
+
                   <label className="label-text mb-2 block font-semibold">Official Admin Comment / Field Notes</label>
                   <textarea
                     rows={3}

@@ -119,7 +119,37 @@ export default function ComplaintDetails() {
         {/* LEFT COLUMN: Main Issue Details */}
         <div className="lg:col-span-2 space-y-6">
           <Card className="!p-0 overflow-hidden bg-white dark:bg-[#1A1C20] rounded-3xl border border-black/5 dark:border-white/10 shadow-soft">
-            {issue.imageUrl && (
+            {issue.resolvedImageUrl ? (
+              <div className="p-5 sm:p-6 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border-b border-black/5 dark:border-white/10 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
+                    <CheckCircle2 size={18} /> Proof of Resolution (Before &amp; After)
+                  </div>
+                  <span className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-300 px-2.5 py-0.5 rounded-full bg-emerald-500/20 uppercase">
+                    Verified Resolved
+                  </span>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="relative h-48 sm:h-56 rounded-2xl overflow-hidden border border-black/10 dark:border-white/10 shadow-sm">
+                    <img src={issue.imageUrl} alt="Before" className="w-full h-full object-cover" />
+                    <span className="absolute bottom-2 left-2 bg-black/75 text-white font-mono font-bold text-[10px] uppercase px-2.5 py-1 rounded-md backdrop-blur-md">
+                      BEFORE (Reported Defect)
+                    </span>
+                  </div>
+                  <div className="relative h-48 sm:h-56 rounded-2xl overflow-hidden border-2 border-emerald-500 shadow-md">
+                    <img src={issue.resolvedImageUrl} alt="After" className="w-full h-full object-cover" />
+                    <span className="absolute bottom-2 left-2 bg-emerald-600 text-white font-mono font-bold text-[10px] uppercase px-2.5 py-1 rounded-md shadow-sm">
+                      AFTER (Repaired / Cleaned)
+                    </span>
+                  </div>
+                </div>
+                {issue.resolvedComment && (
+                  <p className="text-xs text-neutral-700 dark:text-neutral-300 font-medium italic pt-1">
+                    Officer Resolution Note: "{issue.resolvedComment}"
+                  </p>
+                )}
+              </div>
+            ) : issue.imageUrl ? (
               <div className="relative h-72 sm:h-96">
                 <img src={issue.imageUrl} alt={issue.title} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -137,7 +167,8 @@ export default function ComplaintDetails() {
                   <SeverityChip severity={issue.priority.toLowerCase()} />
                 </div>
               </div>
-            )}
+            ) : null}
+
 
             <div className="p-6 sm:p-8 space-y-4">
               <div className="flex items-center justify-between text-xs font-mono text-neutral-400">

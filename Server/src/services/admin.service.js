@@ -51,7 +51,7 @@ export const getAdminIssuesService = async (query = {}) => {
 };
 
 // ---- Update Issue Status (Prisma Transaction) ----
-export const updateIssueStatusService = async (issueId, newStatus, comment, adminId) => {
+export const updateIssueStatusService = async (issueId, newStatus, comment, adminId, resolvedData = {}) => {
   if (isNaN(issueId)) {
     const error = new Error("Invalid issue ID");
     error.statusCode = 400;
@@ -69,13 +69,20 @@ export const updateIssueStatusService = async (issueId, newStatus, comment, admi
   }
 
   const oldStatus = existingIssue.status;
+  const { resolvedImageUrl, resolvedComment } = resolvedData;
 
   // PRISMA TRANSACTION: Atomic update of Issue + History + Notification
   const result = await prisma.$transaction(async (tx) => {
     // 1. Update issue status
     const updatedIssue = await tx.issue.update({
       where: { id: issueId },
-      data: { status: newStatus },
+      data: {
+        status: newStatus,
+        ...(newStatus === "RESOLVED" && {
+          resolvedImageUrl: resolvedImageUrl || null,
+          resolvedComment: resolvedComment || comment || "Work completed and verified by municipal authority.",
+        }),
+      },
       include: {
         createdBy: { select: { id: true, name: true, email: true } },
         assignedTo: { select: { id: true, name: true, email: true } },
@@ -89,7 +96,7 @@ export const updateIssueStatusService = async (issueId, newStatus, comment, admi
         changedById: adminId,
         oldStatus,
         newStatus,
-        comment: comment || `Status updated from ${oldStatus} to ${newStatus}`,
+        comment: resolvedComment || comment || `Status updated from ${oldStatus} to ${newStatus}`,
       },
     });
 
@@ -98,7 +105,9 @@ export const updateIssueStatusService = async (issueId, newStatus, comment, admi
       data: {
         userId: existingIssue.createdById,
         issueId,
-        message: `Your issue #${issueId} (${existingIssue.title}) status changed to ${newStatus}.`,
+        message: newStatus === "RESOLVED"
+          ? `🎉 Great news! Your reported issue #${issueId} (${existingIssue.title}) has been marked RESOLVED with proof of work!`
+          : `Your issue #${issueId} (${existingIssue.title}) status changed to ${newStatus}.`,
       },
     });
 
@@ -107,6 +116,7 @@ export const updateIssueStatusService = async (issueId, newStatus, comment, admi
 
   return result;
 };
+
 
 // ---- Update Issue Priority (Admin Override) ----
 export const updateIssuePriorityService = async (issueId, newPriority, adminId) => {

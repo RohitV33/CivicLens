@@ -133,11 +133,12 @@ export const getAdminIssuesAPI = (params = {}) => {
   return apiFetch(`/api/admin/issues${query ? `?${query}` : ''}`)
 }
 
-export const updateIssueStatusAPI = (id, status, comment) =>
+export const updateIssueStatusAPI = (id, status, comment, resolvedImageUrl, resolvedComment) =>
   apiFetch(`/api/admin/issues/${id}/status`, {
     method: 'PATCH',
-    body: JSON.stringify({ status, comment }),
+    body: JSON.stringify({ status, comment, resolvedImageUrl, resolvedComment }),
   })
+
 
 export const updateIssuePriorityAPI = (id, priority) =>
   apiFetch(`/api/admin/issues/${id}/priority`, {

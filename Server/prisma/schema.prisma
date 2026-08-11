@@ -82,6 +82,8 @@ model Issue {
   aiClassification String?
   aiConfidence     Float?
   upvoteCount      Int      @default(0)
+  resolvedImageUrl String?
+  resolvedComment  String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

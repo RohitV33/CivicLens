@@ -28,7 +28,7 @@ export const getAdminIssues = async (req, res, next) => {
 export const updateIssueStatus = async (req, res, next) => {
   try {
     const issueId = parseInt(req.params.id);
-    const { status, comment } = req.body;
+    const { status, comment, resolvedImageUrl, resolvedComment } = req.body;
     const adminId = req.user.id;
 
     if (!status) {
@@ -37,7 +37,13 @@ export const updateIssueStatus = async (req, res, next) => {
       throw error;
     }
 
-    const issue = await updateIssueStatusService(issueId, status, comment, adminId);
+    const issue = await updateIssueStatusService(
+      issueId,
+      status,
+      comment,
+      adminId,
+      { resolvedImageUrl, resolvedComment }
+    );
 
     res.status(200).json({
       success: true,
@@ -48,6 +54,7 @@ export const updateIssueStatus = async (req, res, next) => {
     next(error);
   }
 };
+
 
 // ---- PATCH /api/admin/issues/:id/priority ----
 export const updateIssuePriority = async (req, res, next) => {
