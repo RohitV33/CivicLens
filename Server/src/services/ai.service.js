@@ -117,7 +117,12 @@ export const analyzeIssueImageService = async ({ imageUrl = "", title = "", desc
   if (apiKey && apiKey.length > 10 && !apiKey.includes("your_gemini_api_key")) {
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const modelsToTry = [
+        "gemini-1.5-flash-latest",
+        "gemini-2.0-flash",
+        "gemini-1.5-flash",
+        "gemini-1.5-pro",
+      ];
 
       const imagePart = await fetchImagePart(imageUrl);
 
@@ -159,8 +164,22 @@ Return strictly valid JSON only with NO markdown formatting, adhering to this fo
 }`;
 
       const contents = imagePart ? [prompt, imagePart] : [prompt];
-      const result = await model.generateContent(contents);
-      const rawText = result.response.text().trim();
+      let rawText = null;
+      let lastErr = null;
+
+      for (const modelName of modelsToTry) {
+        try {
+          const model = genAI.getGenerativeModel({ model: modelName });
+          const result = await model.generateContent(contents);
+          rawText = result.response.text().trim();
+          if (rawText) break;
+        } catch (err) {
+          lastErr = err;
+          console.warn(`⚠️ Model ${modelName} returned error: ${err.message}, attempting next model fallback...`);
+        }
+      }
+
+      if (!rawText && lastErr) throw lastErr;
 
       const cleanJson = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
       const parsed = JSON.parse(cleanJson);
@@ -182,6 +201,7 @@ Return strictly valid JSON only with NO markdown formatting, adhering to this fo
       console.error("⚠️ Gemini Vision API call failed:", err.message);
     }
   }
+
 
   // 2. Enhanced Fallback Heuristic Inspection Engine
   const fullText = `${imageUrl} ${title} ${description}`.toLowerCase();
