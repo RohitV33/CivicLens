@@ -1,29 +1,31 @@
 import { motion } from 'framer-motion'
-import logoImg from '../assets/logo-transparent.png?v=3'
+import logoCivicImg from '../assets/logo_civic.png'
 
-export default function Logo({ size = 52, showWordmark = true, className = '', showTagline = false }) {
+export default function Logo({ size = 38, showWordmark = true, className = '' }) {
   return (
-    <div className={`flex items-center group cursor-pointer select-none ${className}`}>
+    <div className={`flex items-center gap-2.5 group cursor-pointer select-none ${className}`}>
       <motion.div
-        whileHover={{ scale: 1.04 }}
-        whileTap={{ scale: 0.96 }}
+        whileHover={{ scale: 1.03 }}
+        whileTap={{ scale: 0.97 }}
         transition={{ type: 'spring', stiffness: 400, damping: 20 }}
         className="relative flex items-center shrink-0"
       >
         <img
-          src={logoImg}
+          src={logoCivicImg}
           alt="CivicLens AI"
           style={{ height: `${size}px` }}
-          className="w-auto max-w-full object-contain filter drop-shadow-sm dark:brightness-125 dark:drop-shadow-[0_0_10px_rgba(255,255,255,0.4)] transition-all duration-200"
+          className="w-auto max-w-full object-contain filter drop-shadow-sm transition-all duration-200"
           onError={(e) => {
-            e.target.src = '/logo-transparent.png?v=3'
+            e.target.src = '/logo_civic.png'
           }}
         />
-
       </motion.div>
+      {showWordmark && (
+        <span className="font-extrabold text-lg sm:text-xl tracking-tight text-neutral-900 dark:text-white flex items-center gap-1.5 font-sans">
+          <span>CivicLens</span>
+          <span className="text-blue-600 dark:text-blue-400 font-black text-xs px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">AI</span>
+        </span>
+      )}
     </div>
   )
 }
-
-
-
