@@ -17,7 +17,9 @@ export const translations = {
     dashTitle: "Welcome back",
     dashSubtitle: "Your space for civic reports, resolution progress, and city transformation.",
     btnNewReport: "New Report",
+    btnReportIssue: "Report Issue",
     statTotal: "Total City Issues",
+
     statResolved: "Resolved Issues",
     statActive: "Active Work Units",
     statMine: "My Reported Issues",
@@ -122,7 +124,9 @@ export const translations = {
     dashTitle: "वापसी पर स्वागत है",
     dashSubtitle: "नागरिक रिपोर्ट, समाधान प्रगति और नगर विकास के लिए आपका मंच।",
     btnNewReport: "नई रिपोर्ट करें",
+    btnReportIssue: "शिकायत दर्ज करें",
     statTotal: "कुल शहर की समस्याएं",
+
     statResolved: "हल की गई समस्याएं",
     statActive: "सक्रिय कार्य इकाइयाँ",
     statMine: "मेरी दर्ज समस्याएं",
