@@ -41,8 +41,15 @@ export const loginAPI = (email, password) =>
     body: JSON.stringify({ email, password }),
   })
 
+export const googleAuthAPI = (token) =>
+  apiFetch('/api/auth/google', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+  })
+
 export const logoutAPI = () =>
   apiFetch('/api/auth/logout', { method: 'POST' })
+
 
 // ---- USER API CALLS ----
 export const getProfileAPI = () => apiFetch('/api/users/profile')

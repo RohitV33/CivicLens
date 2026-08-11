@@ -12,8 +12,11 @@
 // ============================================================
 
 import bcrypt from "bcrypt";
+import { OAuth2Client } from "google-auth-library";
 import prisma from "../lib/prisma.js";
 import { generateToken } from "../utils/jwt.js";
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // ---- REGISTER SERVICE ----
 export const registerService = async (userData) => {
@@ -76,6 +79,12 @@ export const loginService = async (userData) => {
     throw error;
   }
 
+  if (!user.password) {
+    const error = new Error("This account was created using Google. Please log in with Google.");
+    error.statusCode = 400;
+    throw error;
+  }
+
   // Step 3: Compare the password the user typed with the hashed password in DB
   const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
@@ -86,7 +95,7 @@ export const loginService = async (userData) => {
   }
 
   // Step 4: Create a JWT token with user's id, email, and role
-  const token = generateToken({
+  const jwtToken = generateToken({
     id: user.id,
     email: user.email,
     role: user.role,
@@ -94,7 +103,7 @@ export const loginService = async (userData) => {
 
   // Step 5: Return token and safe user info (no password)
   return {
-    token,
+    token: jwtToken,
     user: {
       id: user.id,
       name: user.name,
@@ -103,3 +112,76 @@ export const loginService = async (userData) => {
     },
   };
 };
+
+// ---- GOOGLE AUTH SERVICE ----
+export const googleAuthService = async (googleToken) => {
+  let googleId, email, name;
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: googleToken,
+      audience: process.env.GOOGLE_CLIENT_ID || undefined,
+    });
+    const payload = ticket.getPayload();
+    googleId = payload.sub;
+    email = payload.email;
+    name = payload.name || payload.given_name || "Civic User";
+  } catch (err) {
+    const error = new Error("Invalid or expired Google token. " + err.message);
+    error.statusCode = 401;
+    throw error;
+  }
+
+  if (!email) {
+    const error = new Error("Google account does not provide an email address.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Find user by email or googleId
+  let user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { googleId },
+        { email },
+      ],
+    },
+  });
+
+  if (user) {
+    // Link googleId if missing
+    if (!user.googleId) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { googleId },
+      });
+    }
+  } else {
+    // Register new user via Google
+    user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        googleId,
+        password: null,
+        role: "USER",
+      },
+    });
+  }
+
+  const jwtToken = generateToken({
+    id: user.id,
+    email: user.email,
+    role: user.role,
+  });
+
+  return {
+    token: jwtToken,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+  };
+};

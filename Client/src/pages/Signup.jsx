@@ -9,6 +9,8 @@ import { useToast } from '../context/ToastContext'
 import { useAuth } from '../context/AuthContext'   // ← get login() function
 import { registerAPI, loginAPI } from '../services/api' // ← real API calls
 
+import GoogleAuthButton from '../components/GoogleAuthButton'
+
 const requirements = [
   { id: 'len', label: 'At least 8 characters', test: (v) => v.length >= 8 },
   { id: 'num', label: 'Contains a number', test: (v) => /\d/.test(v) },
@@ -70,7 +72,16 @@ export default function Signup() {
 
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="w-full max-w-sm mx-auto">
           <h1 className="font-display text-2xl font-bold text-text-primary dark:text-text-dark mb-1.5">Create your account</h1>
-          <p className="text-sm text-text-secondary dark:text-text-dark/60 mb-8">Start reporting civic issues and track their resolution.</p>
+          <p className="text-sm text-text-secondary dark:text-text-dark/60 mb-6">Start reporting civic issues and track their resolution.</p>
+
+          <GoogleAuthButton text="Sign up with Google" />
+
+          <div className="my-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border dark:bg-border-dark" />
+            <span className="text-[11px] text-text-secondary dark:text-text-dark/50 font-semibold uppercase tracking-wider">Or email</span>
+            <div className="h-px flex-1 bg-border dark:bg-border-dark" />
+          </div>
+
 
           <form onSubmit={submit} noValidate className="space-y-4">
             <div>

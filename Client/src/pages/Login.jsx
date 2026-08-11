@@ -9,6 +9,8 @@ import { useToast } from '../context/ToastContext'
 import { useAuth } from '../context/AuthContext'   // ← get login() function
 import { loginAPI } from '../services/api'         // ← real API call
 
+import GoogleAuthButton from '../components/GoogleAuthButton'
+
 export default function Login() {
   const [showPw, setShowPw] = useState(false)
   const [form, setForm] = useState({ email: '', password: '' })
@@ -101,9 +103,18 @@ export default function Login() {
           className="w-full max-w-md mx-auto bg-white dark:bg-[#1A1C20] rounded-[2.5rem] p-8 sm:p-10 border border-black/5 dark:border-white/10 shadow-craft"
         >
           <h1 className="font-serif text-3xl text-neutral-900 dark:text-white mb-2">Welcome back</h1>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-8">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6">
             Log in to continue reporting and tracking civic issues.
           </p>
+
+          <GoogleAuthButton text="Sign in with Google" />
+
+          <div className="my-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
+            <span className="text-[11px] text-neutral-400 font-semibold uppercase tracking-wider">Or email</span>
+            <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
+          </div>
+
 
           <form onSubmit={submit} noValidate className="space-y-5">
             <div>

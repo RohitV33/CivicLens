@@ -13,7 +13,7 @@
 //                              ← ← ← ← ← ← ← ←
 // ============================================================
 
-import { registerService, loginService } from "../services/auth.service.js";
+import { registerService, loginService, googleAuthService } from "../services/auth.service.js";
 
 // ---- POST /api/auth/register ----
 export const registerUser = async (req, res, next) => {
@@ -53,6 +53,24 @@ export const loginUser = async (req, res, next) => {
   }
 };
 
+// ---- POST /api/auth/google ----
+export const googleLoginUser = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+    const { token: jwtToken, user } = await googleAuthService(token);
+
+    res.status(200).json({
+      success: true,
+      message: "Authenticated with Google successfully!",
+      token: jwtToken,
+      data: user,
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
 // ---- POST /api/auth/logout ----
 export const logoutUser = (req, res) => {
   // Since we use JWT (token-based auth), logout is handled on the CLIENT side
@@ -63,4 +81,4 @@ export const logoutUser = (req, res) => {
     success: true,
     message: "Logged out successfully!",
   });
-};
+};
