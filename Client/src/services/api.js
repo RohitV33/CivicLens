@@ -96,6 +96,11 @@ export const createCommentAPI = (id, content) =>
     body: JSON.stringify({ content }),
   })
 
+export const deleteIssueAPI = (id) =>
+  apiFetch(`/api/issues/${id}`, { method: 'DELETE' })
+
+
+
 
 export const createIssueAPI = (issueData) => {
 

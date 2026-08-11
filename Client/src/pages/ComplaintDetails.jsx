@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  MapPin, Building2, MessageSquare, Send, Sparkles, Calendar, User, Loader2, CheckCircle2, ThumbsUp
+  MapPin, Building2, MessageSquare, Send, Sparkles, Calendar, User, Loader2, CheckCircle2, ThumbsUp, Trash2
 } from 'lucide-react'
+
 import AppLayout from '../components/AppLayout'
 import Card from '../components/Card'
 import Button from '../components/Button'
@@ -11,13 +12,16 @@ import MapCard from '../components/MapCard'
 import Timeline from '../components/Timeline'
 import { StatusChip, SeverityChip } from '../components/StatusChip'
 import { useToast } from '../context/ToastContext'
-import { getIssueByIdAPI, toggleUpvoteIssueAPI, getIssueCommentsAPI, createCommentAPI } from '../services/api'
+import { useAuth } from '../context/AuthContext'
+import { getIssueByIdAPI, toggleUpvoteIssueAPI, getIssueCommentsAPI, createCommentAPI, deleteIssueAPI } from '../services/api'
 import { getSLAStatus } from '../utils/sla'
 import { useLanguage } from '../context/LanguageContext'
 
 
 export default function ComplaintDetails() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const { user } = useAuth()
   const { t } = useLanguage()
   const [issue, setIssue] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -27,7 +31,22 @@ export default function ComplaintDetails() {
   const [upvoteCount, setUpvoteCount] = useState(0)
   const [hasUpvoted, setHasUpvoted] = useState(false)
   const [upvoting, setUpvoting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const { addToast } = useToast()
+
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to permanently delete this report?')) return
+    setDeleting(true)
+    try {
+      await deleteIssueAPI(issue.id)
+      addToast('Report deleted successfully', 'success')
+      navigate('/dashboard')
+    } catch (err) {
+      addToast(err.message || 'Failed to delete report', 'error')
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   const loadIssue = async () => {
     setLoading(true)
@@ -205,23 +224,39 @@ export default function ComplaintDetails() {
                   <span className="flex items-center gap-1.5 font-medium"><Calendar size={14} /> {new Date(issue.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleUpvote}
-                  disabled={upvoting}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold transition-all shadow-sm active:scale-95 ${
-                    hasUpvoted
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-emerald-500/20'
-                      : 'bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400'
-                  }`}
-                >
-                  <ThumbsUp size={14} className={hasUpvoted ? 'fill-current' : ''} />
-                  <span>{hasUpvoted ? t('btnUpvoted') : t('btnEndorseUpvote')}</span>
-                  <span className="px-2 py-0.5 rounded-full bg-black/10 dark:bg-white/10 text-[11px]">
-                    {upvoteCount}
-                  </span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleUpvote}
+                    disabled={upvoting}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold transition-all shadow-sm active:scale-95 ${
+                      hasUpvoted
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-emerald-500/20'
+                        : 'bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400'
+                    }`}
+                  >
+                    <ThumbsUp size={14} className={hasUpvoted ? 'fill-current' : ''} />
+                    <span>{hasUpvoted ? t('btnUpvoted') : t('btnEndorseUpvote')}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-black/10 dark:bg-white/10 text-[11px]">
+                      {upvoteCount}
+                    </span>
+                  </button>
+
+                  {(user?.id === issue.createdById || user?.role === 'ADMIN') && (
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      disabled={deleting}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs font-bold hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors"
+                      title="Delete Report"
+                    >
+                      <Trash2 size={14} />
+                      <span>{deleting ? 'Deleting...' : 'Delete'}</span>
+                    </button>
+                  )}
+                </div>
               </div>
+
 
             </div>
           </Card>

@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ShieldAlert, CheckCircle2, Clock, AlertTriangle, UserCheck,
-  Filter, Search, RefreshCw, Loader2, Send, Award, FileText, ChevronRight
+  Filter, Search, RefreshCw, Loader2, Send, Award, FileText, ChevronRight, Trash2
 } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
 import Card from '../components/Card'
@@ -19,6 +19,7 @@ import {
   updateIssuePriorityAPI,
   assignIssueAPI,
   getAdminAnalyticsAPI,
+  deleteIssueAPI,
 } from '../services/api'
 import { getSLAStatus } from '../utils/sla'
 
@@ -324,16 +325,27 @@ export default function AdminPortal() {
                     </td>
 
                     <td className="py-4 px-4 align-top text-right">
-                      <Button
-                        onClick={() => {
-                          setSelectedIssueModal(issue)
-                          setNewStatus(issue.status)
-                        }}
-                        className="py-1.5 px-3 text-xs shadow-sm"
-                      >
-                        {t('btnUpdateStatus')}
-                      </Button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Button
+                          onClick={() => {
+                            setSelectedIssueModal(issue)
+                            setNewStatus(issue.status)
+                          }}
+                          className="py-1.5 px-3 text-xs shadow-sm"
+                        >
+                          {t('btnUpdateStatus')}
+                        </Button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteIssue(issue.id)}
+                          className="p-1.5 rounded-lg border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                          title="Delete Report"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
                     </td>
+
 
                   </tr>
                 ))}

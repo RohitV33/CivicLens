@@ -362,3 +362,36 @@ export const toggleUpvoteIssueService = async (issueId, userId) => {
   };
 };
 
+// ---- Delete an issue ----
+export const deleteIssueService = async (issueId, user) => {
+  if (isNaN(issueId)) {
+    const error = new Error("Invalid issue ID");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const existingIssue = await prisma.issue.findUnique({
+    where: { id: issueId },
+  });
+
+  if (!existingIssue) {
+    const error = new Error("Issue not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Only creator or ADMIN can delete
+  if (existingIssue.createdById !== user.id && user.role !== "ADMIN") {
+    const error = new Error("Forbidden. You can only delete your own reported issues");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  await prisma.issue.delete({
+    where: { id: issueId },
+  });
+
+  return { message: "Report deleted successfully" };
+};
+
+
