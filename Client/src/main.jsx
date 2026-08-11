@@ -6,17 +6,22 @@ import App from './App.jsx'
 import './index.css'
 import 'leaflet/dist/leaflet.css'
 
+import { LanguageProvider } from './context/LanguageContext.jsx'
+
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <GoogleOAuthProvider clientId={googleClientId}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <LanguageProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </LanguageProvider>
     </GoogleOAuthProvider>
   </React.StrictMode>
 )
+
 
 // Register Service Worker for PWA support
 if ('serviceWorker' in navigator && import.meta.env.PROD) {

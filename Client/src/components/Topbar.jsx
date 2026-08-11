@@ -1,16 +1,18 @@
 import { useState } from 'react'
-import { Bell, Menu, PlusCircle, LogOut } from 'lucide-react'
+import { Bell, Menu, PlusCircle, LogOut, Languages } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import SearchBar from './SearchBar'
 import ThemeToggle from './ThemeToggle'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useAuth } from '../context/AuthContext'  // ← real user + logout
+import { useAuth } from '../context/AuthContext'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function Topbar({ onMenuClick, title }) {
   const [query, setQuery] = useState('')
   const [notifOpen, setNotifOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const { user, logout } = useAuth()  // real user data + logout function
+  const { user, logout } = useAuth()
+  const { lang, toggleLang } = useLanguage()
 
   // Get initials from name ("Rohit Sharma" → "RS")
   const initials = (user?.name || 'U')
@@ -30,11 +32,21 @@ export default function Topbar({ onMenuClick, title }) {
       <SearchBar value={query} onChange={setQuery} className="flex-1 max-w-md" />
 
       <div className="flex items-center gap-2 ml-auto">
+        <button
+          onClick={toggleLang}
+          title="Switch Language (English / हिंदी)"
+          className="h-9 px-2.5 rounded-xl flex items-center gap-1.5 text-xs font-bold text-neutral-800 dark:text-neutral-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors border border-black/10 dark:border-white/10"
+        >
+          <Languages size={15} />
+          <span>{lang === 'en' ? 'EN' : 'हिन्दी'}</span>
+        </button>
+
         <Link to="/report" className="btn-primary hidden sm:inline-flex">
           <PlusCircle size={15} /> Quick Report
         </Link>
 
         <ThemeToggle />
+
 
         <div className="relative">
           <button
