@@ -12,7 +12,8 @@ export default function Topbar({ onMenuClick, title }) {
   const [notifOpen, setNotifOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const { user, logout } = useAuth()
-  const { lang, toggleLang } = useLanguage()
+  const { lang, toggleLang, t } = useLanguage()
+
 
   // Get initials from name ("Rohit Sharma" → "RS")
   const initials = (user?.name || 'U')
@@ -42,8 +43,9 @@ export default function Topbar({ onMenuClick, title }) {
         </button>
 
         <Link to="/report" className="btn-primary hidden sm:inline-flex">
-          <PlusCircle size={15} /> Quick Report
+          <PlusCircle size={15} /> {t('quickReport')}
         </Link>
+
 
         <ThemeToggle />
 

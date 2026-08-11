@@ -5,19 +5,22 @@ import {
 } from 'lucide-react'
 import Logo from './Logo'
 import { useAuth } from '../context/AuthContext'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function Sidebar({ open, onClose }) {
   const { user, logout } = useAuth()
+  const { t } = useLanguage()
 
   const items = [
-    { to: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
-    { to: '/report', label: 'Report Issue', icon: PlusCircle },
-    { to: '/map', label: 'Map Explorer', icon: Map },
-    { to: '/profile', label: 'Profile', icon: User },
+    { to: '/dashboard', label: t('navDashboard'), icon: LayoutGrid },
+    { to: '/report', label: t('navReport'), icon: PlusCircle },
+    { to: '/map', label: t('navMap'), icon: Map },
+    { to: '/profile', label: t('navProfile'), icon: User },
     ...(user?.role === 'ADMIN'
-      ? [{ to: '/admin', label: 'Admin Portal', icon: ShieldAlert }]
+      ? [{ to: '/admin', label: t('navAdmin'), icon: ShieldAlert }]
       : []),
   ]
+
 
   const content = (
     <div className="h-full flex flex-col">
@@ -62,9 +65,10 @@ export default function Sidebar({ open, onClose }) {
 
       <div className="px-3 py-4 border-t border-border dark:border-border-dark flex flex-col gap-1">
         <button onClick={logout} className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-danger hover:bg-danger/5 transition-colors">
-          <LogOut size={17} /> Sign out
+          <LogOut size={17} /> {t('logout')}
         </button>
       </div>
+
     </div>
   )
 
