@@ -87,6 +87,16 @@ export const getIssueByIdAPI = (id) => apiFetch(`/api/issues/${id}`)
 export const toggleUpvoteIssueAPI = (id) =>
   apiFetch(`/api/issues/${id}/upvote`, { method: 'POST' })
 
+export const getIssueCommentsAPI = (id) =>
+  apiFetch(`/api/issues/${id}/comments`)
+
+export const createCommentAPI = (id, content) =>
+  apiFetch(`/api/issues/${id}/comments`, {
+    method: 'POST',
+    body: JSON.stringify({ content }),
+  })
+
+
 export const createIssueAPI = (issueData) => {
 
   const body =

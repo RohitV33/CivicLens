@@ -11,7 +11,7 @@ import MapCard from '../components/MapCard'
 import Timeline from '../components/Timeline'
 import { StatusChip, SeverityChip } from '../components/StatusChip'
 import { useToast } from '../context/ToastContext'
-import { getIssueByIdAPI, toggleUpvoteIssueAPI } from '../services/api'
+import { getIssueByIdAPI, toggleUpvoteIssueAPI, getIssueCommentsAPI, createCommentAPI } from '../services/api'
 import { getSLAStatus } from '../utils/sla'
 
 
@@ -21,6 +21,7 @@ export default function ComplaintDetails() {
   const [loading, setLoading] = useState(true)
   const [comment, setComment] = useState('')
   const [comments, setComments] = useState([])
+  const [postingComment, setPostingComment] = useState(false)
   const [upvoteCount, setUpvoteCount] = useState(0)
   const [hasUpvoted, setHasUpvoted] = useState(false)
   const [upvoting, setUpvoting] = useState(false)
@@ -29,8 +30,12 @@ export default function ComplaintDetails() {
   const loadIssue = async () => {
     setLoading(true)
     try {
-      const res = await getIssueByIdAPI(id)
+      const [res, commentsRes] = await Promise.all([
+        getIssueByIdAPI(id),
+        getIssueCommentsAPI(id).catch(() => ({ data: [] })),
+      ])
       setIssue(res.data)
+      setComments(commentsRes.data || [])
       setUpvoteCount(res.data.upvoteCount || 0)
       setHasUpvoted(Boolean(res.data.hasUpvoted))
     } catch (err) {
@@ -236,20 +241,37 @@ export default function ComplaintDetails() {
               <MessageSquare size={20} /> Discussion & Field Notes ({comments.length})
             </h2>
             <div className="space-y-4 mb-5">
-              {comments.map((c) => (
-                <div key={c.id} className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-white/10 text-neutral-900 dark:text-white flex items-center justify-center text-xs font-bold shrink-0">
-                    {c.name[0]}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold text-neutral-900 dark:text-white">{c.name}</p>
-                      <span className="text-xs text-neutral-400">{c.time}</span>
+              {comments.length === 0 ? (
+                <p className="text-xs text-neutral-500 py-2">No comments posted yet. Be the first to start the discussion!</p>
+              ) : (
+                comments.map((c) => (
+                  <div key={c.id} className="flex gap-3">
+                    {c.user?.avatarUrl ? (
+                      <img src={c.user.avatarUrl} alt={c.user.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-white/10 text-neutral-900 dark:text-white flex items-center justify-center text-xs font-bold shrink-0">
+                        {(c.user?.name || c.name || 'C')[0]}
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-neutral-900 dark:text-white">
+                          {c.user?.name || c.name || 'Citizen'}
+                          {c.user?.role === 'ADMIN' && (
+                            <span className="ml-1.5 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-bold">
+                              OFFICER
+                            </span>
+                          )}
+                        </p>
+                        <span className="text-[11px] text-neutral-400">
+                          {new Date(c.createdAt || c.time || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <p className="text-sm text-neutral-700 dark:text-neutral-300 mt-0.5">{c.content || c.text}</p>
                     </div>
-                    <p className="text-sm text-neutral-700 dark:text-neutral-300 mt-0.5">{c.text}</p>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
             <div className="flex gap-2">
               <input
@@ -258,12 +280,14 @@ export default function ComplaintDetails() {
                 onKeyDown={(e) => e.key === 'Enter' && postComment()}
                 placeholder="Add a comment or inquiry for municipal officers…"
                 className="input-field rounded-2xl"
+                disabled={postingComment}
               />
-              <Button onClick={postComment} icon={Send} className="shrink-0 rounded-2xl shadow-craft">
-                Post
+              <Button onClick={postComment} disabled={postingComment} icon={Send} className="shrink-0 rounded-2xl shadow-craft">
+                {postingComment ? 'Posting...' : 'Post'}
               </Button>
             </div>
           </Card>
+
         </div>
 
         {/* RIGHT COLUMN: Sidebar Info */}
