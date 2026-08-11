@@ -14,11 +14,12 @@ export default function Logo({ size = 52, showWordmark = true, className = '', s
           src={logoImg}
           alt="CivicLens AI"
           style={{ height: `${size}px` }}
-          className="w-auto max-w-full object-contain drop-shadow-sm filter dark:brightness-110 dark:contrast-125 transition-all duration-200"
+          className="w-auto max-w-full object-contain filter drop-shadow-sm dark:brightness-125 dark:drop-shadow-[0_0_10px_rgba(255,255,255,0.4)] transition-all duration-200"
           onError={(e) => {
             e.target.src = '/logo-transparent.png?v=3'
           }}
         />
+
       </motion.div>
     </div>
   )
