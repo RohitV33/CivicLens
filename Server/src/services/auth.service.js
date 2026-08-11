@@ -15,6 +15,8 @@ import bcrypt from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
 import prisma from "../lib/prisma.js";
 import { generateToken } from "../utils/jwt.js";
+import { sendEmail } from "../utils/email.js";
+
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -184,4 +186,84 @@ export const googleAuthService = async (googleToken) => {
       role: user.role,
     },
   };
-};
+};
+
+// ---- FORGOT PASSWORD SERVICE ----
+export const forgotPasswordService = async (email) => {
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (!user) {
+    return { message: "If your email is registered, you will receive a password reset token shortly." };
+  }
+
+  const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+  await prisma.passwordResetToken.deleteMany({
+    where: { userId: user.id },
+  });
+
+  await prisma.passwordResetToken.create({
+    data: {
+      userId: user.id,
+      token: resetToken,
+      expiresAt,
+    },
+  });
+
+  await sendEmail({
+    to: user.email,
+    subject: "🔐 CivicLens AI - Password Reset Request",
+    text: `Hello ${user.name},\n\nYour password reset verification code is: ${resetToken}\n\nThis code will expire in 60 minutes.\n\nIf you did not request this, please ignore this email.`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 500px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+        <h2 style="color: #0f172a;">CivicLens AI Password Reset</h2>
+        <p>Hello <strong>${user.name}</strong>,</p>
+        <p>Your password reset code is:</p>
+        <div style="background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 4px; border-radius: 8px;">
+          ${resetToken}
+        </div>
+        <p style="font-size: 12px; color: #64748b; margin-top: 15px;">This code will expire in 60 minutes.</p>
+      </div>
+    `,
+  });
+
+  return { message: "Password reset code sent to your email address!" };
+};
+
+// ---- RESET PASSWORD SERVICE ----
+export const resetPasswordService = async (token, newPassword) => {
+  if (!token || !newPassword) {
+    const error = new Error("Reset token and new password are required");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const resetRecord = await prisma.passwordResetToken.findUnique({
+    where: { token },
+    include: { user: true },
+  });
+
+  if (!resetRecord || resetRecord.expiresAt < new Date()) {
+    const error = new Error("Invalid or expired password reset code");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: resetRecord.userId },
+      data: { password: hashedPassword },
+    }),
+    prisma.passwordResetToken.delete({
+      where: { id: resetRecord.id },
+    }),
+  ]);
+
+  return { message: "Password reset successfully! You can now log in with your new password." };
+};
+

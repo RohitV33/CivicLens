@@ -64,8 +64,9 @@ model User {
   issuesReported Issue[]        @relation("CreatedIssues")
   issuesAssigned Issue[]        @relation("AssignedIssues")
   histories      IssueHistory[] @relation("UserHistories")
-  notifications  Notification[] @relation("UserNotifications")
-  upvotes        Upvote[]       @relation("UserUpvotes")
+  notifications  Notification[]       @relation("UserNotifications")
+  upvotes        Upvote[]             @relation("UserUpvotes")
+  resetTokens    PasswordResetToken[]
 }
 
 model Issue {
@@ -134,4 +135,14 @@ model Notification {
 
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
-}
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+

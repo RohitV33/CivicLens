@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Mail, Lock, Eye, EyeOff, ShieldCheck, MapPinned, Sparkles } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Mail, Lock, Eye, EyeOff, ShieldCheck, MapPinned, Sparkles, KeyRound, Loader2, ArrowLeft } from 'lucide-react'
 import Logo from '../components/Logo'
 import ThemeToggle from '../components/ThemeToggle'
 import Button from '../components/Button'
 import { useToast } from '../context/ToastContext'
-import { useAuth } from '../context/AuthContext'   // ← get login() function
-import { loginAPI } from '../services/api'         // ← real API call
-
+import { useAuth } from '../context/AuthContext'
+import { loginAPI, forgotPasswordAPI, resetPasswordAPI } from '../services/api'
 import GoogleAuthButton from '../components/GoogleAuthButton'
 
 export default function Login() {
@@ -16,8 +15,17 @@ export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
+
+  // Forgot Password Modal state
+  const [forgotModalOpen, setForgotModalOpen] = useState(false)
+  const [resetStep, setResetStep] = useState(1) // 1 = Enter Email, 2 = Enter Token & New Pw
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetToken, setResetToken] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
+
   const { addToast } = useToast()
-  const { user, login } = useAuth()  // login() saves token + redirects to dashboard
+  const { user, login } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -39,16 +47,51 @@ export default function Login() {
     if (!validate()) return
     setLoading(true)
     try {
-      // Call the real backend API
       const res = await loginAPI(form.email, form.password)
       addToast('Welcome back! Redirecting to your dashboard…', 'success')
-      // Save token + user data, then redirect to /dashboard
       login(res.token, res.data)
     } catch (err) {
-      // Show the error message from the server (e.g. "Invalid email or password")
       addToast(err.message || 'Login failed', 'error')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleRequestResetToken = async (e) => {
+    e.preventDefault()
+    if (!/^\S+@\S+\.\S+$/.test(resetEmail)) {
+      addToast('Please enter a valid email address', 'error')
+      return
+    }
+    setResetLoading(true)
+    try {
+      const res = await forgotPasswordAPI(resetEmail)
+      addToast(res.message || 'Reset code sent to your email!', 'success')
+      setResetStep(2)
+    } catch (err) {
+      addToast(err.message || 'Failed to request reset token', 'error')
+    } finally {
+      setResetLoading(false)
+    }
+  }
+
+  const handleConfirmReset = async (e) => {
+    e.preventDefault()
+    if (!resetToken || newPassword.length < 6) {
+      addToast('Please enter code and password (min 6 chars)', 'error')
+      return
+    }
+    setResetLoading(true)
+    try {
+      const res = await resetPasswordAPI(resetToken, newPassword)
+      addToast(res.message || 'Password reset successfully!', 'success')
+      setForgotModalOpen(false)
+      setResetStep(1)
+      setForm((prev) => ({ ...prev, email: resetEmail }))
+    } catch (err) {
+      addToast(err.message || 'Failed to reset password', 'error')
+    } finally {
+      setResetLoading(false)
     }
   }
 
@@ -115,7 +158,6 @@ export default function Login() {
             <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
           </div>
 
-
           <form onSubmit={submit} noValidate className="space-y-5">
             <div>
               <label className="label-text mb-2 block">Email</label>
@@ -130,7 +172,19 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="label-text mb-2 block">Password</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="label-text block">Password</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetEmail(form.email)
+                    setForgotModalOpen(true)
+                  }}
+                  className="text-xs text-neutral-500 hover:text-black dark:hover:text-white font-semibold"
+                >
+                  Forgot password?
+                </button>
+              </div>
               <div className="relative">
                 <input
                   type={showPw ? 'text' : 'password'}
@@ -163,6 +217,100 @@ export default function Login() {
           </p>
         </motion.div>
       </div>
+
+      {/* Forgot Password Modal */}
+      <AnimatePresence>
+        {forgotModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-[#1A1C20] rounded-3xl p-7 max-w-md w-full shadow-2xl border border-black/10 dark:border-white/10 space-y-5"
+            >
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                    <KeyRound size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-xl text-neutral-900 dark:text-white font-bold">
+                      {resetStep === 1 ? 'Reset Password' : 'Verify & Set New Password'}
+                    </h3>
+                    <p className="text-xs text-neutral-500">
+                      {resetStep === 1 ? 'Step 1 of 2: Request reset code' : 'Step 2 of 2: Enter code & new password'}
+                    </p>
+                  </div>
+                </div>
+                <button onClick={() => setForgotModalOpen(false)} className="text-neutral-400 hover:text-black dark:hover:text-white text-xl font-bold">
+                  ✕
+                </button>
+              </div>
+
+              {resetStep === 1 ? (
+                <form onSubmit={handleRequestResetToken} className="space-y-4">
+                  <p className="text-xs text-neutral-600 dark:text-neutral-300">
+                    Enter your registered email address below. We will send a 6-digit password verification code to your inbox.
+                  </p>
+                  <div>
+                    <label className="label-text mb-1 block">Account Email</label>
+                    <input
+                      type="email"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      placeholder="name@example.com"
+                      className="input-field rounded-2xl text-sm"
+                      required
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <Button type="button" onClick={() => setForgotModalOpen(false)} variant="outline" className="flex-1 justify-center py-2.5">
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={resetLoading} className="flex-1 justify-center py-2.5 shadow-craft">
+                      {resetLoading ? <Loader2 size={16} className="animate-spin" /> : 'Send Code'}
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <form onSubmit={handleConfirmReset} className="space-y-4">
+                  <div>
+                    <label className="label-text mb-1 block">6-Digit Verification Code</label>
+                    <input
+                      type="text"
+                      value={resetToken}
+                      onChange={(e) => setResetToken(e.target.value)}
+                      placeholder="e.g. 849201"
+                      className="input-field rounded-2xl text-sm font-mono tracking-widest text-center text-lg font-bold"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="label-text mb-1 block">New Password</label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="input-field rounded-2xl text-sm"
+                      required
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <Button type="button" onClick={() => setResetStep(1)} variant="outline" className="py-2.5 px-3">
+                      <ArrowLeft size={16} />
+                    </Button>
+                    <Button type="submit" disabled={resetLoading} className="flex-1 justify-center py-2.5 shadow-craft">
+                      {resetLoading ? <Loader2 size={16} className="animate-spin" /> : 'Reset Password'}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
+

@@ -47,8 +47,21 @@ export const googleAuthAPI = (token) =>
     body: JSON.stringify({ token }),
   })
 
+export const forgotPasswordAPI = (email) =>
+  apiFetch('/api/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+
+export const resetPasswordAPI = (token, newPassword) =>
+  apiFetch('/api/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, newPassword }),
+  })
+
 export const logoutAPI = () =>
   apiFetch('/api/auth/logout', { method: 'POST' })
+
 
 
 // ---- USER API CALLS ----

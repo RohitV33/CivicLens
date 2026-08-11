@@ -7,6 +7,8 @@ import {
   registerUser,
   loginUser,
   googleLoginUser,
+  forgotPassword,
+  resetPassword,
   logoutUser,
 } from "../controllers/auth.controller.js";
 import { validate } from "../middleware/validate.js";
@@ -22,6 +24,12 @@ router.post("/login", validate(loginSchema), loginUser);
 
 // POST /api/auth/google -> Google OAuth Login/Signup
 router.post("/google", validate(googleAuthSchema), googleLoginUser);
+
+// POST /api/auth/forgot-password -> Request password reset code
+router.post("/forgot-password", forgotPassword);
+
+// POST /api/auth/reset-password -> Reset password with token
+router.post("/reset-password", resetPassword);
 
 // POST /api/auth/logout -> Logout
 router.post("/logout", logoutUser);
