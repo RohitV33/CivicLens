@@ -15,7 +15,8 @@ export default function Topbar({ onMenuClick, title }) {
   const { lang, toggleLang, t } = useLanguage()
 
 
-  // Get initials from name ("Rohit Sharma" → "RS")
+  // Get initials from name ("Alex Morgan" → "AM")
+
   const initials = (user?.name || 'U')
     .split(' ')
     .map((n) => n[0])

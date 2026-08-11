@@ -91,7 +91,8 @@ export default function Signup() {
                 <input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Rohit Sharma"
+                  placeholder="Alex Morgan"
+
                   className={`input-field pl-10 ${errors.name ? '!border-danger focus:!ring-danger/10' : ''}`}
                 />
               </div>
