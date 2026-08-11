@@ -21,6 +21,10 @@ import { errorHandler } from "./middleware/error.middleware.js";
 
 const app = express();
 
+// Trust proxy for Render / Vercel rate-limiting headers
+app.set('trust proxy', 1);
+
+
 // 1. HTTP Security Headers
 app.use(helmet());
 
