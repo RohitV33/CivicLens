@@ -54,6 +54,13 @@ export const logoutAPI = () =>
 // ---- USER API CALLS ----
 export const getProfileAPI = () => apiFetch('/api/users/profile')
 
+export const updateProfileAPI = (profileData) =>
+  apiFetch('/api/users/profile', {
+    method: 'PATCH',
+    body: JSON.stringify(profileData),
+  })
+
+
 // ---- ISSUE API CALLS ----
 export const getAllIssuesAPI = (params = {}) => {
   const query = new URLSearchParams(params).toString()

@@ -52,6 +52,11 @@ export function AuthProvider({ children }) {
     navigate('/dashboard')
   }
 
+  // Called when user profile is updated
+  const updateUser = (updatedData) => {
+    setUser((prev) => ({ ...prev, ...updatedData }))
+  }
+
   // Called when user clicks logout
   const logout = () => {
     localStorage.removeItem('token') // remove token from localStorage
@@ -60,10 +65,11 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   )
+
 }
 
 // Step 3: Custom hook — use this in any component to access auth state

@@ -78,10 +78,19 @@ export default function Topbar({ onMenuClick, title }) {
             onClick={() => setUserMenuOpen((o) => !o)}
             className="flex items-center gap-2 pl-1"
           >
-            <div className="w-8 h-8 rounded-full bg-primary/15 text-primary dark:text-primary-dark flex items-center justify-center text-xs font-semibold shrink-0">
-              {initials}
-            </div>
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={user.name || 'User'}
+                className="w-8 h-8 rounded-full object-cover ring-2 ring-primary/20 shrink-0"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-primary/15 text-primary dark:text-primary-dark flex items-center justify-center text-xs font-semibold shrink-0">
+                {initials}
+              </div>
+            )}
           </button>
+
           <AnimatePresence>
             {userMenuOpen && (
               <motion.div

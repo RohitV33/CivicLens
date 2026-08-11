@@ -23,6 +23,9 @@ export const getMyProfile = async (req, res, next) => {
         id: true,
         name: true,
         email: true,
+        avatarUrl: true,
+        bio: true,
+        location: true,
         role: true,
         createdAt: true,
       },
@@ -43,6 +46,45 @@ export const getMyProfile = async (req, res, next) => {
     next(error);
   }
 };
+
+// ---- PATCH /api/users/profile ----
+// Updates the logged-in user's profile
+export const updateMyProfile = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { name, avatarUrl, bio, location } = req.body;
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(name !== undefined && { name }),
+        ...(avatarUrl !== undefined && { avatarUrl }),
+        ...(bio !== undefined && { bio }),
+        ...(location !== undefined && { location }),
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatarUrl: true,
+        bio: true,
+        location: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully!",
+      data: updatedUser,
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 // ---- GET /api/users/all ----
 // Returns ALL users in the database

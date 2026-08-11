@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import {
-  MapPin, Calendar, Edit3, FileText, CheckCircle2, Award, Flag, Layers,
-  Megaphone, ThumbsUp, Flame, Trophy, Save, Loader2, PlusCircle
+  MapPin, Calendar, Edit3, FileText, Award, Flag, Layers,
+  Megaphone, ThumbsUp, Flame, Trophy, Save, Loader2, PlusCircle, Camera, Upload
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import AppLayout from '../components/AppLayout'
@@ -15,7 +15,7 @@ import { achievements } from '../data/mockData'
 import { useCountUp } from '../hooks/useCountUp'
 import { useToast } from '../context/ToastContext'
 import { useAuth } from '../context/AuthContext'
-import { getProfileAPI, getMyIssuesAPI } from '../services/api'
+import { getProfileAPI, getMyIssuesAPI, updateProfileAPI, uploadImageAPI } from '../services/api'
 
 const achievementIcons = { Flag, Layers, Megaphone, ThumbsUp, Flame, Trophy }
 
@@ -30,16 +30,22 @@ function ProfileStat({ value, label }) {
 }
 
 export default function Profile() {
-  const { user } = useAuth()
+  const { user, updateUser } = useAuth()
   const [profileData, setProfileData] = useState(null)
   const [myIssues, setMyIssues] = useState([])
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [uploadingDp, setUploadingDp] = useState(false)
 
   const [editOpen, setEditOpen] = useState(false)
   const [name, setName] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState('')
   const [bio, setBio] = useState('Active citizen contributor on CivicLens platform.')
   const [locationStr, setLocationStr] = useState('Ghaziabad, UP')
   const { addToast } = useToast()
+
+  const fileInputRef = useRef(null)
+  const modalFileInputRef = useRef(null)
 
   const loadData = async () => {
     setLoading(true)
@@ -52,6 +58,9 @@ export default function Profile() {
       const u = profileRes.data || user
       setProfileData(u)
       setName(u?.name || 'Citizen')
+      setAvatarUrl(u?.avatarUrl || '')
+      setBio(u?.bio || 'Active citizen contributor on CivicLens platform.')
+      setLocationStr(u?.location || 'Ghaziabad, UP')
       setMyIssues(issuesRes.data || [])
     } catch (err) {
       console.error('Failed to load profile data', err)
@@ -70,6 +79,57 @@ export default function Profile() {
     .join('')
     .toUpperCase()
 
+  const handleAvatarFile = async (file) => {
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      addToast('Please select a valid image file', 'error')
+      return
+    }
+
+    setUploadingDp(true)
+    try {
+      const res = await uploadImageAPI(file)
+      const newAvatarUrl = res.url || res.data?.url
+      if (!newAvatarUrl) throw new Error('Failed to obtain uploaded image URL')
+
+      setAvatarUrl(newAvatarUrl)
+
+      // Save to database immediately
+      const updatedUserRes = await updateProfileAPI({ avatarUrl: newAvatarUrl })
+      if (updateUser) {
+        updateUser(updatedUserRes.data || { avatarUrl: newAvatarUrl })
+      }
+      addToast('Display picture updated successfully!', 'success')
+    } catch (err) {
+      addToast(err.message || 'Failed to upload display picture', 'error')
+    } finally {
+      setUploadingDp(false)
+    }
+  }
+
+  const handleSaveProfile = async () => {
+    setSaving(true)
+    try {
+      const res = await updateProfileAPI({
+        name,
+        avatarUrl,
+        bio,
+        location: locationStr,
+      })
+
+      if (updateUser) {
+        updateUser(res.data)
+      }
+      setProfileData(res.data)
+      setEditOpen(false)
+      addToast('Profile updated successfully!', 'success')
+    } catch (err) {
+      addToast(err.message || 'Failed to update profile', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const submittedCount = myIssues.length
   const resolvedCount = myIssues.filter((i) => i.status === 'RESOLVED').length
   const totalPoints = (submittedCount * 50) + (resolvedCount * 100)
@@ -77,11 +137,6 @@ export default function Profile() {
   const joinedDateStr = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })
     : 'March 2026'
-
-  const save = () => {
-    setEditOpen(false)
-    addToast('Profile information saved locally.', 'success')
-  }
 
   return (
     <AppLayout title="Profile">
@@ -93,9 +148,43 @@ export default function Profile() {
         </div>
         <div className="px-6 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-10 sm:-mt-12">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 flex items-center justify-center text-2xl font-display font-bold border-4 border-surface dark:border-card-dark shrink-0 shadow-lg">
-              {initials}
+            {/* Avatar / DP container */}
+            <div className="relative group shrink-0">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 flex items-center justify-center text-2xl font-display font-bold border-4 border-surface dark:border-card-dark shrink-0 shadow-lg overflow-hidden relative">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+                ) : (
+                  initials
+                )}
+
+                {uploadingDp && (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white">
+                    <Loader2 className="animate-spin" size={24} />
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingDp}
+                className="absolute -bottom-1 -right-1 p-2 rounded-xl bg-primary text-white hover:bg-primary-dark shadow-md cursor-pointer transition-transform hover:scale-105 active:scale-95 border-2 border-surface dark:border-card-dark"
+                title="Upload or change display picture"
+              >
+                <Camera size={14} />
+              </button>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) handleAvatarFile(e.target.files[0])
+                }}
+              />
             </div>
+
             <div className="flex-1 min-w-0 pb-1">
               <div className="flex items-center gap-2">
                 <h1 className="font-display text-2xl font-bold text-text-primary dark:text-text-dark">{name}</h1>
@@ -216,14 +305,53 @@ export default function Profile() {
         footer={
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button icon={Save} onClick={save}>Save changes</Button>
+            <Button icon={saving ? Loader2 : Save} disabled={saving || uploadingDp} onClick={handleSaveProfile}>
+              {saving ? 'Saving...' : 'Save changes'}
+            </Button>
           </div>
         }
       >
-        <div className="space-y-4">
+        <div className="space-y-5">
+          {/* Avatar Upload in Modal */}
+          <div className="flex items-center gap-4 p-3.5 rounded-2xl bg-neutral-50 dark:bg-white/5 border border-border dark:border-border-dark">
+            <div className="w-16 h-16 rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 flex items-center justify-center text-xl font-bold overflow-hidden shrink-0 relative">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="DP" className="w-full h-full object-cover" />
+              ) : (
+                initials
+              )}
+              {uploadingDp && (
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white">
+                  <Loader2 className="animate-spin" size={20} />
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-text-primary dark:text-text-dark">Profile Picture (DP)</p>
+              <p className="text-xs text-text-secondary dark:text-text-dark/60 mt-0.5">JPG, PNG or WEBP up to 5MB</p>
+              <button
+                type="button"
+                onClick={() => modalFileInputRef.current?.click()}
+                disabled={uploadingDp}
+                className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-primary dark:text-primary-dark hover:underline"
+              >
+                <Upload size={13} /> {uploadingDp ? 'Uploading...' : 'Change Display Picture'}
+              </button>
+              <input
+                ref={modalFileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) handleAvatarFile(e.target.files[0])
+                }}
+              />
+            </div>
+          </div>
+
           <div>
             <label className="label-text mb-1.5 block">Full Name</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className="input-field font-bold" />
+            <input value={name} onChange={(e) => setName(e.target.value)} className="input-field font-semibold" />
           </div>
           <div>
             <label className="label-text mb-1.5 block">Bio</label>
