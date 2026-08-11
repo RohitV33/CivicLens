@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, ChevronDown, Sparkles, Zap } from 'lucide-react'
 import Logo from './Logo'
 import ThemeToggle from './ThemeToggle'
+import { useAuth } from '../context/AuthContext'
+
 
 const navLinks = [
   { label: 'Product', sectionId: 'features' },
@@ -14,7 +16,9 @@ const navLinks = [
 ]
 
 export default function Navbar() {
+  const { user } = useAuth()
   const [scrolled, setScrolled] = useState(false)
+
   const [open, setOpen] = useState(false)
   const [activeSection, setActiveSection] = useState(null)
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 })
@@ -90,7 +94,7 @@ export default function Navbar() {
     <div className="w-full z-50 sticky top-0 font-sans">
       {/* ── Floating Capsule Header ── */}
       <header className="max-w-6xl mx-auto px-4 pt-3 pb-2 transition-all duration-300">
-        <div className={`w-full rounded-full transition-all duration-500 px-5 sm:px-7 py-1.5 flex items-center justify-between ${
+        <div className={`w-full rounded-full transition-all duration-500 px-5 sm:px-7 py-2.5 flex items-center justify-between ${
           scrolled
             ? 'bg-white/95 dark:bg-[#18191C]/95 backdrop-blur-2xl shadow-[0_8px_40px_rgba(0,0,0,0.12)] border border-black/10 dark:border-white/10'
             : 'bg-white/85 dark:bg-[#18191C]/85 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.07)] border border-white/70 dark:border-white/10'
@@ -98,8 +102,9 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link to="/" className="shrink-0 flex items-center group">
-            <Logo size={85} />
+            <Logo size={52} />
           </Link>
+
 
 
           {/* Desktop Nav Links with Sliding Indicator */}
@@ -152,12 +157,13 @@ export default function Navbar() {
               Log in
             </Link>
             <Link
-              to="/report"
+              to={user ? "/report" : "/signup"}
               className="inline-flex items-center justify-center rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold px-4 py-2 text-sm hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-sm"
             >
               Report Issue
             </Link>
           </div>
+
 
           {/* Mobile Hamburger */}
           <div className="flex items-center gap-2 md:hidden">
@@ -218,12 +224,13 @@ export default function Navbar() {
                     Log in
                   </Link>
                   <Link
-                    to="/report"
+                    to={user ? "/report" : "/signup"}
                     onClick={() => setOpen(false)}
                     className="inline-flex items-center justify-center rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold px-5 py-2.5 text-sm shadow-sm"
                   >
                     Report Issue
                   </Link>
+
                 </div>
               </div>
             </motion.div>

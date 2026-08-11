@@ -1,15 +1,14 @@
 import { motion } from 'framer-motion'
-import logoCivicImg from '../assets/logo_civic.png?v=5'
+import logoCivicImg from '../assets/logo_civic.png?v=6'
 
-export default function Logo({ size = 80, className = '' }) {
-
+export default function Logo({ size = 52, className = '' }) {
   return (
     <div className={`flex items-center group cursor-pointer select-none ${className}`}>
       <motion.div
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.97 }}
         transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-        className="relative flex items-center shrink-0 dark:bg-white/95 dark:px-5 dark:py-1.5 dark:rounded-xl dark:shadow-md transition-all"
+        className="relative flex items-center shrink-0 dark:bg-white/95 dark:px-3 dark:py-1 dark:rounded-xl dark:shadow-md transition-all"
       >
         <img
           src={logoCivicImg}
@@ -17,7 +16,7 @@ export default function Logo({ size = 80, className = '' }) {
           style={{ height: `${size}px` }}
           className="w-auto max-w-full object-contain filter drop-shadow-sm transition-all duration-200"
           onError={(e) => {
-            e.target.src = '/logo_civic.png?v=7'
+            e.target.src = '/logo_civic.png?v=6'
           }}
         />
       </motion.div>

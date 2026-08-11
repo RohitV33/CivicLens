@@ -10,6 +10,7 @@ import Button from '../components/Button'
 import ImageUploader from '../components/ImageUploader'
 import MapCard from '../components/MapCard'
 import { useToast } from '../context/ToastContext'
+import { useAuth } from '../context/AuthContext'
 import {
   createIssueAPI,
   uploadImageAPI,
@@ -22,7 +23,18 @@ import { useLanguage } from '../context/LanguageContext'
 
 export default function ReportIssue() {
   const { t } = useLanguage()
+  const { user, loading: authLoading } = useAuth()
+  const navigate = useNavigate()
+  const { addToast } = useToast()
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/signup')
+    }
+  }, [user, authLoading, navigate])
+
   const [file, setFile] = useState(null)
+
   const [imageUrl, setImageUrl] = useState(null)
   const [uploadingImage, setUploadingImage] = useState(false)
 
@@ -40,10 +52,8 @@ export default function ReportIssue() {
   const [coords, setCoords] = useState({ lat: 28.6692, lng: 77.4538 }) // Default: Ghaziabad / Delhi NCR
   const [locating, setLocating] = useState(false)
 
-  const navigate = useNavigate()
-  const { addToast } = useToast()
-
   // Get current GPS position on mount
+
   const detectUserLocation = () => {
     if (!navigator.geolocation) {
       setLocationAddress('GT Road, Sector 14, Ghaziabad')

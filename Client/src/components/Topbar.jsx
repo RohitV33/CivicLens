@@ -42,9 +42,10 @@ export default function Topbar({ onMenuClick, title }) {
           <span>{lang === 'en' ? 'EN' : 'हिन्दी'}</span>
         </button>
 
-        <Link to="/report" className="btn-primary hidden sm:inline-flex">
+        <Link to={user ? "/report" : "/signup"} className="btn-primary hidden sm:inline-flex">
           <PlusCircle size={15} /> {t('quickReport')}
         </Link>
+
 
 
         <ThemeToggle />

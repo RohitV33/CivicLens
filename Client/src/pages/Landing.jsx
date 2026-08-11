@@ -524,9 +524,10 @@ export default function Landing() {
     if (user) {
       navigate('/report')
     } else {
-      navigate('/login')
+      navigate('/signup')
     }
   }
+
 
   return (
     <div className="min-h-screen bg-[#FAF8F5] dark:bg-[#080809] text-neutral-900 dark:text-white font-sans selection:bg-blue-500/20 overflow-x-hidden">
