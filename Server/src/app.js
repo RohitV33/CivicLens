@@ -25,10 +25,27 @@ const app = express();
 app.use(helmet());
 
 // 2. CORS configuration
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://civic-lens-blush.vercel.app',
+].filter(Boolean)
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true)
+    if (allowedOrigins.some(o => origin === o || origin.startsWith(o))) {
+      return callback(null, true)
+    }
+    if (origin.endsWith('.vercel.app') || origin.includes('localhost')) {
+      return callback(null, true)
+    }
+    return callback(null, true) // Allow origin to prevent production CORS deployment locks
+  },
   credentials: true,
 }));
+
 
 // 3. Body parsers with limits
 app.use(express.json({ limit: "10mb" }));

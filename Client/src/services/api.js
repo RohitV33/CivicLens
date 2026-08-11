@@ -18,10 +18,16 @@ const apiFetch = async (url, options = {}) => {
 
   const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`
 
-  const response = await fetch(fullUrl, {
-    ...options,
-    headers,
-  })
+  let response
+  try {
+    response = await fetch(fullUrl, {
+      ...options,
+      headers,
+    })
+  } catch (err) {
+    throw new Error('Connecting to backend server... If the server was asleep, please wait 15 seconds and try again.')
+  }
+
 
   const text = await response.text()
   let data = {}
