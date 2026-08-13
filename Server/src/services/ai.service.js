@@ -126,12 +126,39 @@ export const analyzeIssueImageService = async ({ imageUrl = "", title = "", desc
 
       const imagePart = await fetchImagePart(imageUrl);
 
-      const prompt = `You are an expert AI Computer Vision System for CivicLens, an urban civic issue reporting platform.
-Examine the provided image pixels and text metadata ("${title} ${description}").
+      const prompt = `Analyze the uploaded image for civic-issue relevance.
+
+VALID civic issue images include:
+- garbage or waste accumulation
+- plastic waste, paper, cardboard, glass, metal, organic waste
+- overflowing garbage bins or dumped litter on public places
+- potholes and damaged roads
+- broken streetlights
+- damaged public infrastructure
+- water leakage or flooding
+- sewage/drainage problems
+- damaged sidewalks
+- illegal dumping
+- other visible public-space problems
+
+INVALID images include:
+- screenshots
+- graphs or charts
+- documents
+- invoices
+- memes
+- UI screenshots
+- random unrelated objects
+- selfies/portraits
+- completely unrelated scenery
+
+IMPORTANT:
+A photo containing physical garbage, litter, plastic waste, cans, wrappers, or dumped waste is a VALID civic issue image.
+Do NOT classify a real-world photograph of garbage as a document, graph, chart, or screenshot.
 
 Tasks:
-1. Determine if this image shows a real civic/urban infrastructure problem (such as a road pothole, overflowing garbage bin, broken streetlight, water pipe leak, road asphalt crack, sewage overflow, blocked drainage, or damaged public property).
-2. If it is NOT a civic issue (e.g. an anime character, graph/chart diagram, document, code screenshot, personal selfie, pet, food, car wallpaper, game, meme, or artwork):
+1. Determine if this image shows a real civic/urban infrastructure problem.
+2. If it is NOT a civic issue (e.g. an anime character, graph/chart diagram, document, invoice, code screenshot, personal selfie, pet, meme, or artwork):
    - Set isCivicIssue = false
    - Set category = "OTHER"
    - Set priority = "LOW"
@@ -139,18 +166,18 @@ Tasks:
    - Set aiClassification = "Non-Civic Photo / Document / Graph Image Detected"
    - Set suggestedTitle = "Non-Civic Photo Uploaded"
    - Set suggestedDescription = "This photo does not depict a municipal defect."
-   - Set warning = "⚠️ AI Vision Alert: The scanned image shows a graph/chart/document or non-civic media rather than a physical civic infrastructure defect. Please upload a clear photo of a pothole, garbage dump, broken streetlight, or water leakage."
+   - Set warning = "⚠️ AI Vision Alert: The scanned image shows a graph/chart/document or non-civic media rather than a physical civic infrastructure defect."
 3. If it IS a civic issue:
    - Set isCivicIssue = true
    - Choose category from: ["POTHOLE", "GARBAGE", "STREETLIGHT", "WATER_LEAKAGE", "ROAD_DAMAGE", "SEWAGE", "DRAINAGE", "OTHER"]
    - Choose priority from: ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
-   - Calculate confidence (percentage between 70.0 and 99.0)
+   - Calculate confidence (percentage between 75.0 and 99.0)
    - Write a concise technical aiClassification sentence describing the defect shown in the image.
    - Generate a professional 4-8 word suggestedTitle describing the defect.
    - Generate a detailed 2-3 sentence suggestedDescription describing the problem, hazard, and recommended municipal repair action.
    - Set warning = null
 
-Return strictly valid JSON only with NO markdown formatting, adhering to this format:
+Return strictly valid JSON only with NO markdown formatting:
 {
   "isCivicIssue": boolean,
   "category": "POTHOLE" | "GARBAGE" | "STREETLIGHT" | "WATER_LEAKAGE" | "ROAD_DAMAGE" | "SEWAGE" | "DRAINAGE" | "OTHER",
@@ -202,12 +229,12 @@ Return strictly valid JSON only with NO markdown formatting, adhering to this fo
     }
   }
 
-
   // 2. Enhanced Fallback Heuristic Inspection Engine
   const fullText = `${imageUrl} ${title} ${description}`.toLowerCase();
-  const isNonCivic = NON_CIVIC_TERMS.some((term) => fullText.includes(term));
+  const hasWasteKeywords = ["garb", "trash", "waste", "dump", "litter", "plastic", "paper", "cardboard", "glass", "metal", "organic", "bin", "rubbish", "overflow", "pothole", "streetlight", "leakage", "sewage", "drainage"].some((k) => fullText.includes(k));
+  const isExplicitNonCivic = !hasWasteKeywords && NON_CIVIC_TERMS.some((term) => fullText.includes(term));
 
-  if (isNonCivic) {
+  if (isExplicitNonCivic) {
     return {
       isCivicIssue: false,
       category: "OTHER",
@@ -217,8 +244,8 @@ Return strictly valid JSON only with NO markdown formatting, adhering to this fo
       suggestedTitle: "Non-Civic Image Uploaded",
       suggestedDescription: "The uploaded image does not appear to show a municipal infrastructure issue.",
       warning:
-        "⚠️ AI Vision Alert: The uploaded image appears to be a Graph/Chart/Document rather than a physical civic infrastructure defect. Please upload a clear photo of a pothole, garbage, streetlight, or water leakage.",
-      summary: "Non-civic image detected. AI recommends uploading genuine photo evidence of municipal defects.",
+        "⚠️ AI Vision Alert: The uploaded image appears to be a Graph/Chart/Document rather than a physical civic infrastructure defect.",
+      summary: "Non-civic image detected.",
     };
   }
 

@@ -128,6 +128,16 @@ export default function ReportIssue() {
         title: title || selectedFile.name,
         description: description || 'Citizen reported issue',
       })
+
+      // If YOLOv8 detected waste objects, override false non-civic flags
+      if (wasteRes?.data?.detections?.length > 0 && aiRes.data) {
+        aiRes.data.isCivicIssue = true
+        aiRes.data.warning = null
+        if (aiRes.data.category === 'OTHER') {
+          aiRes.data.category = wasteRes.data.summary?.issueCategory || 'GARBAGE'
+        }
+      }
+
       setAiResult(aiRes.data)
 
       if (wasteRes?.data?.summary?.suggestedTitle && !title) {
