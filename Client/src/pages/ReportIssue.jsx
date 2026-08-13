@@ -122,18 +122,19 @@ export default function ReportIssue() {
       const uploadedUrl = uploadRes.data.url
       setImageUrl(uploadedUrl)
 
-      // 4. Trigger Gemini Vision AI Computer Vision Classification
+      // 4. Trigger Gemini Vision AI Computer Vision Classification with YOLO Context
       const aiRes = await analyzeIssueAIAPI({
         imageUrl: dataUri || uploadedUrl,
         title: title || selectedFile.name,
         description: description || 'Citizen reported issue',
+        yoloResult: wasteRes?.data,
       })
 
-      // If YOLOv8 detected waste objects, override false non-civic flags
+      // If YOLOv8 detected waste objects, enforce category GARBAGE
       if (wasteRes?.data?.detections?.length > 0 && aiRes.data) {
         aiRes.data.isCivicIssue = true
         aiRes.data.warning = null
-        if (aiRes.data.category === 'OTHER') {
+        if (aiRes.data.category === 'POTHOLE' || aiRes.data.category === 'OTHER') {
           aiRes.data.category = wasteRes.data.summary?.issueCategory || 'GARBAGE'
         }
       }

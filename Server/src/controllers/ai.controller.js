@@ -11,9 +11,9 @@ import {
 // POST /api/ai/analyze
 export const analyzeIssueImage = async (req, res, next) => {
   try {
-    const { imageUrl, title, description } = req.body;
+    const { imageUrl, title, description, yoloResult } = req.body;
 
-    const result = await analyzeIssueImageService({ imageUrl, title, description });
+    const result = await analyzeIssueImageService({ imageUrl, title, description, yoloResult });
 
     res.status(200).json({
       success: true,

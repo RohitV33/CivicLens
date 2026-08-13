@@ -154,10 +154,10 @@ export const classifyWasteAIAPI = (file) => {
   })
 }
 
-export const analyzeIssueAIAPI = ({ imageUrl, title, description }) =>
+export const analyzeIssueAIAPI = ({ imageUrl, title, description, yoloResult }) =>
   apiFetch('/api/ai/analyze', {
     method: 'POST',
-    body: JSON.stringify({ imageUrl, title, description }),
+    body: JSON.stringify({ imageUrl, title, description, yoloResult }),
   })
 
 export const checkDuplicateAIAPI = ({ latitude, longitude, category, radiusInKm }) =>

@@ -110,8 +110,11 @@ const GENERATE_CIVIC_TEXT = (category) => {
 };
 
 // ---- AI Computer Vision & Classification Engine ----
-export const analyzeIssueImageService = async ({ imageUrl = "", title = "", description = "" }) => {
+export const analyzeIssueImageService = async ({ imageUrl = "", title = "", description = "", yoloResult = null }) => {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+
+  const yoloPrimary = yoloResult?.summary?.primaryLabel || yoloResult?.summary?.primaryCategory || "";
+  const hasYoloWaste = yoloResult?.detections && yoloResult.detections.length > 0;
 
   // 1. If real Gemini API key is configured and valid, perform REAL AI Multimodal Image Pixel Analysis
   if (apiKey && apiKey.length > 10 && !apiKey.includes("your_gemini_api_key")) {
@@ -128,6 +131,10 @@ export const analyzeIssueImageService = async ({ imageUrl = "", title = "", desc
 
       const prompt = `Analyze the uploaded image for civic-issue relevance.
 
+YOLO Object Detection Result:
+- Detected Waste Type: ${yoloPrimary || "None"}
+- Objects Count: ${yoloResult?.summary?.totalObjects || 0}
+
 VALID civic issue images include:
 - garbage or waste accumulation
 - plastic waste, paper, cardboard, glass, metal, organic waste
@@ -142,23 +149,17 @@ VALID civic issue images include:
 - other visible public-space problems
 
 INVALID images include:
-- screenshots
-- graphs or charts
-- documents
-- invoices
-- memes
-- UI screenshots
-- random unrelated objects
-- selfies/portraits
-- completely unrelated scenery
+- screenshots, graphs, charts, documents, invoices, memes, UI screenshots, selfies, portraits
 
-IMPORTANT:
-A photo containing physical garbage, litter, plastic waste, cans, wrappers, or dumped waste is a VALID civic issue image.
-Do NOT classify a real-world photograph of garbage as a document, graph, chart, or screenshot.
+CRITICAL CLASSIFICATION RULES:
+1. If YOLO detected waste objects (plastic, paper, cardboard, glass, metal, organic) OR the image visibly contains garbage, litter, plastic waste, cans, wrappers, or dumped waste, classify category as "GARBAGE".
+2. "POTHOLE" should ONLY be selected when a visible damaged road surface or crater/pothole is actually present in the asphalt/roadway.
+3. Do NOT classify an image as "POTHOLE" merely because it is a civic issue or on a street.
+4. Do NOT invent a different civic issue category if YOLO detected waste and the image shows waste/garbage/dumping.
 
 Tasks:
 1. Determine if this image shows a real civic/urban infrastructure problem.
-2. If it is NOT a civic issue (e.g. an anime character, graph/chart diagram, document, invoice, code screenshot, personal selfie, pet, meme, or artwork):
+2. If it is NOT a civic issue:
    - Set isCivicIssue = false
    - Set category = "OTHER"
    - Set priority = "LOW"
@@ -166,7 +167,7 @@ Tasks:
    - Set aiClassification = "Non-Civic Photo / Document / Graph Image Detected"
    - Set suggestedTitle = "Non-Civic Photo Uploaded"
    - Set suggestedDescription = "This photo does not depict a municipal defect."
-   - Set warning = "⚠️ AI Vision Alert: The scanned image shows a graph/chart/document or non-civic media rather than a physical civic infrastructure defect."
+   - Set warning = "⚠️ AI Vision Alert: The scanned image shows a graph/chart/document or non-civic media."
 3. If it IS a civic issue:
    - Set isCivicIssue = true
    - Choose category from: ["POTHOLE", "GARBAGE", "STREETLIGHT", "WATER_LEAKAGE", "ROAD_DAMAGE", "SEWAGE", "DRAINAGE", "OTHER"]
@@ -174,7 +175,7 @@ Tasks:
    - Calculate confidence (percentage between 75.0 and 99.0)
    - Write a concise technical aiClassification sentence describing the defect shown in the image.
    - Generate a professional 4-8 word suggestedTitle describing the defect.
-   - Generate a detailed 2-3 sentence suggestedDescription describing the problem, hazard, and recommended municipal repair action.
+   - Generate a detailed 2-3 sentence suggestedDescription describing the problem.
    - Set warning = null
 
 Return strictly valid JSON only with NO markdown formatting:
@@ -211,18 +212,24 @@ Return strictly valid JSON only with NO markdown formatting:
       const cleanJson = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
       const parsed = JSON.parse(cleanJson);
 
-      const defaults = GENERATE_CIVIC_TEXT(parsed.category || "OTHER");
+      // If YOLO detected waste objects, enforce category GARBAGE unless Gemini strongly identified another valid civic defect
+      let finalCategory = parsed.category || "OTHER";
+      if (hasYoloWaste && finalCategory === "POTHOLE") {
+        finalCategory = "GARBAGE";
+      }
+
+      const defaults = GENERATE_CIVIC_TEXT(finalCategory);
 
       return {
         isCivicIssue: parsed.isCivicIssue ?? true,
-        category: parsed.category || "OTHER",
+        category: finalCategory,
         priority: parsed.priority || "MEDIUM",
-        confidence: parseFloat(parsed.confidence) || 90.0,
-        aiClassification: parsed.aiClassification || "Analyzed by Gemini Vision AI",
+        confidence: parseFloat(parsed.confidence) || 92.0,
+        aiClassification: parsed.aiClassification || `Verified ${finalCategory.replace('_', ' ')} Issue`,
         suggestedTitle: parsed.suggestedTitle || defaults.title,
         suggestedDescription: parsed.suggestedDescription || defaults.description,
         warning: parsed.warning || null,
-        summary: parsed.summary || "Gemini Vision AI completed image scan.",
+        summary: parsed.summary || "AI Vision completed image scan.",
       };
     } catch (err) {
       console.error("⚠️ Gemini Vision API call failed:", err.message);
@@ -230,9 +237,10 @@ Return strictly valid JSON only with NO markdown formatting:
   }
 
   // 2. Enhanced Fallback Heuristic Inspection Engine
-  const fullText = `${imageUrl} ${title} ${description}`.toLowerCase();
-  const hasWasteKeywords = ["garb", "trash", "waste", "dump", "litter", "plastic", "paper", "cardboard", "glass", "metal", "organic", "bin", "rubbish", "overflow", "pothole", "streetlight", "leakage", "sewage", "drainage"].some((k) => fullText.includes(k));
-  const isExplicitNonCivic = !hasWasteKeywords && NON_CIVIC_TERMS.some((term) => fullText.includes(term));
+  const fullText = `${title} ${description}`.toLowerCase();
+  const hasWasteKeywords = ["garb", "trash", "waste", "dump", "litter", "plastic", "paper", "cardboard", "glass", "metal", "organic", "bin", "rubbish", "overflow"].some((k) => fullText.includes(k));
+
+  const isExplicitNonCivic = !hasWasteKeywords && !hasYoloWaste && NON_CIVIC_TERMS.some((term) => fullText.includes(term));
 
   if (isExplicitNonCivic) {
     return {
@@ -240,40 +248,38 @@ Return strictly valid JSON only with NO markdown formatting:
       category: "OTHER",
       priority: "LOW",
       confidence: 15.0,
-      aiClassification: "Irrelevant / Non-Civic Image Detected (Graph / Chart / Document / Artwork)",
+      aiClassification: "Irrelevant / Non-Civic Image Detected",
       suggestedTitle: "Non-Civic Image Uploaded",
       suggestedDescription: "The uploaded image does not appear to show a municipal infrastructure issue.",
-      warning:
-        "⚠️ AI Vision Alert: The uploaded image appears to be a Graph/Chart/Document rather than a physical civic infrastructure defect.",
+      warning: "⚠️ AI Vision Alert: The uploaded image appears to be a non-civic media file.",
       summary: "Non-civic image detected.",
     };
   }
 
-  const text = `${imageUrl} ${title} ${description}`.toLowerCase();
   let category = "OTHER";
   let priority = "MEDIUM";
-  let confidence = 92.5;
+  let confidence = 92.0;
   let classification = "General Civic Issue";
 
-  if (text.includes("pothole") || text.includes("hole") || text.includes("crater") || text.includes("asphalt") || text.includes("tarmac")) {
+  if (hasYoloWaste || hasWasteKeywords) {
+    category = "GARBAGE";
+    priority = "HIGH";
+    confidence = 94.5;
+    classification = `Municipal Waste Accumulation (${yoloPrimary || 'Solid Waste'})`;
+  } else if (fullText.includes("pothole") || fullText.includes("crater") || fullText.includes("asphalt")) {
     category = "POTHOLE";
     priority = "HIGH";
-    confidence = 96.4;
+    confidence = 95.0;
     classification = "Severe Road Surface Degradation / Deep Crater Pothole";
-  } else if (text.includes("garb") || text.includes("trash") || text.includes("waste") || text.includes("dump") || text.includes("overflow") || text.includes("litter") || text.includes("rubbish") || text.includes("plastic") || text.includes("bin")) {
-    category = "GARBAGE";
-    priority = (text.includes("overflow") || text.includes("dump")) ? "CRITICAL" : "HIGH";
-    confidence = 95.8;
-    classification = "Municipal Solid Waste Accumulation & Container Overflow";
-  } else if (text.includes("light") || text.includes("lamp") || text.includes("pole") || text.includes("dark") || text.includes("bulb")) {
+  } else if (fullText.includes("light") || fullText.includes("lamp") || fullText.includes("pole")) {
     category = "STREETLIGHT";
     priority = "MEDIUM";
-    confidence = 91.8;
+    confidence = 91.0;
     classification = "Public Lighting Fixture Electrical Failure";
-  } else if (text.includes("water") || text.includes("leak") || text.includes("pipe") || text.includes("burst") || text.includes("spill") || text.includes("tap")) {
+  } else if (fullText.includes("water") || fullText.includes("leak") || fullText.includes("pipe")) {
     category = "WATER_LEAKAGE";
     priority = "CRITICAL";
-    confidence = 95.7;
+    confidence = 95.0;
     classification = "Pressurized Water Distribution Pipe Burst / Clean Water Leakage";
   } else if (text.includes("drain") || text.includes("gutter") || text.includes("flood") || text.includes("block") || text.includes("clog")) {
     category = "DRAINAGE";
