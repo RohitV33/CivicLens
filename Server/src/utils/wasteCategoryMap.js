@@ -73,6 +73,16 @@ export const WASTE_CATEGORIES = {
     suggestedTitle: "Biodegradable Organic Waste",
     suggestedDescription: "Biodegradable waste detected requiring green organic waste bin collection.",
   },
+  pothole: {
+    category: "POTHOLE",
+    wasteType: "pothole",
+    label: "Road Pothole / Crater",
+    bin: "roadwork",
+    binColor: "Orange Hazard",
+    department: "TRAFFIC_ROADS",
+    suggestedTitle: "Road Surface Degradation & Crater Pothole",
+    suggestedDescription: "Deep asphalt crater pothole detected posing hazard to vehicles and traffic safety.",
+  },
 };
 
 export const getWasteInfo = (rawClass) => {

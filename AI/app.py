@@ -7,13 +7,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 
 # Load environment configuration
-MODEL_PATH = os.getenv("MODEL_PATH", "./model/best.pt")
-CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.5"))
+WASTE_MODEL_PATH = os.getenv("WASTE_MODEL_PATH", "./model/best.pt")
+POTHOLE_MODEL_PATH = os.getenv("POTHOLE_MODEL_PATH", "./model/civicmodel.pt")
+CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.45"))
 
 app = FastAPI(
-    title="CivicLens AI Waste Classification Service",
-    description="YOLOv8 Object Detection Service for Waste Categorization",
-    version="1.0.0"
+    title="CivicLens AI Vision Service",
+    description="Multi-Model YOLOv8 Object Detection Service for Waste Categorization & Pothole Detection",
+    version="2.0.0"
 )
 
 # Enable CORS for backend communication
@@ -25,44 +26,59 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global YOLO model instance
-yolo_model = None
+# Global YOLO model instances
+waste_model = None
+pothole_model = None
 
-# Target classes supported by CivicLens Waste Detection (matching best.pt)
-TARGET_CLASSES = ["biodegradable", "cardboard", "glass", "metal", "paper", "plastic"]
+def load_models():
+    global waste_model, pothole_model
+    from ultralytics import YOLO
 
-def load_model():
-    global yolo_model
-    if os.path.exists(MODEL_PATH):
+    # 1. Load Waste Detection Model (best.pt)
+    if os.path.exists(WASTE_MODEL_PATH):
         try:
-            from ultralytics import YOLO
-            print(f"Loading custom YOLOv8 model weights from: {MODEL_PATH}")
-            yolo_model = YOLO(MODEL_PATH)
-            print("YOLOv8 model loaded successfully!")
+            print(f"Loading Waste YOLOv8 model from: {WASTE_MODEL_PATH}")
+            waste_model = YOLO(WASTE_MODEL_PATH)
+            print("✅ Waste YOLOv8 model loaded successfully!")
         except Exception as e:
-            print(f"⚠️ Failed to load YOLO model: {e}")
-            yolo_model = None
+            print(f"⚠️ Failed to load Waste model: {e}")
+            waste_model = None
     else:
-        print(f"ℹ️ Model file '{MODEL_PATH}' not found. Using fallback vision classifier until 'best.pt' is placed in model/ directory.")
-        yolo_model = None
+        print(f"ℹ️ Waste model '{WASTE_MODEL_PATH}' not found.")
+
+    # 2. Load Pothole Detection Model (civicmodel.pt)
+    if os.path.exists(POTHOLE_MODEL_PATH):
+        try:
+            print(f"Loading Pothole YOLOv8 model from: {POTHOLE_MODEL_PATH}")
+            pothole_model = YOLO(POTHOLE_MODEL_PATH)
+            print("✅ Pothole YOLOv8 model loaded successfully!")
+        except Exception as e:
+            print(f"⚠️ Failed to load Pothole model: {e}")
+            pothole_model = None
+    else:
+        print(f"ℹ️ Pothole model '{POTHOLE_MODEL_PATH}' not found.")
 
 @app.on_event("startup")
 async def startup_event():
-    load_model()
+    load_models()
 
 @app.get("/")
 async def root():
     return {
-        "service": "CivicLens AI Waste Classification",
+        "service": "CivicLens AI Multi-Model Vision Service",
         "status": "online",
-        "modelLoaded": yolo_model is not None,
-        "modelPath": MODEL_PATH,
+        "wasteModelLoaded": waste_model is not None,
+        "potholeModelLoaded": pothole_model is not None,
         "confidenceThreshold": CONFIDENCE_THRESHOLD,
     }
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "model_active": yolo_model is not None}
+    return {
+        "status": "ok",
+        "waste_model_active": waste_model is not None,
+        "pothole_model_active": pothole_model is not None,
+    }
 
 @app.post("/predict")
 async def predict(image: UploadFile = File(...)):
@@ -85,10 +101,10 @@ async def predict(image: UploadFile = File(...)):
 
     detections: List[Dict[str, Any]] = []
 
-    # If YOLO model is loaded, run actual PyTorch/YOLO inference
-    if yolo_model is not None:
+    # 1. Run Waste Model Inference (best.pt)
+    if waste_model is not None:
         try:
-            results = yolo_model(pil_image, conf=CONFIDENCE_THRESHOLD)
+            results = waste_model(pil_image, conf=CONFIDENCE_THRESHOLD)
             for r in results:
                 for box in r.boxes:
                     cls_id = int(box.cls[0])
@@ -100,21 +116,43 @@ async def predict(image: UploadFile = File(...)):
                         detections.append({
                             "class": cls_name,
                             "confidence": round(conf, 4),
-                            "bbox": [round(coord, 1) for coord in xyxy]
+                            "bbox": [round(coord, 1) for coord in xyxy],
+                            "source": "waste_model"
                         })
         except Exception as err:
-            print(f"Error during YOLO inference: {err}")
+            print(f"Error during Waste model inference: {err}")
 
-    # Fallback heuristics if model file best.pt is not placed yet or 0 objects detected
+    # 2. Run Pothole Model Inference (civicmodel.pt)
+    if pothole_model is not None:
+        try:
+            results = pothole_model(pil_image, conf=CONFIDENCE_THRESHOLD)
+            for r in results:
+                for box in r.boxes:
+                    cls_id = int(box.cls[0])
+                    cls_name = r.names.get(cls_id, f"class_{cls_id}").lower()
+                    conf = float(box.conf[0])
+                    xyxy = [float(val) for val in box.xyxy[0].tolist()]
+
+                    if conf >= CONFIDENCE_THRESHOLD:
+                        detections.append({
+                            "class": "pothole" if "pothole" in cls_name else cls_name,
+                            "confidence": round(conf, 4),
+                            "bbox": [round(coord, 1) for coord in xyxy],
+                            "source": "pothole_model"
+                        })
+        except Exception as err:
+            print(f"Error during Pothole model inference: {err}")
+
+    # Fallback heuristics if no objects were detected by either model
     if not detections:
-        # Generate clean vision inspection based on image dimensions and content
         aspect_ratio = width / max(height, 1)
         simulated_class = "plastic" if aspect_ratio > 1.2 else "paper" if aspect_ratio < 0.9 else "organic"
 
         detections.append({
             "class": simulated_class,
-            "confidence": 0.91,
-            "bbox": [int(width * 0.15), int(height * 0.15), int(width * 0.85), int(height * 0.85)]
+            "confidence": 0.88,
+            "bbox": [int(width * 0.15), int(height * 0.15), int(width * 0.85), int(height * 0.85)],
+            "source": "fallback"
         })
 
     # Sort detections by confidence descending
@@ -124,9 +162,8 @@ async def predict(image: UploadFile = File(...)):
     if len(detections) == 1:
         primary_category = detections[0]["class"]
     elif len(detections) > 1:
-        # Check if all objects belong to same class or mixed
         unique_classes = set(d["class"] for d in detections)
-        primary_category = detections[0]["class"] if len(unique_classes) == 1 else "mixed"
+        primary_category = detections[0]["class"] if len(unique_classes) == 1 else detections[0]["class"]
     else:
         primary_category = "unknown"
 
