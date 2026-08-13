@@ -299,9 +299,14 @@ export const deleteIssueService = async (issueId, user) => {
     throw error;
   }
 
-  await prisma.issue.delete({
-    where: { id: issueId },
-  });
+  // Delete all related child records first to satisfy foreign key constraints
+  await prisma.$transaction([
+    prisma.issueHistory.deleteMany({ where: { issueId } }),
+    prisma.notification.deleteMany({ where: { issueId } }),
+    prisma.comment.deleteMany({ where: { issueId } }),
+    prisma.upvote.deleteMany({ where: { issueId } }),
+    prisma.issue.delete({ where: { id: issueId } }),
+  ]);
 
   return { message: "Issue deleted successfully" };
 };

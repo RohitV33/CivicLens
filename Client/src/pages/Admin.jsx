@@ -127,6 +127,17 @@ export default function AdminPortal() {
     }
   }
 
+  const handleDeleteIssue = async (issueId) => {
+    if (!window.confirm(`Are you sure you want to permanently delete report #${issueId}?`)) return
+    try {
+      await deleteIssueAPI(issueId)
+      addToast(`Report #${issueId} permanently deleted!`, 'success')
+      loadAdminData()
+    } catch (err) {
+      addToast(err.message || 'Failed to delete report', 'error')
+    }
+  }
+
 
   return (
     <AppLayout title={t('navAdmin')}>

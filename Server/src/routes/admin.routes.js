@@ -10,6 +10,7 @@ import {
   assignIssue,
   getAdminAnalytics,
 } from "../controllers/admin.controller.js";
+import { deleteIssue } from "../controllers/issue.controller.js";
 import authMiddleware from "../middleware/auth.middleware.js";
 import { authorize } from "../middleware/authorize.middleware.js";
 import { validate } from "../middleware/validate.js";
@@ -28,6 +29,7 @@ router.get("/issues", getAdminIssues);
 router.patch("/issues/:id/status", validate(updateStatusSchema), updateIssueStatus);
 router.patch("/issues/:id/priority", validate(updatePrioritySchema), updateIssuePriority);
 router.patch("/issues/:id/assign", validate(assignIssueSchema), assignIssue);
+router.delete("/issues/:id", deleteIssue);
 router.get("/analytics", getAdminAnalytics);
 
 export default router;
