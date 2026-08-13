@@ -12,18 +12,12 @@ import {
   deleteNotificationAPI,
 } from '../services/api'
 
-const DEFAULT_NOTIFICATIONS = [
-  { id: 1, title: 'Report CL-10245 moved to In Review', time: '2h ago', isRead: false },
-  { id: 2, title: 'Report CL-10243 was resolved', time: '1d ago', isRead: false },
-  { id: 3, title: 'You earned "Community Voice" badge', time: '3d ago', isRead: false },
-]
-
 export default function Topbar({ onMenuClick, title }) {
   const [query, setQuery] = useState('')
   const [notifOpen, setNotifOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const [notifications, setNotifications] = useState(DEFAULT_NOTIFICATIONS)
-  const [unreadCount, setUnreadCount] = useState(3)
+  const [notifications, setNotifications] = useState([])
+  const [unreadCount, setUnreadCount] = useState(0)
   const { user, logout } = useAuth()
   const { lang, toggleLang, t } = useLanguage()
 
@@ -36,23 +30,19 @@ export default function Topbar({ onMenuClick, title }) {
 
   // Fetch real notifications if user is logged in
   useEffect(() => {
-    if (!user) return
+    if (!user) {
+      setNotifications([])
+      setUnreadCount(0)
+      return
+    }
     getNotificationsAPI()
       .then((res) => {
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) {
-          const list = res.data.map((n) => ({
+        const rawList = res.data || res.notifications || []
+        if (Array.isArray(rawList)) {
+          const list = rawList.map((n) => ({
             id: n.id,
-            title: n.title || n.message || `Notification #${n.id}`,
-            time: new Date(n.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
-            isRead: n.isRead,
-          }))
-          setNotifications(list)
-          setUnreadCount(res.unreadCount ?? list.filter((i) => !i.isRead).length)
-        } else if (res.notifications && res.notifications.length > 0) {
-          const list = res.notifications.map((n) => ({
-            id: n.id,
-            title: n.title || n.message || `Notification #${n.id}`,
-            time: new Date(n.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+            title: n.title ? `${n.title}${n.message ? `: ${n.message}` : ''}` : (n.message || `Notification #${n.id}`),
+            time: new Date(n.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
             isRead: n.isRead,
           }))
           setNotifications(list)

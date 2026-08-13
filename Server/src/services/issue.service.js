@@ -111,6 +111,16 @@ export const createIssueService = async (issueData, createdById) => {
       },
     });
 
+    // Create real notification for the reporting citizen
+    await tx.notification.create({
+      data: {
+        userId: createdById,
+        issueId: issue.id,
+        title: `Report #${issue.id} Submitted`,
+        message: `Your report "${title}" was successfully submitted and routed to ${finalDepartment.replace('_', ' ')}.`,
+      },
+    });
+
     return issue;
   });
 
@@ -352,6 +362,18 @@ export const toggleUpvoteIssueService = async (issueId, userId) => {
     ]);
     hasUpvoted = true;
     newCount = newCount + 1;
+
+    // Create real notification for report author if upvoted by another citizen
+    if (existingIssue.createdById !== userId) {
+      await prisma.notification.create({
+        data: {
+          userId: existingIssue.createdById,
+          issueId: issueId,
+          title: `Upvote Received`,
+          message: `A citizen upvoted your report #${issueId} ("${existingIssue.title}").`,
+        },
+      }).catch(() => {});
+    }
   }
 
   return {
