@@ -145,6 +145,15 @@ export const deleteNotificationAPI = (id) =>
   apiFetch(`/api/notifications/${id}`, { method: 'DELETE' })
 
 // ---- AI & DUPLICATE DETECTION API CALLS ----
+export const classifyWasteAIAPI = (file) => {
+  const formData = new FormData()
+  formData.append('image', file)
+  return apiFetch('/api/ai/classify-waste', {
+    method: 'POST',
+    body: formData,
+  })
+}
+
 export const analyzeIssueAIAPI = ({ imageUrl, title, description }) =>
   apiFetch('/api/ai/analyze', {
     method: 'POST',

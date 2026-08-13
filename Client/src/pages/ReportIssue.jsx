@@ -16,6 +16,7 @@ import {
   uploadImageAPI,
   reverseGeocodeAPI,
   analyzeIssueAIAPI,
+  classifyWasteAIAPI,
   checkDuplicateAIAPI,
 } from '../services/api'
 
@@ -41,6 +42,7 @@ export default function ReportIssue() {
 
   const [analyzing, setAnalyzing] = useState(false)
   const [aiResult, setAiResult] = useState(null)
+  const [wasteResult, setWasteResult] = useState(null)
   const [duplicateWarning, setDuplicateWarning] = useState(null)
 
   const [title, setTitle] = useState('')
@@ -92,6 +94,7 @@ export default function ReportIssue() {
   const handleFileSelect = async (selectedFile) => {
     setFile(selectedFile)
     setAiResult(null)
+    setWasteResult(null)
     setDuplicateWarning(null)
     setImageUrl(null)
 
@@ -101,19 +104,25 @@ export default function ReportIssue() {
     setAnalyzing(true)
 
     try {
-      // 1. Convert selected file to base64 Data URI for Gemini Vision
+      // 1. Trigger YOLOv8 Waste Classification
+      const wasteRes = await classifyWasteAIAPI(selectedFile).catch(() => null)
+      if (wasteRes?.data) {
+        setWasteResult(wasteRes.data)
+      }
+
+      // 2. Convert selected file to base64 Data URI for Gemini Vision
       const reader = new FileReader()
       reader.readAsDataURL(selectedFile)
       const dataUri = await new Promise((resolve) => {
         reader.onloadend = () => resolve(reader.result)
       })
 
-      // 2. Upload photo to Cloudinary
+      // 3. Upload photo to Cloudinary
       const uploadRes = await uploadImageAPI(selectedFile)
       const uploadedUrl = uploadRes.data.url
       setImageUrl(uploadedUrl)
 
-      // 3. Trigger Gemini Vision AI Computer Vision Classification with Base64 Data URI
+      // 4. Trigger Gemini Vision AI Computer Vision Classification
       const aiRes = await analyzeIssueAIAPI({
         imageUrl: dataUri || uploadedUrl,
         title: title || selectedFile.name,
@@ -121,21 +130,23 @@ export default function ReportIssue() {
       })
       setAiResult(aiRes.data)
 
-      if (aiRes.data.suggestedTitle) {
+      if (wasteRes?.data?.summary?.suggestedTitle && !title) {
+        setTitle(wasteRes.data.summary.suggestedTitle)
+      } else if (aiRes.data.suggestedTitle && !title) {
         setTitle(aiRes.data.suggestedTitle)
-      } else if (!title) {
-        setTitle(`Reported ${aiRes.data.category.replace('_', ' ')} Issue`)
       }
 
-      if (aiRes.data.suggestedDescription) {
+      if (wasteRes?.data?.summary?.suggestedDescription && !description) {
+        setDescription(wasteRes.data.summary.suggestedDescription)
+      } else if (aiRes.data.suggestedDescription && !description) {
         setDescription(aiRes.data.suggestedDescription)
       }
 
-      // 3. Trigger Geo Duplicate Check
+      // 5. Trigger Geo Duplicate Check
       const dupRes = await checkDuplicateAIAPI({
         latitude: coords.lat,
         longitude: coords.lng,
-        category: aiRes.data.category,
+        category: wasteRes?.data?.summary?.issueCategory || aiRes.data.category,
       })
 
       if (dupRes.data.isDuplicate) {
@@ -294,6 +305,57 @@ export default function ReportIssue() {
                 <Loader2 size={32} className="animate-spin text-blue-700 dark:text-blue-300 mx-auto" />
                 <h3 className="font-serif text-2xl text-blue-950 dark:text-blue-100">AI Computer Vision Audit in Progress...</h3>
                 <p className="text-xs text-blue-800 dark:text-blue-300 font-medium">Uploading to Cloudinary CDN & analyzing issue category & severity</p>
+              </motion.div>
+            )}
+
+            {wasteResult && !analyzing && (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-3xl p-6 bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-transparent border border-blue-500/20 shadow-soft space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-serif text-xl font-bold text-neutral-900 dark:text-white">
+                    <Sparkles size={20} className="text-blue-600 dark:text-blue-400" />
+                    AI Waste Classification
+                  </div>
+                  <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-700 dark:text-blue-300">
+                    YOLOv8 Detected
+                  </span>
+                </div>
+
+                {/* List of detected objects with confidence bars */}
+                <div className="space-y-2">
+                  {wasteResult.detections?.map((d, i) => (
+                    <div key={i} className="space-y-1">
+                      <div className="flex justify-between text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                        <span className="capitalize">{d.label || d.class}</span>
+                        <span>{Math.round((d.confidence <= 1 ? d.confidence * 100 : d.confidence))}%</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full transition-all duration-500"
+                          style={{ width: `${Math.round((d.confidence <= 1 ? d.confidence * 100 : d.confidence))}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div className="p-3 rounded-2xl bg-white/80 dark:bg-black/30 border border-black/5 dark:border-white/10">
+                    <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block">Primary Category</span>
+                    <span className="text-sm font-bold text-neutral-900 dark:text-white capitalize">
+                      {wasteResult.summary?.primaryLabel || wasteResult.summary?.primaryCategory}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-white/80 dark:bg-black/30 border border-black/5 dark:border-white/10">
+                    <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block">Recommended Bin</span>
+                    <span className="text-sm font-bold text-blue-600 dark:text-blue-400 capitalize">
+                      {wasteResult.summary?.recommendedBinColor} ({wasteResult.summary?.recommendedBin})
+                    </span>
+                  </div>
+                </div>
               </motion.div>
             )}
 
