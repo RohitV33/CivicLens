@@ -1,30 +1,101 @@
-import { useState } from 'react'
-import { Bell, Menu, PlusCircle, LogOut, Languages } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Bell, Menu, PlusCircle, LogOut, Languages, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import SearchBar from './SearchBar'
 import ThemeToggle from './ThemeToggle'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
+import {
+  getNotificationsAPI,
+  markAllNotificationsReadAPI,
+  deleteNotificationAPI,
+} from '../services/api'
+
+const DEFAULT_NOTIFICATIONS = [
+  { id: 1, title: 'Report CL-10245 moved to In Review', time: '2h ago', isRead: false },
+  { id: 2, title: 'Report CL-10243 was resolved', time: '1d ago', isRead: false },
+  { id: 3, title: 'You earned "Community Voice" badge', time: '3d ago', isRead: false },
+]
 
 export default function Topbar({ onMenuClick, title }) {
   const [query, setQuery] = useState('')
   const [notifOpen, setNotifOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [notifications, setNotifications] = useState(DEFAULT_NOTIFICATIONS)
+  const [unreadCount, setUnreadCount] = useState(3)
   const { user, logout } = useAuth()
   const { lang, toggleLang, t } = useLanguage()
 
-
   // Get initials from name ("Alex Morgan" → "AM")
-
   const initials = (user?.name || 'U')
     .split(' ')
     .map((n) => n[0])
     .join('')
     .toUpperCase()
 
+  // Fetch real notifications if user is logged in
+  useEffect(() => {
+    if (!user) return
+    getNotificationsAPI()
+      .then((res) => {
+        if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+          const list = res.data.map((n) => ({
+            id: n.id,
+            title: n.title || n.message || `Notification #${n.id}`,
+            time: new Date(n.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+            isRead: n.isRead,
+          }))
+          setNotifications(list)
+          setUnreadCount(res.unreadCount ?? list.filter((i) => !i.isRead).length)
+        } else if (res.notifications && res.notifications.length > 0) {
+          const list = res.notifications.map((n) => ({
+            id: n.id,
+            title: n.title || n.message || `Notification #${n.id}`,
+            time: new Date(n.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+            isRead: n.isRead,
+          }))
+          setNotifications(list)
+          setUnreadCount(res.unreadCount ?? list.filter((i) => !i.isRead).length)
+        }
+      })
+      .catch(() => {})
+  }, [user])
+
+  // Handle clicking on the Notification Bell
+  const handleToggleNotif = () => {
+    const nextState = !notifOpen
+    setNotifOpen(nextState)
+
+    // When opening the notification dropdown, automatically remove unread count & mark as read
+    if (nextState && unreadCount > 0) {
+      setUnreadCount(0)
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+      if (user) {
+        markAllNotificationsReadAPI().catch(() => {})
+      }
+    }
+  }
+
+  const handleClearAll = (e) => {
+    e.stopPropagation()
+    setNotifications([])
+    setUnreadCount(0)
+    if (user) {
+      markAllNotificationsReadAPI().catch(() => {})
+    }
+  }
+
+  const handleDeleteItem = (id, e) => {
+    e.stopPropagation()
+    setNotifications((prev) => prev.filter((n) => n.id !== id))
+    if (user) {
+      deleteNotificationAPI(id).catch(() => {})
+    }
+  }
+
   return (
-    <header className="sticky top-0 z-40 h-16 flex items-center gap-3 px-4 sm:px-6 border-b border-border dark:border-border-dark bg-surface/90 dark:bg-bg-dark/90 backdrop-blur-md">
+    <header className="sticky top-0 z-40 h-16 flex items-center gap-3 px-4 sm:px-6 border-b border-border dark:border-border-dark bg-surface/90 dark:bg-bg-dark/90 backdrop-blur-md font-sans">
       <button onClick={onMenuClick} className="md:hidden text-text-secondary dark:text-text-dark shrink-0">
         <Menu size={20} />
       </button>
@@ -47,19 +118,24 @@ export default function Topbar({ onMenuClick, title }) {
           <PlusCircle size={15} /> {t('quickReport')}
         </Link>
 
-
-
         <ThemeToggle />
 
-
+        {/* Notification Bell Dropdown */}
         <div className="relative">
           <button
-            onClick={() => setNotifOpen((o) => !o)}
-            className="relative w-9 h-9 rounded-xl flex items-center justify-center text-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-text-primary dark:hover:text-text-dark transition-colors"
+            type="button"
+            onClick={handleToggleNotif}
+            className="relative w-9 h-9 rounded-xl flex items-center justify-center text-neutral-700 dark:text-neutral-300 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-black dark:hover:text-white transition-colors"
+            title="Notifications"
           >
             <Bell size={17} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-danger ring-2 ring-surface dark:ring-bg-dark" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white font-extrabold text-[10px] flex items-center justify-center shadow-sm border-2 border-white dark:border-[#18191C]">
+                {unreadCount}
+              </span>
+            )}
           </button>
+
           <AnimatePresence>
             {notifOpen && (
               <motion.div
@@ -67,28 +143,63 @@ export default function Topbar({ onMenuClick, title }) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -8, scale: 0.97 }}
                 transition={{ duration: 0.15 }}
-                className="absolute right-0 mt-2 w-80 card-surface !p-0 overflow-hidden"
+                className="absolute right-0 mt-2 w-80 bg-white dark:bg-[#1A1C20] rounded-2xl border border-black/10 dark:border-white/10 shadow-2xl overflow-hidden z-50"
               >
-                <div className="px-4 py-3 border-b border-border dark:border-border-dark">
-                  <p className="text-sm font-semibold text-text-primary dark:text-text-dark">Notifications</p>
+                <div className="px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-neutral-900 dark:text-white">Notifications</p>
+                    {notifications.length > 0 && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-400">
+                        {notifications.length}
+                      </span>
+                    )}
+                  </div>
+                  {notifications.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleClearAll}
+                      className="text-xs font-semibold text-neutral-500 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                    >
+                      Clear all
+                    </button>
+                  )}
                 </div>
-                <div className="max-h-72 overflow-y-auto">
-                  {[
-                    { t: 'Report CL-10245 moved to In Review', time: '2h ago' },
-                    { t: 'Report CL-10243 was resolved', time: '1d ago' },
-                    { t: 'You earned "Community Voice" badge', time: '3d ago' },
-                  ].map((n, i) => (
-                    <div key={i} className="px-4 py-3 hover:bg-black/[0.02] dark:hover:bg-white/[0.03] border-b border-border dark:border-border-dark last:border-0">
-                      <p className="text-sm text-text-primary dark:text-text-dark">{n.t}</p>
-                      <p className="text-xs text-text-secondary dark:text-text-dark/50 mt-0.5">{n.time}</p>
+
+                <div className="max-h-80 overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800">
+                  {notifications.length === 0 ? (
+                    <div className="p-6 text-center text-xs text-neutral-400">
+                      No notifications right now.
                     </div>
-                  ))}
+                  ) : (
+                    notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        className="px-4 py-3 hover:bg-neutral-50 dark:hover:bg-white/[0.03] transition-colors flex items-start justify-between gap-3 group"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 leading-snug">
+                            {n.title}
+                          </p>
+                          <p className="text-[11px] text-neutral-400 mt-1 font-medium">{n.time}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteItem(n.id, e)}
+                          className="opacity-0 group-hover:opacity-100 p-1 text-neutral-400 hover:text-rose-500 transition-opacity"
+                          title="Dismiss"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
+        {/* User Profile Menu Dropdown */}
         <div className="relative">
           <button
             onClick={() => setUserMenuOpen((o) => !o)}
@@ -112,16 +223,16 @@ export default function Topbar({ onMenuClick, title }) {
               <motion.div
                 initial={{ opacity: 0, y: -8, scale: 0.97 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                exit={{ opacity: 0, y: -8, scale: 1 }}
                 transition={{ duration: 0.15 }}
-                className="absolute right-0 mt-2 w-48 card-surface !p-1 overflow-hidden"
+                className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1A1C20] rounded-2xl border border-black/10 dark:border-white/10 shadow-2xl p-1 overflow-hidden z-50"
               >
-                <Link to="/profile" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-text-primary dark:text-text-dark hover:bg-black/[0.04] dark:hover:bg-white/[0.06] rounded-lg">
+                <Link to="/profile" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-neutral-800 dark:text-neutral-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] rounded-xl font-medium">
                   {user?.name || 'Profile'}
                 </Link>
                 <button
                   onClick={() => { setUserMenuOpen(false); logout() }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-danger hover:bg-danger/5 rounded-lg"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl font-semibold"
                 >
                   <LogOut size={14} /> Logout
                 </button>
