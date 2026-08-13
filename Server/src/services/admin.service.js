@@ -72,47 +72,57 @@ export const updateIssueStatusService = async (issueId, newStatus, comment, admi
   const { resolvedImageUrl, resolvedComment } = resolvedData;
 
   // PRISMA TRANSACTION: Atomic update of Issue + History + Notification
-  const result = await prisma.$transaction(async (tx) => {
-    // 1. Update issue status
-    const updatedIssue = await tx.issue.update({
-      where: { id: issueId },
-      data: {
-        status: newStatus,
-        ...(newStatus === "RESOLVED" && {
-          resolvedImageUrl: resolvedImageUrl || null,
-          resolvedComment: resolvedComment || comment || "Work completed and verified by municipal authority.",
-        }),
-      },
-      include: {
-        createdBy: { select: { id: true, name: true, email: true } },
-        assignedTo: { select: { id: true, name: true, email: true } },
-      },
-    });
+  const result = await prisma.$transaction(
+    async (tx) => {
+      // 1. Update issue status
+      const updatedIssue = await tx.issue.update({
+        where: { id: issueId },
+        data: {
+          status: newStatus,
+          ...(newStatus === "RESOLVED" && {
+            resolvedImageUrl: resolvedImageUrl || null,
+            resolvedComment: resolvedComment || comment || "Work completed and verified by municipal authority.",
+          }),
+        },
+        include: {
+          createdBy: { select: { id: true, name: true, email: true } },
+          assignedTo: { select: { id: true, name: true, email: true } },
+        },
+      });
 
-    // 2. Insert audit log history
-    await tx.issueHistory.create({
-      data: {
-        issueId,
-        changedById: adminId,
-        oldStatus,
-        newStatus,
-        comment: resolvedComment || comment || `Status updated from ${oldStatus} to ${newStatus}`,
-      },
-    });
+      // 2. Insert audit log history
+      await tx.issueHistory.create({
+        data: {
+          issueId,
+          changedById: adminId,
+          oldStatus,
+          newStatus,
+          comment: resolvedComment || comment || `Status updated from ${oldStatus} to ${newStatus}`,
+        },
+      });
 
-    // 3. Create notification for citizen
-    await tx.notification.create({
-      data: {
-        userId: existingIssue.createdById,
-        issueId,
-        message: newStatus === "RESOLVED"
-          ? `🎉 Great news! Your reported issue #${issueId} (${existingIssue.title}) has been marked RESOLVED with proof of work!`
-          : `Your issue #${issueId} (${existingIssue.title}) status changed to ${newStatus}.`,
-      },
-    });
+      // 3. Create notification for citizen safely
+      try {
+        await tx.notification.create({
+          data: {
+            userId: existingIssue.createdById,
+            issueId,
+            message: newStatus === "RESOLVED"
+              ? `🎉 Great news! Your reported issue #${issueId} (${existingIssue.title}) has been marked RESOLVED with proof of work!`
+              : `Your issue #${issueId} (${existingIssue.title}) status changed to ${newStatus}.`,
+          },
+        });
+      } catch (notifErr) {
+        console.warn("⚠️ Notification creation skipped:", notifErr.message);
+      }
 
-    return updatedIssue;
-  });
+      return updatedIssue;
+    },
+    {
+      maxWait: 10000,
+      timeout: 25000,
+    }
+  );
 
   return result;
 };

@@ -41,6 +41,22 @@ export const errorHandler = (err, req, res, next) => {
     }));
   }
 
+  // 5. Sanitize internal Prisma & technical Database errors from leaking to user UI
+  if (
+    message.includes("prisma.") ||
+    message.includes("Transaction API error") ||
+    message.includes("Invocation:") ||
+    message.includes("Transaction not found") ||
+    message.includes("Client Engine") ||
+    err.code?.startsWith("P")
+  ) {
+    console.error("⚠️ [Sanitized Technical Database Error]:", err.message);
+    if (!err.statusCode || err.statusCode === 500) {
+      statusCode = 500;
+      message = "An unexpected system error occurred. Please try again.";
+    }
+  }
+
   const isDev = process.env.NODE_ENV === "development";
 
   res.status(statusCode).json({

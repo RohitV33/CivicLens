@@ -38,7 +38,16 @@ const apiFetch = async (url, options = {}) => {
   }
 
   if (!response.ok) {
-    throw new Error(data.message || 'Something went wrong')
+    let msg = data.message || 'Something went wrong. Please try again.'
+    if (
+      msg.includes('prisma.') ||
+      msg.includes('Transaction API error') ||
+      msg.includes('Invocation:') ||
+      msg.includes('Transaction not found')
+    ) {
+      msg = 'An unexpected server error occurred. Please try again.'
+    }
+    throw new Error(msg)
   }
 
   return data

@@ -76,53 +76,62 @@ export const createIssueService = async (issueData, createdById) => {
   const finalSlaHours = mapPriorityToSLAHours(finalPriority);
 
   // Use a transaction to create issue & initial history record
-  const result = await prisma.$transaction(async (tx) => {
-    const issue = await tx.issue.create({
-      data: {
-        title,
-        description,
-        category: finalCategory,
-        department: finalDepartment,
-        priority: finalPriority,
-        slaHours: finalSlaHours,
-        imageUrl: imageUrl || null,
-        latitude: parsedLat,
-        longitude: parsedLng,
-        address: address || location || null,
-        aiClassification: finalAiClassification,
-        aiConfidence: finalAiConfidence,
-        createdById,
-      },
-      include: {
-        createdBy: {
-          select: { id: true, name: true, email: true },
+  const result = await prisma.$transaction(
+    async (tx) => {
+      const issue = await tx.issue.create({
+        data: {
+          title,
+          description,
+          category: finalCategory,
+          department: finalDepartment,
+          priority: finalPriority,
+          slaHours: finalSlaHours,
+          imageUrl: imageUrl || null,
+          latitude: parsedLat,
+          longitude: parsedLng,
+          address: address || location || null,
+          aiClassification: finalAiClassification,
+          aiConfidence: finalAiConfidence,
+          createdById,
         },
-      },
-    });
+        include: {
+          createdBy: {
+            select: { id: true, name: true, email: true },
+          },
+        },
+      });
 
+      // Create initial audit history record
+      await tx.issueHistory.create({
+        data: {
+          issueId: issue.id,
+          changedById: createdById,
+          newStatus: "PENDING",
+          comment: `Issue reported by citizen. AI auto-classified as ${finalCategory} (${finalAiConfidence}% confidence).`,
+        },
+      });
 
-    // Create initial audit history record
-    await tx.issueHistory.create({
-      data: {
-        issueId: issue.id,
-        changedById: createdById,
-        newStatus: "PENDING",
-        comment: `Issue reported by citizen. AI auto-classified as ${finalCategory} (${finalAiConfidence}% confidence).`,
-      },
-    });
+      // Create real notification for the reporting citizen safely
+      try {
+        await tx.notification.create({
+          data: {
+            userId: createdById,
+            issueId: issue.id,
+            title: `Report #${issue.id} Submitted`,
+            message: `Your report "${title}" was successfully submitted and routed to ${finalDepartment.replace('_', ' ')}.`,
+          },
+        });
+      } catch (notifErr) {
+        console.warn("⚠️ Notification creation skipped:", notifErr.message);
+      }
 
-    // Create real notification for the reporting citizen
-    await tx.notification.create({
-      data: {
-        userId: createdById,
-        issueId: issue.id,
-        title: `Report #${issue.id} Submitted`,
-        message: `Your report "${title}" was successfully submitted and routed to ${finalDepartment.replace('_', ' ')}.`,
-      },
-    });
-
-    return issue;
-  });
+      return issue;
+    },
+    {
+      maxWait: 10000,
+      timeout: 25000,
+    }
+  );
 
   return result;
 };
