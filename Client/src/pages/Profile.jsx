@@ -132,7 +132,53 @@ export default function Profile() {
 
   const submittedCount = myIssues.length
   const resolvedCount = myIssues.filter((i) => i.status === 'RESOLVED').length
-  const totalPoints = (submittedCount * 50) + (resolvedCount * 100)
+  const totalUpvotes = myIssues.reduce((sum, i) => sum + (i.upvoteCount || 0), 0)
+  const totalPoints = (submittedCount * 50) + (resolvedCount * 100) + (totalUpvotes * 10)
+
+  const realAchievements = [
+    {
+      id: 1,
+      label: 'First Report',
+      icon: 'Flag',
+      earned: submittedCount >= 1,
+      progress: `${Math.min(submittedCount, 1)}/1`,
+    },
+    {
+      id: 2,
+      label: '10 Reports',
+      icon: 'Layers',
+      earned: submittedCount >= 10,
+      progress: `${Math.min(submittedCount, 10)}/10`,
+    },
+    {
+      id: 3,
+      label: 'Community Voice',
+      icon: 'Megaphone',
+      earned: submittedCount >= 5,
+      progress: `${Math.min(submittedCount, 5)}/5`,
+    },
+    {
+      id: 4,
+      label: '50 Upvotes',
+      icon: 'ThumbsUp',
+      earned: totalUpvotes >= 50,
+      progress: `${Math.min(totalUpvotes, 50)}/50`,
+    },
+    {
+      id: 5,
+      label: 'Resolution Hero',
+      icon: 'Flame',
+      earned: resolvedCount >= 3,
+      progress: `${Math.min(resolvedCount, 3)}/3`,
+    },
+    {
+      id: 6,
+      label: 'Top Contributor',
+      icon: 'Trophy',
+      earned: submittedCount >= 20 || totalPoints >= 1000,
+      progress: `${Math.min(totalPoints, 1000)}/1000 pts`,
+    },
+  ]
 
   const joinedDateStr = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })
@@ -238,7 +284,7 @@ export default function Profile() {
                       location: r.address || r.location || 'Location specified',
                       reportedAt: r.createdAt,
                       image: r.imageUrl || r.category,
-                      upvotes: 12,
+                      upvotes: r.upvoteCount || 0,
                     }}
                     index={i}
                     compact
@@ -264,22 +310,29 @@ export default function Profile() {
               <Award size={16} className="text-amber-500" /> Achievement Badges
             </h2>
             <div className="grid grid-cols-3 gap-3">
-              {achievements.map((a) => {
+              {realAchievements.map((a) => {
                 const Icon = achievementIcons[a.icon]
                 return (
                   <motion.div
                     key={a.id}
                     whileHover={{ y: -2 }}
-                    className={`flex flex-col items-center gap-2 p-3 rounded-xl border text-center ${
+                    className={`flex flex-col items-center gap-2 p-3 rounded-xl border text-center transition-all ${
                       a.earned
-                        ? 'border-emerald-500/20 bg-emerald-500/5'
-                        : 'border-border dark:border-border-dark opacity-40 grayscale'
+                        ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-900 dark:text-emerald-200 font-bold shadow-xs'
+                        : 'border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-white/[0.02] text-neutral-400 opacity-60'
                     }`}
                   >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${a.earned ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-black/5 dark:bg-white/5 text-text-secondary'}`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center relative ${
+                      a.earned
+                        ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                        : 'bg-black/5 dark:bg-white/5 text-neutral-400'
+                    }`}>
                       <Icon size={17} />
                     </div>
-                    <p className="text-[11px] font-medium text-text-primary dark:text-text-dark leading-tight">{a.label}</p>
+                    <div>
+                      <p className="text-[11px] font-bold leading-tight">{a.label}</p>
+                      <span className="text-[10px] font-mono opacity-80">{a.progress}</span>
+                    </div>
                   </motion.div>
                 )
               })}
