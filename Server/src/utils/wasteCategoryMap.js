@@ -63,6 +63,16 @@ export const WASTE_CATEGORIES = {
     suggestedTitle: "Organic Food Waste Overflow",
     suggestedDescription: "Biodegradable organic waste accumulation creating foul odor and unhygienic conditions.",
   },
+  biodegradable: {
+    category: "GARBAGE",
+    wasteType: "biodegradable",
+    label: "Biodegradable Waste",
+    bin: "organic",
+    binColor: "Green Bin",
+    department: "SANITATION",
+    suggestedTitle: "Biodegradable Organic Waste",
+    suggestedDescription: "Biodegradable waste detected requiring green organic waste bin collection.",
+  },
 };
 
 export const getWasteInfo = (rawClass) => {

@@ -28,8 +28,8 @@ app.add_middleware(
 # Global YOLO model instance
 yolo_model = None
 
-# Target classes supported by CivicLens Waste Detection
-TARGET_CLASSES = ["plastic", "paper", "cardboard", "glass", "metal", "organic"]
+# Target classes supported by CivicLens Waste Detection (matching best.pt)
+TARGET_CLASSES = ["biodegradable", "cardboard", "glass", "metal", "paper", "plastic"]
 
 def load_model():
     global yolo_model
