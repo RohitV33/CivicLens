@@ -204,6 +204,7 @@ export const assignIssueService = async (issueId, assignedToId, adminId) => {
 // ---- Admin Analytics Dashboard ----
 export const getAdminAnalyticsService = async () => {
   const [
+    totalUsers,
     totalIssues,
     pending,
     reviewing,
@@ -215,6 +216,7 @@ export const getAdminAnalyticsService = async () => {
     criticalPriority,
     categoryCounts,
   ] = await Promise.all([
+    prisma.user.count(),
     prisma.issue.count(),
     prisma.issue.count({ where: { status: "PENDING" } }),
     prisma.issue.count({ where: { status: "REVIEWING" } }),
@@ -233,6 +235,7 @@ export const getAdminAnalyticsService = async () => {
   const resolutionRate = totalIssues > 0 ? ((resolved / totalIssues) * 100).toFixed(1) : 0;
 
   return {
+    totalUsers,
     totalIssues,
     statusBreakdown: {
       pending,
