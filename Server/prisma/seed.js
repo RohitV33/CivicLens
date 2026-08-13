@@ -6,16 +6,21 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Seeding production database schema...");
 
-  const adminPassword = await bcrypt.hash("Rohit@6142", 10);
-  const userPassword = await bcrypt.hash("Rohit@3721", 10);
+  const adminEmail = process.env.ADMIN_EMAIL || "admin@civiclens.gov.in";
+  const adminRawPassword = process.env.ADMIN_PASSWORD || "Admin@civiclens2026";
+  const userRawPassword = process.env.USER_PASSWORD || "User@civiclens2026";
+  const user1Email = process.env.USER_EMAIL || "citizen@civiclens.com";
+
+  const adminPassword = await bcrypt.hash(adminRawPassword, 10);
+  const userPassword = await bcrypt.hash(userRawPassword, 10);
 
   // 1. Create System Admin
   const admin = await prisma.user.upsert({
-    where: { email: "gamerji6142@gmail.com" },
-    update: { role: "ADMIN" },
+    where: { email: adminEmail },
+    update: { role: "ADMIN", password: adminPassword },
     create: {
       name: "Municipal Admin Officer",
-      email: "gamerji6142@gmail.com",
+      email: adminEmail,
       password: adminPassword,
       role: "ADMIN",
     },
@@ -23,11 +28,11 @@ async function main() {
 
   // 2. Create Citizens
   const user1 = await prisma.user.upsert({
-    where: { email: "rohit.2327cs1176@kiet.edu" },
-    update: {},
+    where: { email: user1Email },
+    update: { password: userPassword },
     create: {
       name: "Rohit Verma",
-      email: "rohit.2327cs1176@kiet.edu",
+      email: user1Email,
       password: userPassword,
       role: "USER",
     },
@@ -35,7 +40,7 @@ async function main() {
 
   const user2 = await prisma.user.upsert({
     where: { email: "ananya@civiclens.com" },
-    update: {},
+    update: { password: userPassword },
     create: {
       name: "Ananya Gupta",
       email: "ananya@civiclens.com",

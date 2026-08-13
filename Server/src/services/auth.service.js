@@ -68,10 +68,16 @@ export const registerService = async (userData) => {
 export const loginService = async (userData) => {
 
   const { email, password } = userData;
+  const cleanEmail = (email || "").trim();
 
-  // Step 1: Find the user by email
-  const user = await prisma.user.findUnique({
-    where: { email },
+  // Step 1: Find the user by email (case-insensitive)
+  const user = await prisma.user.findFirst({
+    where: {
+      email: {
+        equals: cleanEmail,
+        mode: "insensitive",
+      },
+    },
   });
 
   // Step 2: If no user found → wrong email
