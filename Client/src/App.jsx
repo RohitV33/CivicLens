@@ -8,8 +8,7 @@ import PageTransition from './components/PageTransition'
 
 import Landing from './pages/Landing'
 import AboutUs from './pages/AboutUs'
-import Login from './pages/Login'
-import Signup from './pages/Signup'
+import Auth from './pages/Auth'
 import Dashboard from './pages/Dashboard'
 import ReportIssue from './pages/ReportIssue'
 import ComplaintDetails from './pages/ComplaintDetails'
@@ -28,12 +27,14 @@ function ScrollToTop() {
 
 function AnimatedRoutes() {
   const location = useLocation()
+  const isAuthRoute = location.pathname === '/login' || location.pathname === '/signup'
+
   return (
     <>
       <ScrollToTop />
       <AnimatePresence mode="sync" initial={false}>
         <motion.div
-          key={location.pathname}
+          key={isAuthRoute ? 'auth-route' : location.pathname}
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4 }}
@@ -42,8 +43,8 @@ function AnimatedRoutes() {
           <Routes location={location}>
             <Route path="/" element={<Landing />} />
             <Route path="/about" element={<AboutUs />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+            <Route path="/login" element={<Auth initialMode="login" />} />
+            <Route path="/signup" element={<Auth initialMode="signup" />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/report" element={<ReportIssue />} />
             <Route path="/complaint/:id" element={<ComplaintDetails />} />
