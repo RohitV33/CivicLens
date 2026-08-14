@@ -975,7 +975,7 @@ export default function Landing() {
             <div className="space-y-3">
               <h4 className="text-xs font-bold uppercase tracking-widest text-neutral-400">Product</h4>
               <ul className="space-y-2 text-xs text-neutral-400">
-                <li><button onClick={handleReportClick} className="hover:text-white transition-colors text-left">Report Issue</button></li>
+                <li><button onClick={handleReportClick} className="hover:text-white transition-colors text-left cursor-pointer">Report Issue</button></li>
                 <li><Link to="/map" className="hover:text-white transition-colors">Live Map</Link></li>
                 <li><Link to="/dashboard" className="hover:text-white transition-colors">Dashboard</Link></li>
               </ul>
@@ -983,39 +983,39 @@ export default function Landing() {
             <div className="space-y-3">
               <h4 className="text-xs font-bold uppercase tracking-widest text-neutral-400">Developer</h4>
               <ul className="space-y-2 text-xs text-neutral-400">
-                <li><a href="#" className="hover:text-white transition-colors">GitHub</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">API Reference</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Open Source</a></li>
+                <li><a href="https://github.com/RohitV33/CivicLens" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a></li>
+                <li><Link to="/about" className="hover:text-white transition-colors">Documentation</Link></li>
+                <li><Link to="/about" className="hover:text-white transition-colors">API Reference</Link></li>
+                <li><a href="https://github.com/RohitV33/CivicLens" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Open Source</a></li>
               </ul>
             </div>
             <div className="space-y-3">
               <h4 className="text-xs font-bold uppercase tracking-widest text-neutral-400">Company</h4>
               <ul className="space-y-2 text-xs text-neutral-400">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Roadmap</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Status</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+                <li><Link to="/about" className="hover:text-white transition-colors">About Us</Link></li>
+                <li><a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a></li>
+                <li><Link to="/map" className="hover:text-white transition-colors">Live Status</Link></li>
+                <li><Link to="/about" className="hover:text-white transition-colors">Contact</Link></li>
               </ul>
             </div>
             <div className="space-y-3">
               <h4 className="text-xs font-bold uppercase tracking-widest text-neutral-400">Legal</h4>
               <ul className="space-y-2 text-xs text-neutral-400">
-                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
+                <li><Link to="/about" className="hover:text-white transition-colors">Privacy</Link></li>
+                <li><Link to="/about" className="hover:text-white transition-colors">Terms</Link></li>
+                <li><Link to="/about" className="hover:text-white transition-colors">Security</Link></li>
               </ul>
             </div>
             <div className="space-y-3 col-span-2 md:col-span-1">
               <h4 className="text-xs font-bold uppercase tracking-widest text-neutral-400">Community</h4>
               <p className="text-xs text-neutral-500">Join the civic tech movement. Free for all citizens.</p>
               <div className="flex gap-2 pt-1">
-                <div className="w-8 h-8 rounded-lg bg-neutral-800 flex items-center justify-center hover:bg-neutral-700 cursor-pointer transition-colors">
+                <a href="https://github.com/RohitV33/CivicLens" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-lg bg-neutral-800 flex items-center justify-center hover:bg-neutral-700 cursor-pointer transition-colors" title="GitHub Source Code">
                   <Github size={14} className="text-neutral-300" />
-                </div>
-                <div className="w-8 h-8 rounded-lg bg-neutral-800 flex items-center justify-center hover:bg-neutral-700 cursor-pointer transition-colors">
+                </a>
+                <Link to="/map" className="w-8 h-8 rounded-lg bg-neutral-800 flex items-center justify-center hover:bg-neutral-700 cursor-pointer transition-colors" title="Live Map Explorer">
                   <Globe size={14} className="text-neutral-300" />
-                </div>
+                </Link>
               </div>
             </div>
           </div>
@@ -1023,9 +1023,9 @@ export default function Landing() {
           <div className="pt-8 border-t border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-500 font-medium">
             <div>© {new Date().getFullYear()} CivicLens AI Inc. All rights reserved.</div>
             <div className="flex items-center gap-6">
-              <a href="#" className="hover:text-neutral-300 transition-colors">GitHub</a>
-              <a href="#" className="hover:text-neutral-300 transition-colors">Privacy</a>
-              <a href="#" className="hover:text-neutral-300 transition-colors">Terms</a>
+              <a href="https://github.com/RohitV33/CivicLens" target="_blank" rel="noopener noreferrer" className="hover:text-neutral-300 transition-colors">GitHub</a>
+              <Link to="/about" className="hover:text-neutral-300 transition-colors">Privacy</Link>
+              <Link to="/about" className="hover:text-neutral-300 transition-colors">Terms</Link>
             </div>
           </div>
 
