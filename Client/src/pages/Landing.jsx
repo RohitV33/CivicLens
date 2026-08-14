@@ -501,17 +501,8 @@ function HowItWorksSection() {
 export default function Landing() {
   const [openFaq, setOpenFaq] = useState(0)
   const [activeTab, setActiveTab] = useState('All Docs')
-  const [realIssues, setRealIssues] = useState([])
   const navigate = useNavigate()
   const { user } = useAuth()
-
-  useEffect(() => {
-    getAllIssuesAPI()
-      .then((res) => {
-        setRealIssues(res.items || res.data || [])
-      })
-      .catch(() => setRealIssues([]))
-  }, [])
 
   const heroRef = useRef(null)
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
@@ -817,55 +808,7 @@ export default function Landing() {
         </FadeIn>
       </section>
 
-      {/* ════════════════════════════════════════════════════════
-          6. LIVE REPORTS FEED
-      ════════════════════════════════════════════════════════ */}
-      <section className="py-20 sm:py-28 px-4 sm:px-6 max-w-5xl mx-auto z-10 relative">
-        <FadeUp className="flex items-center justify-between mb-8 pb-4 border-b border-black/5 dark:border-white/10">
-          <div>
-            <h2 className="font-serif text-3xl">Live Reports Feed</h2>
-            <p className="text-xs text-neutral-500 mt-1">Real-time civic activity across tested cities</p>
-          </div>
-          <span className="text-xs font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-3 py-1.5 rounded-full flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-            Live Stream
-          </span>
-        </FadeUp>
 
-        <div className="space-y-3">
-          {realIssues.length === 0 ? (
-            <div className="p-8 rounded-[20px] bg-white dark:bg-[#14161A] border border-black/5 dark:border-white/8 text-center text-neutral-500">
-              <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">No live reports submitted yet.</p>
-              <p className="text-xs text-neutral-400 mt-1">Be the first citizen to report a civic issue in your city!</p>
-            </div>
-          ) : (
-            realIssues.slice(0, 5).map((item, idx) => (
-              <FadeUp key={item.id} delay={idx * 0.07}>
-                <Link
-                  to={`/issue/${item.id}`}
-                  className="p-4 sm:p-5 rounded-[20px] bg-white dark:bg-[#14161A] border border-black/5 dark:border-white/8 shadow-sm flex items-center justify-between gap-4 group cursor-pointer hover:border-black/20 dark:hover:border-white/20 transition-all block"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-11 h-11 rounded-2xl bg-neutral-100 dark:bg-white/5 flex items-center justify-center text-sm font-extrabold text-neutral-900 dark:text-white flex-shrink-0 font-mono">
-                      #{item.id}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm text-neutral-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{item.title}</h4>
-                      <span className="text-xs text-neutral-500">📍 {item.address || item.location || 'City Location'} · {new Date(item.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-extrabold px-3 py-1.5 rounded-full whitespace-nowrap bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200 uppercase">
-                      {item.status}
-                    </span>
-                  </div>
-                </Link>
-              </FadeUp>
-            ))
-          )}
-        </div>
-
-      </section>
 
       {/* ════════════════════════════════════════════════════════
           7. CITY ANALYTICS DASHBOARD
@@ -912,27 +855,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ════════════════════════════════════════════════════════
-          9. METRICS / TRUST SECTION
-      ════════════════════════════════════════════════════════ */}
-      <section className="py-10 px-4 sm:px-6 max-w-7xl mx-auto z-10 relative">
-        <FadeIn>
-          <div className="rounded-[24px] bg-slate-900 dark:bg-[#121316] text-white p-8 sm:p-12 border border-slate-800 shadow-sm grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center relative overflow-hidden">
-            {[
-              { value: '94%', label: 'AI Detection Accuracy', icon: Cpu },
-              { value: '< 25s', label: 'Average Report Time', icon: Timer },
-              { value: '68%', label: 'Duplicate Reduction', icon: Repeat },
-              { value: '100%', label: 'Auto Dept Assignment', icon: Send },
-            ].map((m, i) => (
-              <FadeUp key={m.label} delay={i * 0.1} className="space-y-2 relative z-10">
-                <m.icon size={20} className="mx-auto text-slate-400" />
-                <p className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">{m.value}</p>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{m.label}</p>
-              </FadeUp>
-            ))}
-          </div>
-        </FadeIn>
-      </section>
+
 
 
       {/* ════════════════════════════════════════════════════════
@@ -1019,39 +942,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ════════════════════════════════════════════════════════
-          12. FINAL CTA
-      ════════════════════════════════════════════════════════ */}
-      <section className="py-12 px-4 sm:px-6 max-w-7xl mx-auto z-10 relative">
-        <FadeIn>
-          <div className="rounded-[28px] relative overflow-hidden p-8 sm:p-14 flex flex-col md:flex-row items-center justify-between gap-8 bg-neutral-100 dark:bg-[#14161A] border border-neutral-200/80 dark:border-neutral-800 shadow-sm">
-            <div className="space-y-3 text-center md:text-left relative z-10">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-200/70 dark:bg-white/10 text-slate-800 dark:text-slate-200 text-xs font-bold uppercase tracking-wider">
-                <Shield size={12} /> Civic Empowerment Platform
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-serif text-neutral-900 dark:text-white leading-tight">
-                Help Build Better Cities.
-              </h2>
-              <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-400">
-                Join thousands of citizens reporting and resolving civic issues.
-              </p>
-            </div>
 
-            <div className="flex flex-wrap items-center gap-3 relative z-10">
-              <button
-                onClick={handleReportClick}
-                className="inline-flex items-center justify-center rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold px-6 py-3 text-sm hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-sm"
-              >
-                Report an Issue
-              </button>
-              <Link to="/map" className="inline-flex items-center justify-center rounded-full bg-white dark:bg-white/10 text-neutral-900 dark:text-white font-semibold px-6 py-3 text-sm border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-white/15 transition-colors">
-                <Globe size={15} />
-                Explore Live Map
-              </Link>
-            </div>
-          </div>
-        </FadeIn>
-      </section>
 
       {/* ════════════════════════════════════════════════════════
           13. FOOTER
