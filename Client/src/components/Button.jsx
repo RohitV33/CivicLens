@@ -23,13 +23,17 @@ export default function Button({
   as: Component = 'button',
   ...props
 }) {
+  const MotionComp = motion(Component)
+
   return (
-    <motion.div whileTap={{ scale: 0.97 }} className="inline-block">
-      <Component className={`${variants[variant]} ${sizes[size]} ${className}`} {...props}>
-        {Icon && <Icon size={16} strokeWidth={2.25} />}
-        {children}
-        {IconRight && <IconRight size={16} strokeWidth={2.25} />}
-      </Component>
-    </motion.div>
+    <MotionComp
+      whileTap={{ scale: 0.97 }}
+      className={`${variants[variant]} ${sizes[size]} ${className}`}
+      {...props}
+    >
+      {Icon && <Icon size={16} strokeWidth={2.25} />}
+      {children}
+      {IconRight && <IconRight size={16} strokeWidth={2.25} />}
+    </MotionComp>
   )
 }

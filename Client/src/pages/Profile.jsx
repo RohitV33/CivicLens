@@ -109,8 +109,10 @@ export default function Profile() {
     loadData()
   }, [])
 
-  // GSAP Smooth Entrance Animation
+  // GSAP Smooth Entrance Animation (Triggers after loading completes)
   useEffect(() => {
+    if (loading) return
+
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
       if (profileHeaderRef.current) {
@@ -126,7 +128,7 @@ export default function Profile() {
       }
     })
     return () => ctx.revert()
-  }, [])
+  }, [loading])
 
   const initials = (name || user?.name || 'C')
     .split(' ')
@@ -436,7 +438,7 @@ export default function Profile() {
             </div>
             <div>
               <label className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1.5 block">Location</label>
-              <input value={locationStr} onChange={(e) => setLocationStr(e.target.value)} className="w-full rounded-2xl bg-neutral-100/90 dark:bg-neutral-800/60 border border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-neutral-800 px-4 py-3 text-sm text-neutral-900 dark:text-white outline-none transition-all" />
+              <input value={locationStr} onChange={(e) => setLocationStr(e.target.value)} className="w-full rounded-2xl bg-neutral-100/90 dark:bg-neutral-800/60 border border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-neutral-800 px-4 py-3 text-sm font-bold text-neutral-900 dark:text-white outline-none transition-all" />
             </div>
           </div>
         </Modal>

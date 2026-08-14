@@ -137,8 +137,10 @@ export default function Dashboard() {
     loadData()
   }, [])
 
-  // GSAP Smooth Entrance Timeline
+  // GSAP Smooth Entrance Timeline (Runs after loading completes so elements exist)
   useEffect(() => {
+    if (loading) return
+
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
 
@@ -166,7 +168,7 @@ export default function Dashboard() {
     })
 
     return () => ctx.revert()
-  }, [])
+  }, [loading])
 
   const resolvedCount = allIssues.filter((i) => i.status === 'RESOLVED').length
   const pendingCount = allIssues.filter((i) => i.status === 'PENDING' || i.status === 'ASSIGNED' || i.status === 'IN_PROGRESS').length
