@@ -126,7 +126,7 @@ export default function Navbar() {
           <nav ref={navRef} className="hidden md:flex items-center gap-0.5 relative">
             {/* Sliding background pill */}
             <AnimatePresence>
-              {activeSection && (
+              {(activeSection || location.pathname === '/about') && (
                 <motion.div
                   key="indicator"
                   className="absolute top-0 bottom-0 rounded-full bg-black/[0.06] dark:bg-white/[0.1] pointer-events-none"

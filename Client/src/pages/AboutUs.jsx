@@ -2,7 +2,6 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { ShieldCheck, Camera, Sparkles, MapPin, Send, AlertTriangle, CheckCircle2, Clock, Globe, Heart, ArrowRight, UserCheck, Building2 } from 'lucide-react'
 import Navbar from '../components/Navbar'
-import PageTransition from '../components/PageTransition'
 
 export default function AboutUs() {
   const steps = [
@@ -33,10 +32,9 @@ export default function AboutUs() {
   ]
 
   return (
-    <PageTransition>
-      <div className="min-h-screen bg-[#FAF8F5] dark:bg-[#080809] text-neutral-900 dark:text-white font-sans selection:bg-blue-500/20 overflow-x-hidden">
-        {/* Navbar */}
-        <Navbar />
+    <div className="min-h-screen bg-[#FAF8F5] dark:bg-[#080809] text-neutral-900 dark:text-white font-sans selection:bg-blue-500/20 overflow-x-hidden">
+      {/* Navbar */}
+      <Navbar />
 
         {/* Hero Header */}
         <section className="relative px-4 sm:px-6 pt-12 pb-16 max-w-5xl mx-auto text-center z-10">
@@ -221,6 +219,5 @@ export default function AboutUs() {
           <p>© {new Date().getFullYear()} CivicLens AI Inc. Building cleaner, safer cities together.</p>
         </footer>
       </div>
-    </PageTransition>
   )
 }
