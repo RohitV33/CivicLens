@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext'
 
 
 const navLinks = [
-  { label: 'About Us', sectionId: 'about-us' },
+  { label: 'About Us', path: '/about' },
   { label: 'How It Works', sectionId: 'how-it-works' },
   { label: 'Live Map', sectionId: 'live-map' },
   { label: 'Analytics', sectionId: 'analytics' },
@@ -35,7 +35,7 @@ export default function Navbar() {
 
   // Track active section via IntersectionObserver
   useEffect(() => {
-    const sectionIds = navLinks.map(l => l.sectionId)
+    const sectionIds = navLinks.filter(l => l.sectionId).map(l => l.sectionId)
     const observers = []
     const sectionVisibility = {}
 
@@ -60,6 +60,20 @@ export default function Navbar() {
 
   // Update sliding indicator position
   useEffect(() => {
+    if (location.pathname === '/about') {
+      const el = linkRefs.current['/about']
+      const nav = navRef.current
+      if (el && nav) {
+        const navRect = nav.getBoundingClientRect()
+        const elRect = el.getBoundingClientRect()
+        setIndicatorStyle({
+          left: elRect.left - navRect.left,
+          width: elRect.width,
+        })
+      }
+      return
+    }
+
     if (!activeSection) return
     const el = linkRefs.current[activeSection]
     const nav = navRef.current
@@ -71,15 +85,19 @@ export default function Navbar() {
         width: elRect.width,
       })
     }
-  }, [activeSection])
+  }, [activeSection, location.pathname])
 
-  const handleNavClick = (sectionId) => {
+  const handleNavClick = (link) => {
     setOpen(false)
+    if (link.path) {
+      navigate(link.path)
+      return
+    }
     if (location.pathname !== '/') {
       navigate('/')
-      setTimeout(() => scrollToSection(sectionId), 400)
+      setTimeout(() => scrollToSection(link.sectionId), 400)
     } else {
-      scrollToSection(sectionId)
+      scrollToSection(link.sectionId)
     }
   }
 
@@ -122,25 +140,30 @@ export default function Navbar() {
               )}
             </AnimatePresence>
 
-            {navLinks.map((l) => (
-              <button
-                key={l.label}
-                ref={el => linkRefs.current[l.sectionId] = el}
-                onClick={() => handleNavClick(l.sectionId)}
-                className={`relative text-sm font-medium px-3.5 py-1.5 rounded-full transition-all duration-200 z-10 ${activeSection === l.sectionId
-                    ? 'text-black dark:text-white font-semibold'
-                    : 'text-neutral-600 dark:text-neutral-300 hover:text-black dark:hover:text-white'
+            {navLinks.map((l) => {
+              const key = l.path || l.sectionId
+              const isActive = (l.path && location.pathname === l.path) || (l.sectionId && activeSection === l.sectionId)
+              return (
+                <button
+                  key={l.label}
+                  ref={el => linkRefs.current[key] = el}
+                  onClick={() => handleNavClick(l)}
+                  className={`relative text-sm font-medium px-3.5 py-1.5 rounded-full transition-all duration-200 z-10 cursor-pointer ${
+                    isActive
+                      ? 'text-black dark:text-white font-semibold'
+                      : 'text-neutral-600 dark:text-neutral-300 hover:text-black dark:hover:text-white'
                   }`}
-              >
-                {l.label}
-                {activeSection === l.sectionId && (
-                  <motion.span
-                    layoutId="activeDot"
-                    className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-blue-500"
-                  />
-                )}
-              </button>
-            ))}
+                >
+                  {l.label}
+                  {isActive && (
+                    <motion.span
+                      layoutId="activeDot"
+                      className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-blue-500"
+                    />
+                  )}
+                </button>
+              )
+            })}
           </nav>
 
           {/* Desktop Right Actions */}
@@ -195,21 +218,25 @@ export default function Navbar() {
               className="md:hidden mt-2 overflow-hidden rounded-3xl bg-white/95 dark:bg-[#18191C]/95 backdrop-blur-2xl border border-black/10 dark:border-white/10 shadow-2xl p-5"
             >
               <div className="flex flex-col gap-1">
-                {navLinks.map((l, i) => (
-                  <motion.button
-                    key={l.label}
-                    initial={{ opacity: 0, x: -12 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    onClick={() => handleNavClick(l.sectionId)}
-                    className={`text-left text-base font-medium py-2 px-3 rounded-xl transition-colors ${activeSection === l.sectionId
-                        ? 'text-black dark:text-white bg-black/5 dark:bg-white/10 font-semibold'
-                        : 'text-neutral-700 dark:text-neutral-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
+                {navLinks.map((l, i) => {
+                  const isActive = (l.path && location.pathname === l.path) || (l.sectionId && activeSection === l.sectionId)
+                  return (
+                    <motion.button
+                      key={l.label}
+                      initial={{ opacity: 0, x: -12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      onClick={() => handleNavClick(l)}
+                      className={`text-left text-base font-medium py-2 px-3 rounded-xl transition-colors ${
+                        isActive
+                          ? 'text-black dark:text-white bg-black/5 dark:bg-white/10 font-semibold'
+                          : 'text-neutral-700 dark:text-neutral-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
                       }`}
-                  >
-                    {l.label}
-                  </motion.button>
-                ))}
+                    >
+                      {l.label}
+                    </motion.button>
+                  )
+                })}
                 <div className="pt-3 mt-2 border-t border-neutral-200 dark:border-neutral-800 flex flex-col gap-2.5">
                   <Link
                     to="/login"

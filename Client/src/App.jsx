@@ -7,6 +7,7 @@ import { AuthProvider } from './context/AuthContext'
 import PageTransition from './components/PageTransition'
 
 import Landing from './pages/Landing'
+import AboutUs from './pages/AboutUs'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
@@ -40,6 +41,7 @@ function AnimatedRoutes() {
         >
           <Routes location={location}>
             <Route path="/" element={<Landing />} />
+            <Route path="/about" element={<AboutUs />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/dashboard" element={<Dashboard />} />
