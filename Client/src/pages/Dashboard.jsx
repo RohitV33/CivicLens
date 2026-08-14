@@ -1,15 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import gsap from 'gsap'
 import {
-  FileText, CheckCircle2, Clock, Award, PlusCircle, ArrowRight, Trophy, Loader2, Search, SlidersHorizontal, UserCheck, Flame, Sparkles, TrendingUp
+  FileText, CheckCircle2, Clock, Award, PlusCircle, ArrowRight, Trophy, Loader2, Search, SlidersHorizontal, UserCheck, Flame, Sparkles, Filter, ChevronRight, Eye, ThumbsUp, MapPin, ArrowUpRight
 } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
 import Card from '../components/Card'
 import Button from '../components/Button'
-import ReportCard from '../components/ReportCard'
-import { EmptyState } from '../components/EmptyState'
 import { useCountUp } from '../hooks/useCountUp'
 import { useAuth } from '../context/AuthContext'
 import { getAllIssuesAPI, getMyIssuesAPI } from '../services/api'
@@ -17,7 +15,7 @@ import { useLanguage } from '../context/LanguageContext'
 
 const SAMPLE_ISSUES = [
   {
-    id: 'REP-101',
+    id: 'REP-404-002',
     title: 'Severe Pothole on Main Market Road',
     category: 'POTHOLE',
     status: 'IN_PROGRESS',
@@ -25,14 +23,15 @@ const SAMPLE_ISSUES = [
     address: 'Sector 14, Main Market, MG Road',
     location: 'Sector 14, Main Market, MG Road',
     createdBy: { name: 'Priya Sharma' },
-    createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
+    createdAt: 'In 2 days',
     aiConfidence: 96,
     department: 'PUBLIC WORKS',
     upvoteCount: 14,
+    amount: 'High Priority',
     imageUrl: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600&auto=format&fit=crop&q=80',
   },
   {
-    id: 'REP-102',
+    id: 'REP-426-001',
     title: 'Uncollected Garbage Pile near Park Entrance',
     category: 'GARBAGE',
     status: 'PENDING',
@@ -40,29 +39,15 @@ const SAMPLE_ISSUES = [
     address: 'Block B, Green Park Extension',
     location: 'Block B, Green Park Extension',
     createdBy: { name: 'Vikram Malhotra' },
-    createdAt: new Date(Date.now() - 3600000 * 12).toISOString(),
+    createdAt: 'In 4 days',
     aiConfidence: 94,
     department: 'SANITATION',
     upvoteCount: 8,
+    amount: 'Medium Priority',
     imageUrl: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=600&auto=format&fit=crop&q=80',
   },
   {
-    id: 'REP-103',
-    title: 'Broken Streetlight in Residential Lane',
-    category: 'STREETLIGHT',
-    status: 'RESOLVED',
-    priority: 'LOW',
-    address: 'Lane 4, Model Town',
-    location: 'Lane 4, Model Town',
-    createdBy: { name: 'Ananya Gupta' },
-    createdAt: new Date(Date.now() - 3600000 * 36).toISOString(),
-    aiConfidence: 98,
-    department: 'ELECTRICAL',
-    upvoteCount: 22,
-    imageUrl: 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=600&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'REP-104',
+    id: 'REP-427-012',
     title: 'Water Leakage Pipeline Burst',
     category: 'WATER_LEAKAGE',
     status: 'IN_PROGRESS',
@@ -70,35 +55,71 @@ const SAMPLE_ISSUES = [
     address: 'Civil Lines Road, Ward 7',
     location: 'Civil Lines Road, Ward 7',
     createdBy: { name: 'Aarav Sharma' },
-    createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+    createdAt: 'In 5 days',
     aiConfidence: 95,
     department: 'WATER SUPPLY',
     upvoteCount: 19,
+    amount: 'Critical Dispatch',
     imageUrl: 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=600&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'REP-417-020',
+    title: 'Broken Streetlight in Residential Lane',
+    category: 'STREETLIGHT',
+    status: 'RESOLVED',
+    priority: 'LOW',
+    address: 'Lane 4, Model Town',
+    location: 'Lane 4, Model Town',
+    createdBy: { name: 'Ananya Gupta' },
+    createdAt: 'Resolved',
+    aiConfidence: 98,
+    department: 'ELECTRICAL',
+    upvoteCount: 22,
+    amount: 'Completed',
+    imageUrl: 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=600&auto=format&fit=crop&q=80',
   },
 ]
 
-function StatCard({ icon: Icon, label, value, bgClass = 'bg-white dark:bg-[#1A1C20]', tone = 'text-black dark:text-white', delta }) {
+function StatMetric({ label, value, subtext, avatars, bars }) {
   const { ref, value: animated } = useCountUp(value)
   return (
-    <motion.div
-      whileHover={{ y: -3, scale: 1.01 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-      className={`${bgClass} rounded-3xl p-6 border border-black/5 dark:border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.03)] relative overflow-hidden group cursor-default`}
-    >
-      <div className="flex items-center justify-between mb-4">
-        <div className="w-11 h-11 rounded-2xl bg-black/5 dark:bg-white/10 flex items-center justify-center text-black dark:text-white group-hover:scale-110 transition-transform">
-          <Icon size={20} strokeWidth={2.2} />
-        </div>
-        {delta && (
-          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-            <Sparkles size={11} /> {delta}
-          </span>
-        )}
+    <div className="space-y-3">
+      <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">{label}</p>
+      <div className="flex items-baseline gap-1">
+        <span className="text-sm font-semibold text-neutral-400 font-sans">$</span>
+        <p ref={ref} className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight tabular-nums">{animated}</p>
+        <span className="text-xs text-neutral-400 font-medium ml-1">{subtext}</span>
       </div>
-      <p ref={ref} className={`text-4xl font-extrabold tracking-tight tabular-nums ${tone}`}>{animated}</p>
-      <p className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mt-1.5">{label}</p>
-    </motion.div>
+
+      {bars && (
+        <div className="flex items-center gap-6 pt-2 text-[10px] font-semibold text-neutral-400">
+          <div>
+            <span>Sep</span>
+            <div className="w-10 h-1.5 bg-[#E2FF38] rounded-full mt-1" />
+          </div>
+          <div>
+            <span>Oct</span>
+            <div className="w-6 h-1.5 bg-[#E2FF38] rounded-full mt-1" />
+          </div>
+          <div>
+            <span>Nov</span>
+            <div className="w-10 h-1.5 bg-[#E2FF38] rounded-full mt-1" />
+          </div>
+          <div>
+            <span>Dec</span>
+            <div className="w-3 h-1.5 bg-[#E2FF38] rounded-full mt-1" />
+          </div>
+        </div>
+      )}
+
+      {avatars && (
+        <div className="flex items-center gap-1 pt-1">
+          {['https://i.pravatar.cc/80?img=12', 'https://i.pravatar.cc/80?img=33', 'https://i.pravatar.cc/80?img=47', 'https://i.pravatar.cc/80?img=68'].map((src, i) => (
+            <img key={i} src={src} alt="user" className="w-6 h-6 rounded-full border-2 border-white dark:border-[#121418] object-cover -ml-1.5 first:ml-0" />
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -110,10 +131,11 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('ALL')
+  const [selectedIssue, setSelectedIssue] = useState(SAMPLE_ISSUES[0])
 
   const headerRef = useRef(null)
   const statsGridRef = useRef(null)
-  const contentGridRef = useRef(null)
+  const mainPanelRef = useRef(null)
 
   const displayName = user?.name || 'Citizen'
 
@@ -130,14 +152,17 @@ export default function Dashboard() {
 
       if (fetchedAll && fetchedAll.length > 0) {
         setAllIssues(fetchedAll)
+        setSelectedIssue(fetchedAll[0])
       } else {
         setAllIssues(SAMPLE_ISSUES)
+        setSelectedIssue(SAMPLE_ISSUES[0])
       }
 
       setMyIssues(fetchedMy)
     } catch (err) {
       console.error('Failed to load issues', err)
       setAllIssues(SAMPLE_ISSUES)
+      setSelectedIssue(SAMPLE_ISSUES[0])
     } finally {
       setLoading(false)
     }
@@ -147,38 +172,30 @@ export default function Dashboard() {
     loadData()
   }, [])
 
-  // GSAP Smooth Dashboard Staggered Entrance
+  // GSAP Entrance Timeline
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
-
       if (headerRef.current) {
-        tl.fromTo(
-          headerRef.current,
-          { y: 22, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.6 }
-        )
+        tl.fromTo(headerRef.current, { y: 22, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 })
       }
-
       if (statsGridRef.current) {
         tl.fromTo(
           statsGridRef.current.children,
-          { y: 25, opacity: 0, scale: 0.94 },
-          { y: 0, opacity: 1, scale: 1, duration: 0.5, stagger: 0.08, ease: 'back.out(1.3)' },
+          { y: 20, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.5, stagger: 0.08 },
           '-=0.3'
         )
       }
-
-      if (contentGridRef.current) {
+      if (mainPanelRef.current) {
         tl.fromTo(
-          contentGridRef.current.children,
-          { y: 25, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.5, stagger: 0.12 },
+          mainPanelRef.current,
+          { y: 25, opacity: 0, scale: 0.98 },
+          { y: 0, opacity: 1, scale: 1, duration: 0.5 },
           '-=0.2'
         )
       }
     })
-
     return () => ctx.revert()
   }, [])
 
@@ -187,201 +204,215 @@ export default function Dashboard() {
   const myResolvedCount = myIssues.filter((i) => i.status === 'RESOLVED').length
   const myImpactPoints = Math.max(150, (myIssues.length * 50) + (myResolvedCount * 100))
 
-  // Real-time filtered issues
   const filteredIssues = allIssues.filter((issue) => {
     const matchesSearch =
       !searchQuery ||
       issue.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       issue.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      issue.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      issue.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      String(issue.id).includes(searchQuery)
+      issue.category?.toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesCategory =
-      selectedCategory === 'ALL' || issue.category === selectedCategory
-
+    const matchesCategory = selectedCategory === 'ALL' || issue.category === selectedCategory
     return matchesSearch && matchesCategory
   })
 
-  const categories = ['ALL', 'POTHOLE', 'GARBAGE', 'STREETLIGHT', 'WATER_LEAKAGE', 'DRAINAGE', 'SEWAGE', 'ROAD_DAMAGE']
+  const categories = ['ALL', 'POTHOLE', 'GARBAGE', 'STREETLIGHT', 'WATER_LEAKAGE']
 
   return (
     <AppLayout title={t('navDashboard')}>
-      {/* Welcome Banner Section */}
-      <div ref={headerRef} className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-6 border-b border-black/5 dark:border-white/10 gap-4">
-        <div>
-          <h1 className="font-serif text-3xl sm:text-4xl font-normal text-neutral-900 dark:text-white tracking-tight">
-            {t('dashTitle')}, <span className="italic font-serif text-blue-600 dark:text-blue-400">{displayName}</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1.5 font-medium max-w-xl">
-            {t('dashSubtitle')}
-          </p>
-        </div>
-        <Button as={Link} to="/report" icon={PlusCircle} className="shadow-lg hover:shadow-xl transition-all">
-          {t('btnNewReport')}
-        </Button>
-      </div>
-
-      {/* Top GSAP Staggered Metric Cards */}
-      <div ref={statsGridRef} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard icon={FileText} label={t('statTotal')} value={allIssues.length} bgClass="bg-[#E7F1FE] dark:bg-[#0E1E33]" tone="text-blue-900 dark:text-blue-100" delta="Live Feed" />
-        <StatCard icon={CheckCircle2} label={t('statResolved')} value={resolvedCount} bgClass="bg-[#E4F8EE] dark:bg-[#0F2D20]" tone="text-emerald-900 dark:text-emerald-100" />
-        <StatCard icon={Clock} label={t('statActive')} value={pendingCount} bgClass="bg-[#FFF4DC] dark:bg-[#2D210F]" tone="text-amber-900 dark:text-amber-100" />
-        <StatCard icon={Award} label={t('statMine')} value={myIssues.length} bgClass="bg-[#FDE8EA] dark:bg-[#2C1518]" tone="text-rose-900 dark:text-rose-100" />
-      </div>
-
-      <div ref={contentGridRef} className="grid lg:grid-cols-3 gap-8">
-        {/* Left 2-Cols: Recent Reports & Search/Filter */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="space-y-8 font-sans max-w-[1400px] mx-auto">
+        {/* Top Salesforce / Stripe Style Header Bar */}
+        <div ref={headerRef} className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
           <div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
-              <h2 className="font-serif text-2xl text-neutral-900 dark:text-white font-bold">{t('recentReports')}</h2>
-              <Link to="/map" className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1 hover:gap-2 transition-all">
-                {t('viewAllMap')} <ArrowRight size={14} />
-              </Link>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
+                Civic Dashboard
+              </h1>
+              <span className="px-3 py-1 rounded-full bg-[#E2FF38] text-black text-xs font-black uppercase tracking-wider">
+                Live AI
+              </span>
             </div>
+            <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1 font-semibold">
+              Welcome back, <span className="text-neutral-900 dark:text-white font-bold">{displayName}</span>. Real-time civic AI dispatch platform.
+            </p>
+          </div>
 
-            {/* Search & Category Filter Bar */}
-            <div className="mb-6 space-y-3">
-              <div className="relative">
-                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search reports by title, location, or ID..."
-                  className="w-full rounded-2xl bg-white dark:bg-[#15171C] border border-black/5 dark:border-white/10 pl-11 pr-4 py-3.5 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 shadow-sm focus:border-blue-500 outline-none transition-all"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 overflow-x-auto pb-1.5 no-scrollbar relative">
-                {categories.map((cat) => {
-                  const active = selectedCategory === cat
-                  return (
-                    <button
-                      key={cat}
-                      onClick={() => setSelectedCategory(cat)}
-                      className={`relative px-4 py-2 rounded-xl text-xs font-bold shrink-0 transition-colors z-10 cursor-pointer ${
-                        active
-                          ? 'text-white dark:text-neutral-900'
-                          : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white bg-white/70 dark:bg-white/5 border border-black/5 dark:border-white/5'
-                      }`}
-                    >
-                      {active && (
-                        <motion.div
-                          layoutId="activeDashCat"
-                          className="absolute inset-0 rounded-xl bg-neutral-900 dark:bg-white -z-10 shadow-sm"
-                          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                        />
-                      )}
-                      <span>{cat.replace('_', ' ')}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="py-14 text-center text-neutral-500">
-                <Loader2 className="animate-spin mx-auto mb-3 text-blue-600 dark:text-blue-400" size={30} />
-                <p className="text-sm font-semibold">Loading live civic reports...</p>
-              </div>
-            ) : filteredIssues.length > 0 ? (
-              <div className="grid sm:grid-cols-2 gap-4">
-                {filteredIssues.map((r, i) => (
-                  <ReportCard
-                    key={r.id}
-                    report={{
-                      id: r.id,
-                      title: r.title,
-                      category: r.category,
-                      status: r.status,
-                      severity: r.priority,
-                      location: r.address || r.location || 'Location specified',
-                      reportedBy: r.createdBy?.name || 'Citizen',
-                      reportedAt: r.createdAt,
-                      confidence: r.aiConfidence || 92,
-                      department: r.department ? r.department.replace('_', ' ') : 'PUBLIC WORKS',
-                      upvotes: r.upvoteCount || 0,
-                      image: r.imageUrl || r.category,
-                    }}
-                    index={i}
-                    compact
-                  />
-                ))}
-              </div>
-            ) : (
-              <Card className="text-center py-12">
-                <EmptyState
-                  icon={FileText}
-                  title="No matching reports found"
-                  description="No reports match your current search query or filter selection."
-                  action={<Button as={Link} to="/report" icon={PlusCircle}>{t('btnReportIssue')}</Button>}
-                />
-              </Card>
-            )}
+          <div className="flex items-center gap-3">
+            <Link
+              to="/report"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#E2FF38] hover:bg-[#d4f22e] text-black font-extrabold text-xs shadow-md transition-transform hover:scale-[1.02] cursor-pointer"
+            >
+              <PlusCircle size={16} /> File New Complaint
+            </Link>
           </div>
         </div>
 
-        {/* Right Sidebar: Real User Impact & Community Leaderboard */}
-        <div className="space-y-6">
-          <motion.div
-            whileHover={{ y: -2 }}
-            className="bg-gradient-to-br from-emerald-500/15 via-teal-500/10 to-transparent rounded-3xl p-7 border border-emerald-500/25 shadow-soft space-y-4 relative overflow-hidden"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-extrabold uppercase tracking-widest text-emerald-800 dark:text-emerald-300">Your Civic Impact</span>
-              <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 flex items-center justify-center">
-                <Award size={20} />
-              </div>
-            </div>
-            <div>
-              <p className="text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">{myImpactPoints} <span className="text-xs font-bold text-neutral-400">PTS</span></p>
-              <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1 font-medium leading-relaxed">Earned from {myIssues.length} submitted reports & {myResolvedCount} verified resolutions.</p>
-            </div>
-            <Button as={Link} to="/report" className="w-full justify-center shadow-md bg-emerald-600 hover:bg-emerald-700 text-white">
-              {t('btnFileComplaint')}
-            </Button>
-          </motion.div>
+        {/* Top 4 Salesforce-Style Metric Columns */}
+        <div ref={statsGridRef} className="grid grid-cols-2 lg:grid-cols-4 gap-6 p-7 rounded-[2.2rem] bg-white dark:bg-[#121418] border border-black/5 dark:border-white/10 shadow-[0_15px_45px_rgba(0,0,0,0.03)]">
+          <StatMetric label="Total City Reports" value={allIssues.length} subtext="issues" bars />
+          <StatMetric label="Resolved Progress" value={resolvedCount} subtext="resolved" avatars />
+          <StatMetric label="Active Work Units" value={pendingCount} subtext="units" />
+          <StatMetric label="My Impact Points" value={myImpactPoints} subtext="pts" />
+        </div>
 
-          <Card className="bg-white dark:bg-[#1A1C20] rounded-3xl p-7 border border-black/5 dark:border-white/10 shadow-soft space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-serif text-xl text-neutral-900 dark:text-white font-bold flex items-center gap-2">
-                <Trophy size={19} className="text-amber-500" /> City Leaderboard
-              </h2>
-              <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20">Top Citizens</span>
+        {/* ── Main Dark/Light Floating Sub-Panel ── */}
+        <div ref={mainPanelRef} className="rounded-[2.6rem] bg-[#16181D] text-white p-6 sm:p-8 shadow-2xl border border-white/10 relative overflow-hidden">
+          {/* Panel Category Pills Navbar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-white/10">
+            <div className="flex items-center gap-2">
+              <h2 className="font-serif text-2xl font-bold text-white tracking-tight">Active Civic Reports</h2>
+              <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-neutral-300 text-xs font-mono">
+                {filteredIssues.length}
+              </span>
             </div>
 
-            <div className="space-y-3 pt-1">
-              {[
-                { rank: 1, name: 'Ananya Gupta', pts: 350, reports: 4, isMe: false },
-                { rank: 2, name: displayName, pts: myImpactPoints, reports: Math.max(1, myIssues.length), isMe: true },
-                { rank: 3, name: 'Aarav Sharma', pts: 200, reports: 2, isMe: false },
-              ].map((c) => (
-                <div
-                  key={c.rank}
-                  className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all ${
-                    c.isMe
-                      ? 'bg-blue-500/10 border-blue-500/30 text-blue-900 dark:text-blue-100 font-bold'
-                      : 'bg-neutral-50 dark:bg-white/5 border-black/5 dark:border-white/10 text-neutral-800 dark:text-neutral-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className={`w-7 h-7 rounded-xl text-xs font-extrabold flex items-center justify-center ${
-                      c.rank === 1 ? 'bg-amber-400 text-black shadow-sm' : c.rank === 2 ? 'bg-slate-300 text-black' : 'bg-amber-700 text-white'
-                    }`}>
-                      #{c.rank}
-                    </span>
-                    <div>
-                      <p className="text-xs font-bold leading-tight">{c.name} {c.isMe && '(You)'}</p>
-                      <p className="text-[10px] text-neutral-400 font-normal mt-0.5">{c.reports} reports submitted</p>
+            {/* Neon Yellow Pill Tab Navigation */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+              {categories.map((cat) => {
+                const active = selectedCategory === cat
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-4 py-2 rounded-full text-xs font-extrabold transition-all cursor-pointer ${
+                      active
+                        ? 'bg-[#E2FF38] text-black shadow-md scale-105'
+                        : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    {cat.replace('_', ' ')}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* 2-Column Split: Issue List on Left, Interactive Detail Card on Right */}
+          <div className="grid lg:grid-cols-12 gap-6 items-start">
+            {/* Left Issue Selection List (5 cols) */}
+            <div className="lg:col-span-5 space-y-3 max-h-[520px] overflow-y-auto pr-1 no-scrollbar">
+              {filteredIssues.map((issue) => {
+                const isSelected = selectedIssue?.id === issue.id
+                return (
+                  <motion.div
+                    key={issue.id}
+                    onClick={() => setSelectedIssue(issue)}
+                    whileHover={{ x: 2 }}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                      isSelected
+                        ? 'bg-[#E2FF38]/15 border-[#E2FF38] text-white shadow-lg'
+                        : 'bg-white/5 border-white/5 text-neutral-300 hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <img
+                        src={issue.imageUrl || 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=120'}
+                        alt="thumb"
+                        className="w-11 h-11 rounded-xl object-cover shrink-0 border border-white/10"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-mono text-neutral-400 font-bold">#{issue.id}</p>
+                        <h4 className="text-sm font-bold text-white truncate max-w-[180px] sm:max-w-[220px]">{issue.title}</h4>
+                        <p className="text-[11px] text-neutral-400 mt-0.5">{issue.createdAt || 'Recent'}</p>
+                      </div>
                     </div>
-                  </div>
-                  <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">{c.pts} pts</span>
-                </div>
-              ))}
+
+                    <div className="text-right shrink-0">
+                      <span className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full ${
+                        issue.status === 'RESOLVED'
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                          : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                      }`}>
+                        {issue.status}
+                      </span>
+                    </div>
+                  </motion.div>
+                )
+              })}
             </div>
-          </Card>
+
+            {/* Right Detailed Issue Hero Card (7 cols) */}
+            <div className="lg:col-span-7">
+              <AnimatePresence mode="wait">
+                {selectedIssue && (
+                  <motion.div
+                    key={selectedIssue.id}
+                    initial={{ opacity: 0, scale: 0.97 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.97 }}
+                    transition={{ duration: 0.3 }}
+                    className="rounded-[2.2rem] bg-gradient-to-br from-[#20252E] via-[#1A1D24] to-[#14161B] p-6 sm:p-7 border border-white/10 space-y-6 shadow-xl relative overflow-hidden"
+                  >
+                    {/* Top Issue Meta Info */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
+                      <div>
+                        <span className="text-xs font-mono font-bold text-[#E2FF38] uppercase tracking-wider block">
+                          Report details #{selectedIssue.id}
+                        </span>
+                        <h3 className="font-serif text-2xl font-bold text-white mt-1 leading-snug">
+                          {selectedIssue.title}
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-3 py-1 rounded-full bg-white/10 text-white text-xs font-bold uppercase">
+                          {selectedIssue.category}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Image & Key Attributes Grid */}
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="h-44 rounded-2xl overflow-hidden relative border border-white/10 group">
+                        <img
+                          src={selectedIssue.imageUrl || 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600'}
+                          alt={selectedIssue.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-3">
+                          <span className="text-[11px] font-semibold text-white/90 flex items-center gap-1">
+                            <MapPin size={12} className="text-[#E2FF38]" /> {selectedIssue.address || selectedIssue.location}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 flex flex-col justify-between">
+                        <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">Assigned Department</span>
+                          <span className="text-sm font-extrabold text-white">{selectedIssue.department || 'PUBLIC WORKS'}</span>
+                        </div>
+
+                        <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">AI Vision Confidence</span>
+                          <span className="text-sm font-extrabold text-[#E2FF38]">{selectedIssue.aiConfidence || 95}% Verified</span>
+                        </div>
+
+                        <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">Citizen Upvotes</span>
+                          <span className="text-sm font-extrabold text-white flex items-center gap-1">
+                            <ThumbsUp size={14} className="text-[#E2FF38]" /> {selectedIssue.upvoteCount || 14} Community Upvotes
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom Action Footer Bar */}
+                    <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase text-neutral-400 block">Reported By</span>
+                        <span className="text-xs font-bold text-white">{selectedIssue.createdBy?.name || 'Citizen'}</span>
+                      </div>
+
+                      <Link
+                        to={`/complaint/${selectedIssue.id}`}
+                        className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#E2FF38] text-black font-extrabold text-xs hover:bg-[#d4f22e] transition-transform hover:scale-105 cursor-pointer shadow-md"
+                      >
+                        View Full Details <ArrowUpRight size={15} />
+                      </Link>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
       </div>
     </AppLayout>
