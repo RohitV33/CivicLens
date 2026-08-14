@@ -94,11 +94,10 @@ export default function Navbar() {
     <div className="w-full z-50 sticky top-0 font-sans">
       {/* ── Floating Capsule Header ── */}
       <header className="max-w-6xl mx-auto px-4 pt-3 pb-2 transition-all duration-300">
-        <div className={`w-full rounded-full transition-all duration-500 px-5 sm:px-7 py-2.5 flex items-center justify-between ${
-          scrolled
+        <div className={`w-full rounded-full transition-all duration-500 px-5 sm:px-7 py-2.5 flex items-center justify-between ${scrolled
             ? 'bg-white/95 dark:bg-[#18191C]/95 backdrop-blur-2xl shadow-[0_8px_40px_rgba(0,0,0,0.12)] border border-black/10 dark:border-white/10'
             : 'bg-white/85 dark:bg-[#18191C]/85 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.07)] border border-white/70 dark:border-white/10'
-        }`}>
+          }`}>
 
           {/* Logo */}
           <Logo size={38} />
@@ -128,11 +127,10 @@ export default function Navbar() {
                 key={l.label}
                 ref={el => linkRefs.current[l.sectionId] = el}
                 onClick={() => handleNavClick(l.sectionId)}
-                className={`relative text-sm font-medium px-3.5 py-1.5 rounded-full transition-all duration-200 z-10 ${
-                  activeSection === l.sectionId
+                className={`relative text-sm font-medium px-3.5 py-1.5 rounded-full transition-all duration-200 z-10 ${activeSection === l.sectionId
                     ? 'text-black dark:text-white font-semibold'
                     : 'text-neutral-600 dark:text-neutral-300 hover:text-black dark:hover:text-white'
-                }`}
+                  }`}
               >
                 {l.label}
                 {activeSection === l.sectionId && (
@@ -204,11 +202,10 @@ export default function Navbar() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05 }}
                     onClick={() => handleNavClick(l.sectionId)}
-                    className={`text-left text-base font-medium py-2 px-3 rounded-xl transition-colors ${
-                      activeSection === l.sectionId
+                    className={`text-left text-base font-medium py-2 px-3 rounded-xl transition-colors ${activeSection === l.sectionId
                         ? 'text-black dark:text-white bg-black/5 dark:bg-white/10 font-semibold'
                         : 'text-neutral-700 dark:text-neutral-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
-                    }`}
+                      }`}
                   >
                     {l.label}
                   </motion.button>

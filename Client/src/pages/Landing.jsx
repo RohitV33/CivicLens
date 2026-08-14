@@ -565,9 +565,9 @@ export default function Landing() {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className="relative rounded-[2.8rem] bg-gradient-to-br from-[#C8DCFC] via-[#D8E9FC] to-[#C0D8F8] dark:from-[#0D1A2E] dark:via-[#111F35] dark:to-[#0A1525] p-6 sm:p-14 overflow-hidden border border-white/90 dark:border-white/8 shadow-[0_40px_100px_rgba(37,99,235,0.15)] text-center"
         >
-          {/* Decorative Shapes */}
+          {/* Decorative Shapes & Dot Grid */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <svg className="absolute top-0 right-0 w-[600px] h-[600px] text-white/60 dark:text-white/4 fill-current" viewBox="0 0 500 500">
+            <svg className="absolute top-0 right-0 w-[600px] h-[600px] text-white/70 dark:text-white/5 fill-current" viewBox="0 0 500 500">
               <path d="M0,0 Q220,160 500,0 L500,500 Q280,320 0,500 Z" />
             </svg>
             <motion.div
@@ -580,8 +580,14 @@ export default function Landing() {
               transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut', delay: 3 }}
               className="absolute -bottom-24 -right-24 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[#C2ECD8]/80 to-[#90D5B5]/40 dark:from-emerald-500/10 dark:to-teal-500/5 blur-3xl"
             />
-            {/* Dot Grid */}
-            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #0066CC 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
+            {/* Dot Grid Pattern (as seen in screenshot) */}
+            <div
+              className="absolute inset-0 opacity-30 dark:opacity-20 pointer-events-none"
+              style={{
+                backgroundImage: 'radial-gradient(circle, #2563EB 1.2px, transparent 1.2px)',
+                backgroundSize: '24px 24px',
+              }}
+            />
           </div>
 
           {/* Hero Content */}
@@ -595,19 +601,18 @@ export default function Landing() {
               className="flex flex-wrap items-center justify-center gap-2.5 mb-7"
             >
               {[
-                { label: '✓ AI Powered', bg: 'bg-blue-500/10 border-blue-300/50 text-blue-800 dark:text-blue-200' },
-                { label: '✓ GPS Verified', bg: 'bg-emerald-500/10 border-emerald-300/50 text-emerald-800 dark:text-emerald-200' },
-                { label: '✓ Real-Time Dispatch', bg: 'bg-violet-500/10 border-violet-300/50 text-violet-800 dark:text-violet-200' },
-
-              ].map((b, i) => (
+                '✓ AI Powered',
+                '✓ GPS Verified',
+                '✓ Real-Time Dispatch',
+              ].map((label, i) => (
                 <motion.span
-                  key={b.label}
-                  initial={{ opacity: 0, scale: 0.8 }}
+                  key={label}
+                  initial={{ opacity: 0, scale: 0.85 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.4, delay: 0.1 + i * 0.07 }}
-                  className={`px-4 py-1.5 rounded-full backdrop-blur-md text-xs font-extrabold border shadow-xs ${b.bg}`}
+                  className="px-4 py-1.5 rounded-full bg-white/90 dark:bg-white/10 backdrop-blur-md text-xs font-bold text-neutral-800 dark:text-neutral-200 border border-black/5 shadow-xs"
                 >
-                  {b.label}
+                  {label}
                 </motion.span>
               ))}
             </motion.div>
@@ -649,20 +654,24 @@ export default function Landing() {
               className="mt-8 flex flex-wrap items-center justify-center gap-4"
             >
               <motion.button
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.04, y: -1 }}
                 whileTap={{ scale: 0.96 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                 onClick={handleReportClick}
-                className="inline-flex items-center gap-2 rounded-full bg-white/90 dark:bg-white/10 backdrop-blur-md text-neutral-900 dark:text-white font-semibold px-8 py-4 text-base border border-black/10 dark:border-white/20 shadow-md hover:bg-white dark:hover:bg-white/15 transition-all"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#0F0F0F] dark:bg-white text-white dark:text-[#0F0F0F] font-semibold px-8 py-3.5 text-base shadow-lg shadow-black/10 hover:bg-[#242424] dark:hover:bg-neutral-100 transition-all cursor-pointer"
               >
-                <Zap size={16} className="fill-white" />
                 Report an Issue
               </motion.button>
-              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+
+              <motion.div
+                whileHover={{ scale: 1.04, y: -1 }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+              >
                 <Link
                   to="/map"
-                  className="inline-flex items-center gap-2 rounded-full bg-white/90 dark:bg-white/10 backdrop-blur-md text-neutral-900 dark:text-white font-semibold px-8 py-4 text-base border border-black/10 dark:border-white/20 shadow-md hover:bg-white dark:hover:bg-white/15 transition-all"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white/80 dark:bg-white/10 backdrop-blur-md text-[#0F0F0F] dark:text-white font-semibold px-8 py-3.5 text-base border border-black/10 dark:border-white/20 shadow-sm hover:bg-white dark:hover:bg-white/20 transition-all cursor-pointer"
                 >
-                  <Globe size={16} />
                   Explore Live Map
                 </Link>
               </motion.div>
