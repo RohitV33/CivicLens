@@ -554,7 +554,7 @@ export default function Landing() {
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="relative rounded-[2.8rem] bg-gradient-to-br from-[#C8DCFC] via-[#D8E9FC] to-[#C0D8F8] dark:from-[#0D1A2E] dark:via-[#111F35] dark:to-[#0A1525] p-6 sm:p-14 overflow-hidden border border-white/90 dark:border-white/8 shadow-[0_40px_100px_rgba(37,99,235,0.15)] text-center"
+          className="relative rounded-[2.8rem] bg-gradient-to-br from-[#C8DCFC] via-[#D8E9FC] to-[#C0D8F8] dark:from-[#0D1A2E] dark:via-[#111F35] dark:to-[#0A1525] p-6 sm:p-14 overflow-hidden border border-white/90 dark:border-transparent shadow-md dark:shadow-none text-center"
         >
           {/* Decorative Shapes & Dot Grid */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -601,7 +601,7 @@ export default function Landing() {
                   initial={{ opacity: 0, scale: 0.85 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.4, delay: 0.1 + i * 0.07 }}
-                  className="px-4 py-1.5 rounded-full bg-white/90 dark:bg-white/10 backdrop-blur-md text-xs font-bold text-neutral-800 dark:text-neutral-200 border border-black/5 shadow-xs"
+                  className="px-4 py-1.5 rounded-full bg-white/90 dark:bg-white/10 backdrop-blur-md text-xs font-bold text-neutral-800 dark:text-neutral-200 border border-black/5 dark:border-transparent shadow-xs dark:shadow-none"
                 >
                   {label}
                 </motion.span>
@@ -649,7 +649,7 @@ export default function Landing() {
                 whileTap={{ scale: 0.96 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                 onClick={handleReportClick}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#0F0F0F] dark:bg-white text-white dark:text-[#0F0F0F] font-semibold px-8 py-3.5 text-base shadow-lg shadow-black/10 hover:bg-[#242424] dark:hover:bg-neutral-100 transition-all cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#0F0F0F] dark:bg-white text-white dark:text-[#0F0F0F] font-semibold px-8 py-3.5 text-base shadow-lg shadow-black/10 dark:shadow-none hover:bg-[#242424] dark:hover:bg-neutral-100 transition-all cursor-pointer"
               >
                 Report an Issue
               </motion.button>
@@ -661,7 +661,7 @@ export default function Landing() {
               >
                 <Link
                   to="/map"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white/80 dark:bg-white/10 backdrop-blur-md text-[#0F0F0F] dark:text-white font-semibold px-8 py-3.5 text-base border border-black/10 dark:border-white/20 shadow-sm hover:bg-white dark:hover:bg-white/20 transition-all cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white/80 dark:bg-white/10 backdrop-blur-md text-[#0F0F0F] dark:text-white font-semibold px-8 py-3.5 text-base border border-black/10 dark:border-transparent shadow-sm dark:shadow-none hover:bg-white dark:hover:bg-white/20 transition-all cursor-pointer"
                 >
                   Explore Live Map
                 </Link>
@@ -673,7 +673,7 @@ export default function Landing() {
               initial={{ opacity: 0, y: 50, scale: 0.96, filter: 'blur(10px)' }}
               animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
               transition={{ duration: 0.9, delay: 0.85, ease: [0.22, 1, 0.36, 1] }}
-              className="mt-12 w-full rounded-[2.2rem] bg-white/95 dark:bg-[#14161A]/95 backdrop-blur-xl border border-white dark:border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.14)] overflow-hidden text-left"
+              className="mt-12 w-full rounded-[2.2rem] bg-white/95 dark:bg-[#14161A]/95 backdrop-blur-xl border border-white dark:border-transparent shadow-md dark:shadow-none overflow-hidden text-left"
             >
               {/* Window Bar */}
               <div className="bg-[#FAF9F6] dark:bg-[#0F1012] px-6 py-3.5 border-b border-neutral-200/80 dark:border-neutral-800 flex items-center justify-between text-xs sm:text-sm">
