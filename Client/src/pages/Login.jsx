@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, Lock, Eye, EyeOff, ShieldCheck, MapPinned, Sparkles, KeyRound, Loader2, ArrowLeft } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, LogIn, KeyRound, Loader2, ArrowLeft } from 'lucide-react'
 import Logo from '../components/Logo'
 import ThemeToggle from '../components/ThemeToggle'
-import Button from '../components/Button'
 import { useToast } from '../context/ToastContext'
 import { useAuth } from '../context/AuthContext'
 import { loginAPI, forgotPasswordAPI, resetPasswordAPI } from '../services/api'
@@ -18,7 +17,7 @@ export default function Login() {
 
   // Forgot Password Modal state
   const [forgotModalOpen, setForgotModalOpen] = useState(false)
-  const [resetStep, setResetStep] = useState(1) // 1 = Enter Email, 2 = Enter Token & New Pw
+  const [resetStep, setResetStep] = useState(1)
   const [resetEmail, setResetEmail] = useState('')
   const [resetToken, setResetToken] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -96,126 +95,125 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-[#FAF8F5] dark:bg-[#0C0D0E] font-sans">
-      {/* Left Craft Brand Banner */}
-      <div className="hidden lg:flex flex-col justify-between p-14 bg-[#D9E8FC] dark:bg-[#152336] relative overflow-hidden border-r border-white/60 dark:border-white/10">
-        <Link to="/"><Logo /></Link>
-
-        <div className="relative z-10 space-y-6">
-          <span className="text-xs font-bold uppercase tracking-widest text-blue-900 dark:text-blue-200">
-            Trusted by citizens &amp; leaders
-          </span>
-          <h2 className="font-serif text-4xl sm:text-5xl text-neutral-900 dark:text-white leading-tight">
-            Every report moves your city <span className="font-serif-italic">forward.</span>
-          </h2>
-          <p className="text-neutral-700 dark:text-neutral-300 max-w-sm text-base">
-            Sign in to track your submissions, earn contributor badges, and see the real impact of your reports.
-          </p>
-
-          <div className="pt-4 flex flex-col gap-3">
-            {[
-              { icon: Sparkles, text: 'AI detects issues from a single photo' },
-              { icon: MapPinned, text: 'Precise geolocation on every report' },
-              { icon: ShieldCheck, text: 'Transparent, trackable resolution timeline' },
-            ].map((f) => {
-              const Icon = f.icon
-              return (
-                <div key={f.text} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-white/80 dark:bg-white/10 flex items-center justify-center shrink-0 shadow-sm">
-                    <Icon size={16} className="text-neutral-900 dark:text-white" />
-                  </div>
-                  <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{f.text}</p>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        <p className="text-xs text-neutral-500 font-medium">© 2026 CivicLens AI. Crafted for better cities.</p>
+    <div className="min-h-screen w-full relative flex flex-col justify-between items-center p-4 sm:p-8 bg-[#E9F2FE] dark:bg-[#07090C] font-sans overflow-hidden selection:bg-blue-500/20">
+      {/* Sky / Cloud Atmospheric Background (matching reference image) */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-32 -left-32 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-[#D2E4FC] via-[#E8F1FD] to-[#CBE0FC] dark:from-[#0B1728] dark:via-[#111F35] dark:to-[#081120] blur-3xl opacity-90" />
+        <div className="absolute -bottom-32 -right-32 w-[700px] h-[700px] rounded-full bg-gradient-to-tl from-[#E2EDFD] via-[#F0F6FE] to-[#D5E5FC] dark:from-[#0A1424] dark:via-[#0F1B2E] dark:to-[#060D18] blur-3xl opacity-90" />
+        {/* Radar Rings */}
+        <svg className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] text-blue-400/15 dark:text-white/5 pointer-events-none" viewBox="0 0 800 800">
+          <circle cx="400" cy="400" r="180" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="6 6" />
+          <circle cx="400" cy="400" r="280" fill="none" stroke="currentColor" strokeWidth="1" />
+          <circle cx="400" cy="400" r="380" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="8 8" />
+        </svg>
       </div>
 
-      {/* Right Form Container */}
-      <div className="flex flex-col justify-center px-6 sm:px-12 lg:px-16 py-12 relative">
-        <div className="absolute top-6 right-6 lg:hidden"><ThemeToggle /></div>
-        <div className="lg:hidden mb-10"><Logo /></div>
+      {/* Top Header Bar */}
+      <div className="w-full max-w-6xl flex items-center justify-between z-20 py-2">
+        <Link to="/" className="hover:opacity-80 transition-opacity">
+          <Logo size={36} />
+        </Link>
+        <ThemeToggle />
+      </div>
 
+      {/* Central Glassmorphism Card */}
+      <div className="w-full flex items-center justify-center my-auto py-8 z-20">
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="w-full max-w-md mx-auto bg-white dark:bg-[#1A1C20] rounded-[2.5rem] p-8 sm:p-10 border border-black/5 dark:border-white/10 shadow-craft"
+          initial={{ opacity: 0, y: 20, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="w-full max-w-[430px] bg-white/85 dark:bg-[#121418]/90 backdrop-blur-2xl rounded-[2.6rem] p-7 sm:p-10 border border-white/90 dark:border-white/10 shadow-[0_25px_70px_rgba(0,0,0,0.09)] text-center relative"
         >
-          <h1 className="font-serif text-3xl text-neutral-900 dark:text-white mb-2">Welcome back</h1>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6">
-            Log in to continue reporting and tracking civic issues.
-          </p>
-
-          <GoogleAuthButton text="Sign in with Google" />
-
-          <div className="my-6 flex items-center gap-3">
-            <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
-            <span className="text-[11px] text-neutral-400 font-semibold uppercase tracking-wider">Or email</span>
-            <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
+          {/* Top Floating Icon Badge */}
+          <div className="w-12 h-12 rounded-2xl bg-white dark:bg-[#1B1E24] shadow-sm border border-black/5 dark:border-white/10 flex items-center justify-center mx-auto mb-5 text-neutral-800 dark:text-white">
+            <LogIn size={20} />
           </div>
 
-          <form onSubmit={submit} noValidate className="space-y-5">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
+            Sign in with email
+          </h1>
+          <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-2 mb-7 leading-relaxed max-w-xs mx-auto">
+            Report and resolve civic issues effortlessly.
+          </p>
+
+          <form onSubmit={submit} noValidate className="space-y-4 text-left">
             <div>
-              <label className="label-text mb-2 block">Email</label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="name@example.com"
-                className="input-field rounded-full"
-              />
-              {errors.email && <p className="text-xs text-red-500 mt-1 font-medium">{errors.email}</p>}
+              <div className="relative">
+                <Mail size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  placeholder="Email address"
+                  className="w-full rounded-2xl bg-neutral-100/90 dark:bg-neutral-800/60 border border-transparent focus:border-blue-500/50 focus:bg-white dark:focus:bg-neutral-800 pl-11 pr-4 py-3.5 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 transition-all outline-none"
+                />
+              </div>
+              {errors.email && <p className="text-xs text-red-500 mt-1 pl-3 font-medium">{errors.email}</p>}
             </div>
 
             <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="label-text block">Password</label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setResetEmail(form.email)
-                    setForgotModalOpen(true)
-                  }}
-                  className="text-xs text-neutral-500 hover:text-black dark:hover:text-white font-semibold"
-                >
-                  Forgot password?
-                </button>
-              </div>
               <div className="relative">
+                <Lock size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
                 <input
                   type={showPw ? 'text' : 'password'}
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  placeholder="••••••••"
-                  className="input-field rounded-full pr-10"
+                  placeholder="Password"
+                  className="w-full rounded-2xl bg-neutral-100/90 dark:bg-neutral-800/60 border border-transparent focus:border-blue-500/50 focus:bg-white dark:focus:bg-neutral-800 pl-11 pr-11 py-3.5 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 transition-all outline-none"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPw(!showPw)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors"
                 >
-                  {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPw ? <EyeOff size={17} /> : <Eye size={17} />}
                 </button>
               </div>
-              {errors.password && <p className="text-xs text-red-500 mt-1 font-medium">{errors.password}</p>}
+              {errors.password && <p className="text-xs text-red-500 mt-1 pl-3 font-medium">{errors.password}</p>}
             </div>
 
-            <Button type="submit" disabled={loading} className="w-full justify-center py-3 text-base shadow-lg">
-              {loading ? 'Logging in...' : 'Sign In'}
-            </Button>
+            <div className="flex justify-end pt-0.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setResetEmail(form.email)
+                  setForgotModalOpen(true)
+                }}
+                className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white font-medium transition-colors cursor-pointer"
+              >
+                Forgot password?
+              </button>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-2xl bg-[#0F0F0F] dark:bg-white text-white dark:text-[#0F0F0F] font-bold py-3.5 text-sm shadow-md hover:bg-neutral-800 dark:hover:bg-neutral-100 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2 mt-2"
+            >
+              {loading ? 'Logging in...' : 'Get Started'}
+            </button>
           </form>
 
-          <p className="mt-8 text-center text-xs text-neutral-500 font-medium">
+          <div className="my-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-neutral-200/80 dark:bg-neutral-800" />
+            <span className="text-[11px] text-neutral-400 font-medium">Or sign in with</span>
+            <div className="h-px flex-1 bg-neutral-200/80 dark:bg-neutral-800" />
+          </div>
+
+          <GoogleAuthButton text="Sign in with Google" />
+
+          <p className="mt-7 text-xs text-neutral-500 font-medium">
             Don't have an account?{' '}
-            <Link to="/signup" className="text-black dark:text-white font-bold hover:underline">
+            <Link to="/signup" className="text-neutral-900 dark:text-white font-bold hover:underline">
               Sign up free
             </Link>
           </p>
         </motion.div>
+      </div>
+
+      {/* Bottom Footer */}
+      <div className="z-20 py-2 text-center text-xs text-neutral-400">
+        © {new Date().getFullYear()} CivicLens AI Inc. All rights reserved.
       </div>
 
       {/* Forgot Password Modal */}
@@ -253,56 +251,56 @@ export default function Login() {
                     Enter your registered email address below. We will send a 6-digit password verification code to your inbox.
                   </p>
                   <div>
-                    <label className="label-text mb-1 block">Account Email</label>
+                    <label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1 block">Account Email</label>
                     <input
                       type="email"
                       value={resetEmail}
                       onChange={(e) => setResetEmail(e.target.value)}
                       placeholder="name@example.com"
-                      className="input-field rounded-2xl text-sm"
+                      className="w-full rounded-2xl bg-neutral-100 dark:bg-neutral-800 px-4 py-3 text-sm text-neutral-900 dark:text-white outline-none"
                       required
                     />
                   </div>
                   <div className="flex gap-2 pt-2">
-                    <Button type="button" onClick={() => setForgotModalOpen(false)} variant="outline" className="flex-1 justify-center py-2.5">
+                    <button type="button" onClick={() => setForgotModalOpen(false)} className="flex-1 rounded-2xl border border-neutral-300 dark:border-neutral-700 py-2.5 text-xs font-bold text-neutral-700 dark:text-neutral-300">
                       Cancel
-                    </Button>
-                    <Button type="submit" disabled={resetLoading} className="flex-1 justify-center py-2.5 shadow-craft">
-                      {resetLoading ? <Loader2 size={16} className="animate-spin" /> : 'Send Code'}
-                    </Button>
+                    </button>
+                    <button type="submit" disabled={resetLoading} className="flex-1 rounded-2xl bg-[#0F0F0F] dark:bg-white text-white dark:text-[#0F0F0F] py-2.5 text-xs font-bold">
+                      {resetLoading ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Send Code'}
+                    </button>
                   </div>
                 </form>
               ) : (
                 <form onSubmit={handleConfirmReset} className="space-y-4">
                   <div>
-                    <label className="label-text mb-1 block">6-Digit Verification Code</label>
+                    <label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1 block">6-Digit Verification Code</label>
                     <input
                       type="text"
                       value={resetToken}
                       onChange={(e) => setResetToken(e.target.value)}
                       placeholder="e.g. 849201"
-                      className="input-field rounded-2xl text-sm font-mono tracking-widest text-center text-lg font-bold"
+                      className="w-full rounded-2xl bg-neutral-100 dark:bg-neutral-800 px-4 py-3 text-sm font-mono tracking-widest text-center text-lg font-bold text-neutral-900 dark:text-white outline-none"
                       required
                     />
                   </div>
                   <div>
-                    <label className="label-text mb-1 block">New Password</label>
+                    <label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1 block">New Password</label>
                     <input
                       type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="input-field rounded-2xl text-sm"
+                      className="w-full rounded-2xl bg-neutral-100 dark:bg-neutral-800 px-4 py-3 text-sm text-neutral-900 dark:text-white outline-none"
                       required
                     />
                   </div>
                   <div className="flex gap-2 pt-2">
-                    <Button type="button" onClick={() => setResetStep(1)} variant="outline" className="py-2.5 px-3">
+                    <button type="button" onClick={() => setResetStep(1)} className="rounded-2xl border border-neutral-300 dark:border-neutral-700 px-4 py-2.5">
                       <ArrowLeft size={16} />
-                    </Button>
-                    <Button type="submit" disabled={resetLoading} className="flex-1 justify-center py-2.5 shadow-craft">
-                      {resetLoading ? <Loader2 size={16} className="animate-spin" /> : 'Reset Password'}
-                    </Button>
+                    </button>
+                    <button type="submit" disabled={resetLoading} className="flex-1 rounded-2xl bg-[#0F0F0F] dark:bg-white text-white dark:text-[#0F0F0F] py-2.5 text-xs font-bold">
+                      {resetLoading ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Reset Password'}
+                    </button>
                   </div>
                 </form>
               )}
@@ -313,4 +311,3 @@ export default function Login() {
     </div>
   )
 }
-
