@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext'
 import { registerAPI, loginAPI } from '../services/api'
 import GoogleAuthButton from '../components/GoogleAuthButton'
 
-import UniqueMotionBackground from '../components/UniqueMotionBackground'
+import MinimalistGlowBackground from '../components/MinimalistGlowBackground'
 
 const requirements = [
   { id: 'len', label: 'At least 8 characters', test: (v) => v.length >= 8 },
@@ -60,8 +60,8 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen w-full relative flex flex-col justify-between items-center p-4 sm:p-8 font-sans overflow-hidden selection:bg-blue-500/20">
-      {/* ── Unique Interactive Motion Background ── */}
-      <UniqueMotionBackground />
+      {/* ── Minimalist Glass & Ambient Glow Orbs Background ── */}
+      <MinimalistGlowBackground />
 
       {/* Top Header Bar */}
       <div className="w-full max-w-6xl flex items-center justify-between z-20 py-2">
