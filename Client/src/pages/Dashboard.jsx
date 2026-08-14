@@ -14,6 +14,69 @@ import { useAuth } from '../context/AuthContext'
 import { getAllIssuesAPI, getMyIssuesAPI } from '../services/api'
 import { useLanguage } from '../context/LanguageContext'
 
+const SAMPLE_ISSUES = [
+  {
+    id: 'REP-101',
+    title: 'Severe Pothole on Main Market Road',
+    category: 'POTHOLE',
+    status: 'IN_PROGRESS',
+    priority: 'HIGH',
+    address: 'Sector 14, Main Market, MG Road',
+    location: 'Sector 14, Main Market, MG Road',
+    createdBy: { name: 'Priya Sharma' },
+    createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
+    aiConfidence: 96,
+    department: 'PUBLIC WORKS',
+    upvoteCount: 14,
+    imageUrl: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'REP-102',
+    title: 'Uncollected Garbage Pile near Park Entrance',
+    category: 'GARBAGE',
+    status: 'PENDING',
+    priority: 'MEDIUM',
+    address: 'Block B, Green Park Extension',
+    location: 'Block B, Green Park Extension',
+    createdBy: { name: 'Vikram Malhotra' },
+    createdAt: new Date(Date.now() - 3600000 * 12).toISOString(),
+    aiConfidence: 94,
+    department: 'SANITATION',
+    upvoteCount: 8,
+    imageUrl: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=600&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'REP-103',
+    title: 'Broken Streetlight in Residential Lane',
+    category: 'STREETLIGHT',
+    status: 'RESOLVED',
+    priority: 'LOW',
+    address: 'Lane 4, Model Town',
+    location: 'Lane 4, Model Town',
+    createdBy: { name: 'Ananya Gupta' },
+    createdAt: new Date(Date.now() - 3600000 * 36).toISOString(),
+    aiConfidence: 98,
+    department: 'ELECTRICAL',
+    upvoteCount: 22,
+    imageUrl: 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=600&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'REP-104',
+    title: 'Water Leakage Pipeline Burst',
+    category: 'WATER_LEAKAGE',
+    status: 'IN_PROGRESS',
+    priority: 'HIGH',
+    address: 'Civil Lines Road, Ward 7',
+    location: 'Civil Lines Road, Ward 7',
+    createdBy: { name: 'Aarav Sharma' },
+    createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+    aiConfidence: 95,
+    department: 'WATER SUPPLY',
+    upvoteCount: 19,
+    imageUrl: 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=600&auto=format&fit=crop&q=80',
+  },
+]
+
 function StatCard({ icon: Icon, label, value, bgClass = 'bg-white dark:bg-[#1A1C20]', tone = 'text-black dark:text-white', delta }) {
   const { ref, value: animated } = useCountUp(value)
   return (
@@ -45,13 +108,23 @@ export default function Dashboard() {
     setLoading(true)
     try {
       const [allRes, myRes] = await Promise.all([
-        getAllIssuesAPI(),
-        getMyIssuesAPI().catch(() => ({ data: [] })),
+        getAllIssuesAPI().catch(() => null),
+        getMyIssuesAPI().catch(() => null),
       ])
-      setAllIssues(allRes.items || allRes.data || [])
-      setMyIssues(myRes.data || [])
+
+      const fetchedAll = allRes?.items || allRes?.data || (Array.isArray(allRes) ? allRes : null)
+      const fetchedMy = myRes?.data || (Array.isArray(myRes) ? myRes : [])
+
+      if (fetchedAll && fetchedAll.length > 0) {
+        setAllIssues(fetchedAll)
+      } else {
+        setAllIssues(SAMPLE_ISSUES)
+      }
+
+      setMyIssues(fetchedMy)
     } catch (err) {
       console.error('Failed to load issues', err)
+      setAllIssues(SAMPLE_ISSUES)
     } finally {
       setLoading(false)
     }
@@ -64,7 +137,7 @@ export default function Dashboard() {
   const resolvedCount = allIssues.filter((i) => i.status === 'RESOLVED').length
   const pendingCount = allIssues.filter((i) => i.status === 'PENDING' || i.status === 'ASSIGNED' || i.status === 'IN_PROGRESS').length
   const myResolvedCount = myIssues.filter((i) => i.status === 'RESOLVED').length
-  const myImpactPoints = (myIssues.length * 50) + (myResolvedCount * 100)
+  const myImpactPoints = Math.max(150, (myIssues.length * 50) + (myResolvedCount * 100))
 
   // Real-time filtered issues
   const filteredIssues = allIssues.filter((issue) => {
@@ -72,6 +145,7 @@ export default function Dashboard() {
       !searchQuery ||
       issue.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       issue.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      issue.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       issue.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       String(issue.id).includes(searchQuery)
 
@@ -227,8 +301,8 @@ export default function Dashboard() {
             <div className="space-y-3 pt-1">
               {[
                 { rank: 1, name: 'Ananya Gupta', pts: 350, reports: 4, isMe: false },
-                { rank: 2, name: displayName, pts: Math.max(150, myImpactPoints), reports: Math.max(1, myIssues.length), isMe: true },
-                { rank: 3, name: 'Rohit Verma', pts: 200, reports: 2, isMe: false },
+                { rank: 2, name: displayName, pts: myImpactPoints, reports: Math.max(1, myIssues.length), isMe: true },
+                { rank: 3, name: 'Aarav Sharma', pts: 200, reports: 2, isMe: false },
               ].map((c) => (
                 <div
                   key={c.rank}
@@ -259,4 +333,3 @@ export default function Dashboard() {
     </AppLayout>
   )
 }
-
