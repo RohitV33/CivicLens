@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import gsap from 'gsap'
 import {
-  FileText, CheckCircle2, Clock, Award, PlusCircle, ArrowRight, Trophy, Loader2, Search, SlidersHorizontal, UserCheck, Flame, Sparkles, Filter, ChevronRight, Eye, ThumbsUp, MapPin, ArrowUpRight
+  FileText, CheckCircle2, Clock, Award, PlusCircle, ArrowRight, Trophy, Loader2, Search, SlidersHorizontal, UserCheck, Flame, Sparkles, Filter, ChevronRight, Eye, ThumbsUp, MapPin, ArrowUpRight, ShieldCheck, Activity
 } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
 import Card from '../components/Card'
@@ -27,7 +27,7 @@ const SAMPLE_ISSUES = [
     aiConfidence: 96,
     department: 'PUBLIC WORKS',
     upvoteCount: 14,
-    amount: 'High Priority',
+    reporterRole: 'Resident Citizen',
     imageUrl: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600&auto=format&fit=crop&q=80',
   },
   {
@@ -43,7 +43,7 @@ const SAMPLE_ISSUES = [
     aiConfidence: 94,
     department: 'SANITATION',
     upvoteCount: 8,
-    amount: 'Medium Priority',
+    reporterRole: 'Green Club Volunteer',
     imageUrl: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=600&auto=format&fit=crop&q=80',
   },
   {
@@ -59,7 +59,7 @@ const SAMPLE_ISSUES = [
     aiConfidence: 95,
     department: 'WATER SUPPLY',
     upvoteCount: 19,
-    amount: 'Critical Dispatch',
+    reporterRole: 'Ward Representative',
     imageUrl: 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=600&auto=format&fit=crop&q=80',
   },
   {
@@ -75,35 +75,34 @@ const SAMPLE_ISSUES = [
     aiConfidence: 98,
     department: 'ELECTRICAL',
     upvoteCount: 22,
-    amount: 'Completed',
+    reporterRole: 'Community Leader',
     imageUrl: 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=600&auto=format&fit=crop&q=80',
   },
 ]
 
-function StatMetric({ label, value, subtext, avatars, bars }) {
+function StatMetric({ label, value, subtext, avatars, bars, highlight }) {
   const { ref, value: animated } = useCountUp(value)
   return (
-    <div className="space-y-3">
-      <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">{label}</p>
-      <div className="flex items-baseline gap-1">
-        <span className="text-sm font-semibold text-neutral-400 font-sans">$</span>
+    <div className="space-y-3 relative group">
+      <p className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">{label}</p>
+      <div className="flex items-baseline gap-2">
         <p ref={ref} className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight tabular-nums">{animated}</p>
-        <span className="text-xs text-neutral-400 font-medium ml-1">{subtext}</span>
+        {subtext && <span className="text-xs text-neutral-400 font-semibold">{subtext}</span>}
       </div>
 
       {bars && (
-        <div className="flex items-center gap-6 pt-2 text-[10px] font-semibold text-neutral-400">
+        <div className="flex items-center gap-5 pt-2 text-[10px] font-bold text-neutral-400">
           <div>
             <span>Sep</span>
-            <div className="w-10 h-1.5 bg-[#E2FF38] rounded-full mt-1" />
+            <div className="w-9 h-1.5 bg-[#E2FF38] rounded-full mt-1" />
           </div>
           <div>
             <span>Oct</span>
-            <div className="w-6 h-1.5 bg-[#E2FF38] rounded-full mt-1" />
+            <div className="w-5 h-1.5 bg-[#E2FF38] rounded-full mt-1" />
           </div>
           <div>
             <span>Nov</span>
-            <div className="w-10 h-1.5 bg-[#E2FF38] rounded-full mt-1" />
+            <div className="w-9 h-1.5 bg-[#E2FF38] rounded-full mt-1" />
           </div>
           <div>
             <span>Dec</span>
@@ -115,8 +114,17 @@ function StatMetric({ label, value, subtext, avatars, bars }) {
       {avatars && (
         <div className="flex items-center gap-1 pt-1">
           {['https://i.pravatar.cc/80?img=12', 'https://i.pravatar.cc/80?img=33', 'https://i.pravatar.cc/80?img=47', 'https://i.pravatar.cc/80?img=68'].map((src, i) => (
-            <img key={i} src={src} alt="user" className="w-6 h-6 rounded-full border-2 border-white dark:border-[#121418] object-cover -ml-1.5 first:ml-0" />
+            <img key={i} src={src} alt="user" className="w-6 h-6 rounded-full border-2 border-white dark:border-[#121418] object-cover -ml-1.5 first:ml-0 shadow-xs" />
           ))}
+          <span className="text-[10px] font-bold text-neutral-400 ml-1">+12 officers</span>
+        </div>
+      )}
+
+      {highlight && (
+        <div className="pt-2">
+          <span className="px-3 py-1 rounded-full bg-[#E2FF38] text-black text-[11px] font-extrabold shadow-sm">
+            Top 5% Citizen Rank
+          </span>
         </div>
       )}
     </div>
@@ -137,7 +145,7 @@ export default function Dashboard() {
   const statsGridRef = useRef(null)
   const mainPanelRef = useRef(null)
 
-  const displayName = user?.name || 'Citizen'
+  const displayName = user?.name || 'Rohit Verma'
 
   const loadData = async () => {
     setLoading(true)
@@ -172,7 +180,7 @@ export default function Dashboard() {
     loadData()
   }, [])
 
-  // GSAP Entrance Timeline
+  // GSAP Smooth Entrance Animations
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
@@ -220,19 +228,14 @@ export default function Dashboard() {
   return (
     <AppLayout title={t('navDashboard')}>
       <div className="space-y-8 font-sans max-w-[1400px] mx-auto">
-        {/* Top Salesforce / Stripe Style Header Bar */}
-        <div ref={headerRef} className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+        {/* ── Top Header Section (Matching Salesforce Reference UI) ── */}
+        <div ref={headerRef} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
-                Civic Dashboard
-              </h1>
-              <span className="px-3 py-1 rounded-full bg-[#E2FF38] text-black text-xs font-black uppercase tracking-wider">
-                Live AI
-              </span>
-            </div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
+              Reports
+            </h1>
             <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1 font-semibold">
-              Welcome back, <span className="text-neutral-900 dark:text-white font-bold">{displayName}</span>. Real-time civic AI dispatch platform.
+              Real-time civic intelligence & automated field dispatch.
             </p>
           </div>
 
@@ -241,32 +244,32 @@ export default function Dashboard() {
               to="/report"
               className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#E2FF38] hover:bg-[#d4f22e] text-black font-extrabold text-xs shadow-md transition-transform hover:scale-[1.02] cursor-pointer"
             >
-              <PlusCircle size={16} /> File New Complaint
+              <PlusCircle size={16} /> Create Report
             </Link>
           </div>
         </div>
 
-        {/* Top 4 Salesforce-Style Metric Columns */}
-        <div ref={statsGridRef} className="grid grid-cols-2 lg:grid-cols-4 gap-6 p-7 rounded-[2.2rem] bg-white dark:bg-[#121418] border border-black/5 dark:border-white/10 shadow-[0_15px_45px_rgba(0,0,0,0.03)]">
-          <StatMetric label="Total City Reports" value={allIssues.length} subtext="issues" bars />
-          <StatMetric label="Resolved Progress" value={resolvedCount} subtext="resolved" avatars />
-          <StatMetric label="Active Work Units" value={pendingCount} subtext="units" />
-          <StatMetric label="My Impact Points" value={myImpactPoints} subtext="pts" />
+        {/* ── 4 Stat Metric Columns (Matching Reference UI Metric Row) ── */}
+        <div ref={statsGridRef} className="grid grid-cols-2 lg:grid-cols-4 gap-6 p-7 sm:p-8 rounded-[2.5rem] bg-white dark:bg-[#121418] border border-black/5 dark:border-white/10 shadow-[0_15px_45px_rgba(0,0,0,0.03)]">
+          <StatMetric label="Total City Reports" value={allIssues.length} subtext="live issues" bars />
+          <StatMetric label="Resolved Progress" value={resolvedCount} subtext="completed" avatars />
+          <StatMetric label="Active Work Units" value={pendingCount} subtext="in field" />
+          <StatMetric label="My Impact Points" value={myImpactPoints} subtext="pts" highlight />
         </div>
 
-        {/* ── Main Dark/Light Floating Sub-Panel ── */}
+        {/* ── Floating Dark Curved Panel (Exact Copy of Reference Panel UI) ── */}
         <div ref={mainPanelRef} className="rounded-[2.6rem] bg-[#16181D] text-white p-6 sm:p-8 shadow-2xl border border-white/10 relative overflow-hidden">
-          {/* Panel Category Pills Navbar */}
+          {/* Top Notch Tab Bar Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-white/10">
             <div className="flex items-center gap-2">
-              <h2 className="font-serif text-2xl font-bold text-white tracking-tight">Active Civic Reports</h2>
-              <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-neutral-300 text-xs font-mono">
+              <h2 className="font-serif text-2xl font-bold text-white tracking-tight">Public Reports</h2>
+              <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-neutral-300 text-xs font-mono font-bold">
                 {filteredIssues.length}
               </span>
             </div>
 
-            {/* Neon Yellow Pill Tab Navigation */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+            {/* Neon Yellow Pill Tab Header (Matching Reference Image) */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar bg-black/30 p-1.5 rounded-full border border-white/5">
               {categories.map((cat) => {
                 const active = selectedCategory === cat
                 return (
@@ -276,20 +279,20 @@ export default function Dashboard() {
                     className={`px-4 py-2 rounded-full text-xs font-extrabold transition-all cursor-pointer ${
                       active
                         ? 'bg-[#E2FF38] text-black shadow-md scale-105'
-                        : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'
+                        : 'text-neutral-400 hover:text-white hover:bg-white/10'
                     }`}
                   >
-                    {cat.replace('_', ' ')}
+                    {cat === 'ALL' ? 'All Reports' : cat.replace('_', ' ')}
                   </button>
                 )
               })}
             </div>
           </div>
 
-          {/* 2-Column Split: Issue List on Left, Interactive Detail Card on Right */}
+          {/* Split-View: Left Issue List + Right Detailed Slate Glass Inspector Card */}
           <div className="grid lg:grid-cols-12 gap-6 items-start">
-            {/* Left Issue Selection List (5 cols) */}
-            <div className="lg:col-span-5 space-y-3 max-h-[520px] overflow-y-auto pr-1 no-scrollbar">
+            {/* Left Selection List (5 cols) */}
+            <div className="lg:col-span-5 space-y-3 max-h-[540px] overflow-y-auto pr-1 no-scrollbar">
               {filteredIssues.map((issue) => {
                 const isSelected = selectedIssue?.id === issue.id
                 return (
@@ -330,7 +333,7 @@ export default function Dashboard() {
               })}
             </div>
 
-            {/* Right Detailed Issue Hero Card (7 cols) */}
+            {/* Right Inspector Card (Matching Blue/Slate Card in Reference UI) */}
             <div className="lg:col-span-7">
               <AnimatePresence mode="wait">
                 {selectedIssue && (
@@ -340,28 +343,34 @@ export default function Dashboard() {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.97 }}
                     transition={{ duration: 0.3 }}
-                    className="rounded-[2.2rem] bg-gradient-to-br from-[#20252E] via-[#1A1D24] to-[#14161B] p-6 sm:p-7 border border-white/10 space-y-6 shadow-xl relative overflow-hidden"
+                    className="rounded-[2.2rem] bg-gradient-to-br from-[#1E2532] via-[#1A202C] to-[#141822] p-6 sm:p-7 border border-white/10 space-y-6 shadow-xl relative overflow-hidden"
                   >
-                    {/* Top Issue Meta Info */}
+                    {/* Header Details */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
                       <div>
-                        <span className="text-xs font-mono font-bold text-[#E2FF38] uppercase tracking-wider block">
-                          Report details #{selectedIssue.id}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono font-bold text-[#E2FF38] uppercase tracking-wider block">
+                            Report Details #{selectedIssue.id}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full bg-white/10 text-white text-[10px] font-bold">
+                            {selectedIssue.status}
+                          </span>
+                        </div>
                         <h3 className="font-serif text-2xl font-bold text-white mt-1 leading-snug">
                           {selectedIssue.title}
                         </h3>
                       </div>
+
                       <div className="flex items-center gap-2">
-                        <span className="px-3 py-1 rounded-full bg-white/10 text-white text-xs font-bold uppercase">
+                        <span className="px-3 py-1 rounded-full bg-[#E2FF38]/20 text-[#E2FF38] text-xs font-extrabold uppercase border border-[#E2FF38]/30">
                           {selectedIssue.category}
                         </span>
                       </div>
                     </div>
 
-                    {/* Image & Key Attributes Grid */}
+                    {/* Image & Detail Cards */}
                     <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="h-44 rounded-2xl overflow-hidden relative border border-white/10 group">
+                      <div className="h-48 rounded-2xl overflow-hidden relative border border-white/10 group">
                         <img
                           src={selectedIssue.imageUrl || 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600'}
                           alt={selectedIssue.title}
@@ -376,29 +385,31 @@ export default function Dashboard() {
 
                       <div className="space-y-3 flex flex-col justify-between">
                         <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">Assigned Department</span>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">Department</span>
                           <span className="text-sm font-extrabold text-white">{selectedIssue.department || 'PUBLIC WORKS'}</span>
                         </div>
 
                         <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">AI Vision Confidence</span>
-                          <span className="text-sm font-extrabold text-[#E2FF38]">{selectedIssue.aiConfidence || 95}% Verified</span>
+                          <span className="text-sm font-extrabold text-[#E2FF38] flex items-center gap-1">
+                            <ShieldCheck size={14} /> {selectedIssue.aiConfidence || 95}% Verified
+                          </span>
                         </div>
 
                         <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">Citizen Upvotes</span>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">Community Upvotes</span>
                           <span className="text-sm font-extrabold text-white flex items-center gap-1">
-                            <ThumbsUp size={14} className="text-[#E2FF38]" /> {selectedIssue.upvoteCount || 14} Community Upvotes
+                            <ThumbsUp size={14} className="text-[#E2FF38]" /> {selectedIssue.upvoteCount || 14} Citizens
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Bottom Action Footer Bar */}
-                    <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                    {/* Footer Action Bar */}
+                    <div className="flex items-center justify-between pt-3 border-t border-white/10">
                       <div>
                         <span className="text-[10px] font-bold uppercase text-neutral-400 block">Reported By</span>
-                        <span className="text-xs font-bold text-white">{selectedIssue.createdBy?.name || 'Citizen'}</span>
+                        <span className="text-xs font-bold text-white">{selectedIssue.createdBy?.name || 'Citizen'} ({selectedIssue.reporterRole || 'Resident'})</span>
                       </div>
 
                       <Link
