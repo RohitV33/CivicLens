@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence, useScroll, useTransform, useSpring, useInView } from 'framer-motion'
+import gsap from 'gsap'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   ArrowRight, Camera, Sparkles, MapPin, ShieldCheck, CheckCircle2,
@@ -14,40 +15,93 @@ import BeforeAfterSlider from '../components/BeforeAfterSlider'
 import AiDetectionDemo from '../components/AiDetectionDemo'
 import LiveMapSection from '../components/LiveMapSection'
 import CityAnalytics from '../components/CityAnalytics'
+import IntroSplash from '../components/IntroSplash'
 import { useAuth } from '../context/AuthContext'
 import { getAllIssuesAPI } from '../services/api'
 
 
-/* ─── Animated Reveal Wrapper ────────────────────────────────────── */
+/* ─── GSAP Smooth Animated Reveal Wrappers ────────────────────────── */
 function FadeUp({ children, delay = 0, className = '' }) {
   const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, amount: 0.15 })
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          gsap.fromTo(
+            el,
+            { opacity: 0, y: 36, filter: 'blur(10px)' },
+            {
+              opacity: 1,
+              y: 0,
+              filter: 'blur(0px)',
+              duration: 0.9,
+              delay: delay,
+              ease: 'power3.out',
+              onComplete: () => {
+                gsap.set(el, { clearProps: 'filter' })
+              }
+            }
+          )
+          observer.unobserve(el)
+        }
+      },
+      { threshold: 0.12 }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [delay])
+
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 36, filter: 'blur(8px)' }}
-      animate={isInView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
-      transition={{ duration: 1, delay, ease: [0.22, 1, 0.36, 1] }}
-      className={className}
-    >
+    <div ref={ref} className={className} style={{ opacity: 0, transform: 'translateY(36px)', filter: 'blur(10px)' }}>
       {children}
-    </motion.div>
+    </div>
   )
 }
 
 function FadeIn({ children, delay = 0, className = '' }) {
   const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, amount: 0.12 })
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          gsap.fromTo(
+            el,
+            { opacity: 0, scale: 0.96, filter: 'blur(8px)' },
+            {
+              opacity: 1,
+              scale: 1,
+              filter: 'blur(0px)',
+              duration: 0.9,
+              delay: delay,
+              ease: 'power3.out',
+              onComplete: () => {
+                gsap.set(el, { clearProps: 'filter' })
+              }
+            }
+          )
+          observer.unobserve(el)
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [delay])
+
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, scale: 0.96, filter: 'blur(6px)' }}
-      animate={isInView ? { opacity: 1, scale: 1, filter: 'blur(0px)' } : {}}
-      transition={{ duration: 1, delay, ease: [0.22, 1, 0.36, 1] }}
-      className={className}
-    >
+    <div ref={ref} className={className} style={{ opacity: 0, transform: 'scale(0.96)', filter: 'blur(8px)' }}>
       {children}
-    </motion.div>
+    </div>
   )
 }
 
@@ -505,10 +559,99 @@ export default function Landing() {
   const { user } = useAuth()
 
   const heroRef = useRef(null)
+  const heroContentRef = useRef(null)
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
   const heroY = useTransform(scrollYProgress, [0, 1], ['0%', '10%'])
   const heroOpacity = useTransform(scrollYProgress, [0, 0.85, 1], [1, 0.9, 0])
 
+  const playHeroEntrance = useCallback(() => {
+    if (!heroContentRef.current) return
+
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+
+      const badges = heroContentRef.current.querySelectorAll('.gsap-hero-badge')
+      const title1 = heroContentRef.current.querySelector('.gsap-hero-title1')
+      const title2 = heroContentRef.current.querySelector('.gsap-hero-title2')
+      const subtitle = heroContentRef.current.querySelector('.gsap-hero-subtitle')
+      const cta = heroContentRef.current.querySelector('.gsap-hero-cta')
+      const preview = heroContentRef.current.querySelector('.gsap-hero-preview')
+      const cards = heroContentRef.current.querySelectorAll('.gsap-hero-card')
+
+      if (badges.length > 0) {
+        tl.fromTo(
+          badges,
+          { opacity: 0, y: 16, scale: 0.9, filter: 'blur(8px)' },
+          { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)', duration: 0.5, stagger: 0.08 }
+        )
+      }
+
+      if (title1) {
+        tl.fromTo(
+          title1,
+          { opacity: 0, y: 32, filter: 'blur(16px)' },
+          { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7 },
+          '-=0.3'
+        )
+      }
+
+      if (title2) {
+        tl.fromTo(
+          title2,
+          { opacity: 0, y: 32, filter: 'blur(16px)' },
+          { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7 },
+          '-=0.5'
+        )
+      }
+
+      if (subtitle) {
+        tl.fromTo(
+          subtitle,
+          { opacity: 0, y: 20, filter: 'blur(10px)' },
+          { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.6 },
+          '-=0.45'
+        )
+      }
+
+      if (cta) {
+        tl.fromTo(
+          cta,
+          { opacity: 0, y: 20, scale: 0.95, filter: 'blur(8px)' },
+          { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)', duration: 0.6 },
+          '-=0.4'
+        )
+      }
+
+      if (preview) {
+        tl.fromTo(
+          preview,
+          { opacity: 0, y: 45, scale: 0.96, filter: 'blur(16px)' },
+          { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)', duration: 0.8 },
+          '-=0.35'
+        )
+      }
+
+      if (cards.length > 0) {
+        tl.fromTo(
+          cards,
+          { opacity: 0, y: 20, filter: 'blur(6px)' },
+          {
+            opacity: 1,
+            y: 0,
+            filter: 'blur(0px)',
+            duration: 0.5,
+            stagger: 0.1,
+            onComplete: () => {
+              gsap.set([badges, title1, title2, subtitle, cta, preview, cards], { clearProps: 'filter' })
+            }
+          },
+          '-=0.4'
+        )
+      }
+    }, heroContentRef)
+
+    return () => ctx.revert()
+  }, [])
 
   const handleReportClick = (e) => {
     e.preventDefault()
@@ -522,6 +665,9 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-[#FAF8F5] dark:bg-[#080809] text-neutral-900 dark:text-white font-sans selection:bg-blue-500/20 overflow-x-hidden">
+
+      {/* ── Initial Website GSAP Intro Splash ── */}
+      <IntroSplash onComplete={playHeroEntrance} />
 
       {/* ── Ambient Background Orbs ── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
@@ -582,68 +728,40 @@ export default function Landing() {
           </div>
 
           {/* Hero Content */}
-          <div className="relative z-10 max-w-4xl mx-auto">
+          <div ref={heroContentRef} className="relative z-10 max-w-4xl mx-auto">
 
             {/* Trust Badges */}
-            <motion.div
-              initial={{ opacity: 0, y: -16, filter: 'blur(8px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="flex flex-wrap items-center justify-center gap-2.5 mb-7"
-            >
+            <div className="flex flex-wrap items-center justify-center gap-2.5 mb-7">
               {[
                 '✓ AI Powered',
                 '✓ GPS Verified',
                 '✓ Real-Time Dispatch',
-              ].map((label, i) => (
-                <motion.span
+              ].map((label) => (
+                <span
                   key={label}
-                  initial={{ opacity: 0, scale: 0.85 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.4, delay: 0.1 + i * 0.07 }}
-                  className="px-4 py-1.5 rounded-full bg-white/90 dark:bg-white/10 backdrop-blur-md text-xs font-bold text-neutral-800 dark:text-neutral-200 border border-black/5 dark:border-transparent shadow-xs dark:shadow-none"
+                  className="gsap-hero-badge px-4 py-1.5 rounded-full bg-white/90 dark:bg-white/10 backdrop-blur-md text-xs font-bold text-neutral-800 dark:text-neutral-200 border border-black/5 dark:border-transparent shadow-xs dark:shadow-none inline-block opacity-0"
                 >
                   {label}
-                </motion.span>
+                </span>
               ))}
-            </motion.div>
+            </div>
 
             {/* Headline with staggered word blur-in */}
             <div className="mb-5">
-              <motion.h1
-                initial={{ opacity: 0, y: 24, filter: 'blur(12px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                transition={{ duration: 0.8, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                className="text-4xl sm:text-6xl md:text-7xl font-serif tracking-tight leading-[1.06] text-neutral-900 dark:text-white"
-              >
+              <h1 className="gsap-hero-title1 text-4xl sm:text-6xl md:text-7xl font-serif tracking-tight leading-[1.06] text-neutral-900 dark:text-white opacity-0">
                 Report Civic Problems.
-              </motion.h1>
-              <motion.h1
-                initial={{ opacity: 0, y: 24, filter: 'blur(12px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                className="text-4xl sm:text-6xl md:text-7xl font-serif tracking-tight leading-[1.06] text-neutral-900 dark:text-white"
-              >
+              </h1>
+              <h1 className="gsap-hero-title2 text-4xl sm:text-6xl md:text-7xl font-serif tracking-tight leading-[1.06] text-neutral-900 dark:text-white opacity-0">
                 <span className="font-serif-italic text-neutral-800 dark:text-neutral-200"> Let AI Handle the Rest.</span>
-              </motion.h1>
+              </h1>
             </div>
 
-            <motion.p
-              initial={{ opacity: 0, y: 16, filter: 'blur(8px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              transition={{ duration: 0.7, delay: 0.55 }}
-              className="mt-4 text-base sm:text-lg text-neutral-700 dark:text-neutral-300 max-w-2xl mx-auto font-normal leading-relaxed"
-            >
+            <p className="gsap-hero-subtitle mt-4 text-base sm:text-lg text-neutral-700 dark:text-neutral-300 max-w-2xl mx-auto font-normal leading-relaxed opacity-0">
               Snap a photo. AI identifies the issue, extracts GPS coordinates, and dispatches it directly to municipal officers in under <strong className="text-neutral-900 dark:text-white">3 seconds</strong>.
-            </motion.p>
+            </p>
 
             {/* CTA Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.7 }}
-              className="mt-8 flex flex-wrap items-center justify-center gap-4"
-            >
+            <div className="gsap-hero-cta mt-8 flex flex-wrap items-center justify-center gap-4 opacity-0">
               <motion.button
                 whileHover={{ scale: 1.04, y: -1 }}
                 whileTap={{ scale: 0.96 }}
@@ -666,15 +784,10 @@ export default function Landing() {
                   Explore Live Map
                 </Link>
               </motion.div>
-            </motion.div>
+            </div>
 
             {/* App UI Preview */}
-            <motion.div
-              initial={{ opacity: 0, y: 50, scale: 0.96, filter: 'blur(10px)' }}
-              animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-              transition={{ duration: 0.9, delay: 0.85, ease: [0.22, 1, 0.36, 1] }}
-              className="mt-12 w-full rounded-[2.2rem] bg-white/95 dark:bg-[#14161A]/95 backdrop-blur-xl border border-white dark:border-transparent shadow-md dark:shadow-none overflow-hidden text-left"
-            >
+            <div className="gsap-hero-preview mt-12 w-full rounded-[2.2rem] bg-white/95 dark:bg-[#14161A]/95 backdrop-blur-xl border border-white dark:border-transparent shadow-md dark:shadow-none overflow-hidden text-left opacity-0">
               {/* Window Bar */}
               <div className="bg-[#FAF9F6] dark:bg-[#0F1012] px-6 py-3.5 border-b border-neutral-200/80 dark:border-neutral-800 flex items-center justify-between text-xs sm:text-sm">
                 <div className="flex items-center gap-2">
@@ -730,7 +843,7 @@ export default function Landing() {
 
                 {/* Main Cards Grid */}
                 <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <motion.div whileHover={{ y: -5, shadow: '0 20px 40px rgba(0,0,0,0.1)' }} className="rounded-2xl p-5 bg-gradient-to-br from-[#EBF3FF] to-[#DCE9FF] dark:from-[#1A2540] dark:to-[#14203A] border border-blue-200/60 dark:border-blue-900/30 space-y-3 shadow-sm">
+                  <motion.div whileHover={{ y: -5, shadow: '0 20px 40px rgba(0,0,0,0.1)' }} className="gsap-hero-card rounded-2xl p-5 bg-gradient-to-br from-[#EBF3FF] to-[#DCE9FF] dark:from-[#1A2540] dark:to-[#14203A] border border-blue-200/60 dark:border-blue-900/30 space-y-3 shadow-sm opacity-0">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold uppercase tracking-wider text-blue-800 dark:text-blue-300">Pothole AI</span>
                       <span className="text-[10px] font-bold bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 px-2 py-0.5 rounded-full">Pending</span>
@@ -742,7 +855,7 @@ export default function Landing() {
                     </div>
                   </motion.div>
 
-                  <motion.div whileHover={{ y: -5 }} className="rounded-2xl p-5 bg-gradient-to-br from-[#FEF3E2] to-[#FDE8C8] dark:from-[#2A1E0A] dark:to-[#221805] border border-amber-200/60 dark:border-amber-900/30 space-y-3 shadow-sm">
+                  <motion.div whileHover={{ y: -5 }} className="gsap-hero-card rounded-2xl p-5 bg-gradient-to-br from-[#FEF3E2] to-[#FDE8C8] dark:from-[#2A1E0A] dark:to-[#221805] border border-amber-200/60 dark:border-amber-900/30 space-y-3 shadow-sm opacity-0">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300">Garbage</span>
                       <span className="text-[10px] font-bold bg-amber-100 dark:bg-amber-900/50 text-amber-900 dark:text-amber-200 px-2 py-0.5 rounded-full">In Progress</span>
@@ -754,7 +867,7 @@ export default function Landing() {
                     </div>
                   </motion.div>
 
-                  <motion.div whileHover={{ y: -5 }} className="rounded-2xl p-5 bg-gradient-to-br from-[#E8F8EF] to-[#D4F1E1] dark:from-[#0F2A1E] dark:to-[#0A2018] border border-emerald-200/60 dark:border-emerald-900/30 space-y-3 shadow-sm">
+                  <motion.div whileHover={{ y: -5 }} className="gsap-hero-card rounded-2xl p-5 bg-gradient-to-br from-[#E8F8EF] to-[#D4F1E1] dark:from-[#0F2A1E] dark:to-[#0A2018] border border-emerald-200/60 dark:border-emerald-900/30 space-y-3 shadow-sm opacity-0">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold uppercase tracking-wider text-emerald-900 dark:text-emerald-300">Streetlight</span>
                       <span className="text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-200 px-2 py-0.5 rounded-full">Resolved ✓</span>
@@ -764,7 +877,7 @@ export default function Landing() {
                   </motion.div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         </motion.div>
       </section>
