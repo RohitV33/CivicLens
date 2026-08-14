@@ -122,11 +122,12 @@ export const analyzeIssueImageService = async ({ imageUrl = "", title = "", desc
       const genAI = new GoogleGenerativeAI(apiKey);
       const modelsToTry = Array.from(new Set([
         process.env.GEMINI_MODEL,
-        "gemini-2.5-flash",
-        "gemini-2.5-pro",
-        "gemini-2.5-flash-lite",
-        "gemini-2.0-flash-001",
-        "gemini-1.5-flash-8b",
+        "gemini-3.6-flash",
+        "gemini-3.5-flash",
+        "gemini-flash-latest",
+        "gemini-pro-latest",
+        "gemini-3.5-flash-lite",
+        "gemini-3-flash-preview",
       ].filter(Boolean)));
 
       const imagePart = await fetchImagePart(imageUrl);
