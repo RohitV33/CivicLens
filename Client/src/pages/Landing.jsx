@@ -770,6 +770,21 @@ export default function Landing() {
       </section>
 
       {/* ════════════════════════════════════════════════════════
+          ABOUT US SECTION
+      ════════════════════════════════════════════════════════ */}
+      <section id="about-us" className="py-20 sm:py-24 px-4 sm:px-6 max-w-7xl mx-auto z-10 relative text-center">
+        <FadeUp>
+          <SectionLabel color="blue">Our Mission</SectionLabel>
+          <h2 className="text-3xl sm:text-5xl font-serif mt-4 text-neutral-900 dark:text-white">
+            Transforming Civic Infrastructure with AI
+          </h2>
+          <p className="mt-4 text-base text-neutral-600 dark:text-neutral-300 max-w-3xl mx-auto leading-relaxed font-normal">
+            CivicLens AI is built to empower citizens and municipalities with real-time intelligence. By combining automated computer vision detection, exact GPS geotagging, and smart department dispatch, we reduce issue resolution time from weeks to hours.
+          </p>
+        </FadeUp>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════
           2. LIVE MAP SECTION
       ════════════════════════════════════════════════════════ */}
       <section id="live-map" className="px-3 sm:px-6 py-12 max-w-7xl mx-auto z-10 relative">
