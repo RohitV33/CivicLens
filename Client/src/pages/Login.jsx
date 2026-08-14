@@ -10,6 +10,8 @@ import { useAuth } from '../context/AuthContext'
 import { loginAPI, forgotPasswordAPI, resetPasswordAPI } from '../services/api'
 import GoogleAuthButton from '../components/GoogleAuthButton'
 
+import MotionSkyBackground from '../components/MotionSkyBackground'
+
 export default function Login() {
   const [showPw, setShowPw] = useState(false)
   const [form, setForm] = useState({ email: '', password: '' })
@@ -28,7 +30,6 @@ export default function Login() {
   const badgeRef = useRef(null)
   const titleRef = useRef(null)
   const formRef = useRef(null)
-  const bgRadarRef = useRef(null)
 
   const { addToast } = useToast()
   const { user, login } = useAuth()
@@ -40,18 +41,9 @@ export default function Login() {
     }
   }, [user, navigate])
 
-  // GSAP Smooth Entrance & Radar Rotation Timeline
+  // GSAP Smooth Entrance Timeline
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // 1. Continuous slow radar rotation
-      gsap.to(bgRadarRef.current, {
-        rotate: 360,
-        duration: 80,
-        repeat: -1,
-        ease: 'none',
-      })
-
-      // 2. Smooth staggered card entrance
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
 
       tl.fromTo(
@@ -145,46 +137,8 @@ export default function Login() {
 
   return (
     <div className="min-h-screen w-full relative flex flex-col justify-between items-center p-4 sm:p-8 bg-[#E9F2FE] dark:bg-[#07090C] font-sans overflow-hidden selection:bg-blue-500/20">
-      {/* ── Dynamic Motion Background (Continuous Floating Blobs & Rotating Radar) ── */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {/* Floating Top Left Cloud Blob */}
-        <motion.div
-          animate={{
-            y: [-15, 20, -15],
-            x: [-10, 15, -10],
-            scale: [1, 1.08, 1],
-          }}
-          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -top-36 -left-36 w-[650px] h-[650px] rounded-full bg-gradient-to-br from-[#C3DCFD] via-[#DEEBFE] to-[#B9D6FD] dark:from-[#0B182B] dark:via-[#12223B] dark:to-[#071222] blur-3xl opacity-90"
-        />
-
-        {/* Floating Bottom Right Sky Blob */}
-        <motion.div
-          animate={{
-            y: [15, -20, 15],
-            x: [10, -15, 10],
-            scale: [1.05, 1, 1.05],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-          className="absolute -bottom-36 -right-36 w-[750px] h-[750px] rounded-full bg-gradient-to-tl from-[#D4E5FD] via-[#E8F2FE] to-[#C8DFFD] dark:from-[#091527] dark:via-[#101D32] dark:to-[#050E1B] blur-3xl opacity-90"
-        />
-
-        {/* Center Glow Pulse Behind Card */}
-        <motion.div
-          animate={{ opacity: [0.4, 0.75, 0.4], scale: [0.96, 1.04, 0.96] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-blue-300/30 dark:bg-blue-600/10 blur-3xl"
-        />
-
-        {/* GSAP Animated Slow Rotating Radar Rings */}
-        <div ref={bgRadarRef} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] pointer-events-none">
-          <svg className="w-full h-full text-blue-400/15 dark:text-white/5" viewBox="0 0 800 800">
-            <circle cx="400" cy="400" r="180" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="6 6" />
-            <circle cx="400" cy="400" r="280" fill="none" stroke="currentColor" strokeWidth="1" />
-            <circle cx="400" cy="400" r="380" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="8 8" />
-          </svg>
-        </div>
-      </div>
+      {/* ── Dynamic Motion Sky Background ── */}
+      <MotionSkyBackground />
 
       {/* Top Header Bar */}
       <div className="w-full max-w-6xl flex items-center justify-between z-20 py-2">
