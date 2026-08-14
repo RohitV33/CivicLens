@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import gsap from 'gsap'
 import { Mail, Lock, Eye, EyeOff, LogIn, KeyRound, Loader2, ArrowLeft } from 'lucide-react'
 import Logo from '../components/Logo'
 import ThemeToggle from '../components/ThemeToggle'
@@ -8,8 +9,6 @@ import { useToast } from '../context/ToastContext'
 import { useAuth } from '../context/AuthContext'
 import { loginAPI, forgotPasswordAPI, resetPasswordAPI } from '../services/api'
 import GoogleAuthButton from '../components/GoogleAuthButton'
-
-import MinimalistGlowBackground from '../components/MinimalistGlowBackground'
 
 export default function Login() {
   const [showPw, setShowPw] = useState(false)
@@ -25,15 +24,33 @@ export default function Login() {
   const [newPassword, setNewPassword] = useState('')
   const [resetLoading, setResetLoading] = useState(false)
 
+  const cardRef = useRef(null)
+  const formRef = useRef(null)
+
   const { addToast } = useToast()
   const { user, login } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
     if (user) {
       navigate('/dashboard', { replace: true })
     }
   }, [user, navigate])
+
+  // GSAP Blur-In Staggered Entrance for Form Inputs
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      if (formRef.current) {
+        gsap.fromTo(
+          formRef.current.children,
+          { y: 18, opacity: 0, filter: 'blur(6px)' },
+          { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.5, stagger: 0.08, ease: 'power2.out' }
+        )
+      }
+    })
+    return () => ctx.revert()
+  }, [])
 
   const validate = () => {
     const e = {}
@@ -98,8 +115,39 @@ export default function Login() {
 
   return (
     <div className="min-h-screen w-full relative flex flex-col justify-between items-center p-4 sm:p-8 font-sans overflow-hidden selection:bg-blue-500/20">
-      {/* ── Minimalist Glass & Ambient Glow Orbs Background ── */}
-      <MinimalistGlowBackground />
+      {/* ── Motion Blurred Background Ambient Orbs ── */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute inset-0 bg-[#FAF8F5] dark:bg-[#07090C] transition-colors duration-500" />
+
+        {/* Floating Motion Blur Orb 1 */}
+        <motion.div
+          animate={{
+            x: [-35, 35, -35],
+            y: [-25, 25, -25],
+            scale: [1, 1.12, 1],
+          }}
+          transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute -top-36 -left-36 w-[680px] h-[680px] rounded-full bg-gradient-to-br from-blue-300/50 via-indigo-200/40 to-sky-100/30 dark:from-blue-900/50 dark:via-indigo-900/30 dark:to-transparent blur-3xl opacity-80"
+        />
+
+        {/* Floating Motion Blur Orb 2 */}
+        <motion.div
+          animate={{
+            x: [35, -35, 35],
+            y: [25, -25, 25],
+            scale: [1.1, 0.92, 1.1],
+          }}
+          transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+          className="absolute -bottom-36 -right-36 w-[780px] h-[780px] rounded-full bg-gradient-to-tl from-sky-300/50 via-blue-200/40 to-indigo-100/30 dark:from-sky-900/50 dark:via-blue-900/30 dark:to-transparent blur-3xl opacity-80"
+        />
+
+        {/* Subtle Pulse Center Glow */}
+        <motion.div
+          animate={{ opacity: [0.3, 0.6, 0.3], scale: [0.95, 1.05, 0.95] }}
+          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] rounded-full bg-blue-400/20 dark:bg-blue-600/10 blur-3xl"
+        />
+      </div>
 
       {/* Top Header Bar */}
       <div className="w-full max-w-6xl flex items-center justify-between z-20 py-2">
@@ -109,18 +157,27 @@ export default function Login() {
         <ThemeToggle />
       </div>
 
-      {/* Central Clean Card */}
-      <div className="w-full flex items-center justify-center my-auto py-8 z-20">
+      {/* 3D Perspective Card Container */}
+      <div className="w-full flex items-center justify-center my-auto py-8 z-20" style={{ perspective: 1200 }}>
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="w-full max-w-[430px] bg-white dark:bg-[#121418] rounded-[2.6rem] p-7 sm:p-10 border border-black/5 dark:border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.06)] text-center relative"
+          ref={cardRef}
+          key="login-card"
+          initial={{ rotateY: -70, opacity: 0, scale: 0.92 }}
+          animate={{ rotateY: 0, opacity: 1, scale: 1 }}
+          exit={{ rotateY: 70, opacity: 0, scale: 0.92 }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          style={{ transformStyle: 'preserve-3d' }}
+          className="w-full max-w-[430px] bg-white/85 dark:bg-[#121418]/90 backdrop-blur-2xl rounded-[2.6rem] p-7 sm:p-10 border border-white/80 dark:border-white/10 shadow-[0_25px_70px_rgba(0,0,0,0.08)] text-center relative"
         >
           {/* Top Icon Badge */}
-          <div className="w-12 h-12 rounded-2xl bg-neutral-100 dark:bg-[#1B1E24] border border-black/5 dark:border-white/10 flex items-center justify-center mx-auto mb-5 text-neutral-800 dark:text-white">
+          <motion.div
+            initial={{ scale: 0, rotate: -30 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ duration: 0.5, delay: 0.1, type: 'spring', stiffness: 350 }}
+            className="w-12 h-12 rounded-2xl bg-white dark:bg-[#1B1E24] shadow-sm border border-black/5 dark:border-white/10 flex items-center justify-center mx-auto mb-5 text-neutral-800 dark:text-white"
+          >
             <LogIn size={20} />
-          </div>
+          </motion.div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
             Sign in with email
@@ -129,10 +186,10 @@ export default function Login() {
             Report and resolve civic issues effortlessly.
           </p>
 
-          <form onSubmit={submit} noValidate className="space-y-4 text-left">
+          <form ref={formRef} onSubmit={submit} noValidate className="space-y-4 text-left">
             <div>
-              <div className="relative">
-                <Mail size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
+              <div className="relative group">
+                <Mail size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-blue-500 transition-colors" />
                 <input
                   type="email"
                   value={form.email}
@@ -145,8 +202,8 @@ export default function Login() {
             </div>
 
             <div>
-              <div className="relative">
-                <Lock size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
+              <div className="relative group">
+                <Lock size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-blue-500 transition-colors" />
                 <input
                   type={showPw ? 'text' : 'password'}
                   value={form.password}
