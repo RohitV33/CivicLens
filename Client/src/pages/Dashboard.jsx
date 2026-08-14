@@ -131,20 +131,30 @@ export default function Dashboard() {
                 />
               </div>
 
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-                {categories.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-3 py-1 rounded-full text-xs font-bold shrink-0 transition-all ${
-                      selectedCategory === cat
-                        ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-sm'
-                        : 'bg-black/5 dark:bg-white/5 text-neutral-600 dark:text-neutral-400 hover:bg-black/10 dark:hover:bg-white/10'
-                    }`}
-                  >
-                    {cat.replace('_', ' ')}
-                  </button>
-                ))}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar relative">
+                {categories.map((cat) => {
+                  const active = selectedCategory === cat
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold shrink-0 transition-colors z-10 cursor-pointer ${
+                        active
+                          ? 'text-white dark:text-neutral-900'
+                          : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                      }`}
+                    >
+                      {active && (
+                        <motion.div
+                          layoutId="activeDashCat"
+                          className="absolute inset-0 rounded-full bg-neutral-900 dark:bg-white -z-10 shadow-sm"
+                          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                        />
+                      )}
+                      <span>{cat.replace('_', ' ')}</span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
 

@@ -130,17 +130,21 @@ export default function ReportCard({ report, index = 0, compact = false }) {
           )}
           <div className="flex items-center justify-between pt-3 border-t border-black/5 dark:border-white/10 text-xs font-semibold text-neutral-500">
             <div className="flex items-center gap-3">
-              <button
+              <motion.button
                 type="button"
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.88 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                 onClick={handleUpvote}
-                className={`flex items-center gap-1 px-2 py-1 rounded-full transition-colors ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-colors cursor-pointer ${
                   hasUpvoted
                     ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold'
-                    : 'hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-black dark:hover:text-white'
+                    : 'hover:bg-black/5 dark:hover:bg-white/10 hover:text-black dark:hover:text-white'
                 }`}
               >
-                <ThumbsUp size={13} className={hasUpvoted ? 'fill-current' : ''} /> {upvotes}
-              </button>
+                <ThumbsUp size={13} className={hasUpvoted ? 'fill-current text-emerald-500' : ''} />
+                <span>{upvotes}</span>
+              </motion.button>
               <span className="flex items-center gap-1 hover:text-black dark:hover:text-white"><MessageSquare size={13} /> {report.comments || 0}</span>
             </div>
             <span>

@@ -101,9 +101,7 @@ export default function Navbar() {
         }`}>
 
           {/* Logo */}
-          <Link to="/" className="shrink-0 flex items-center group">
-            <Logo size={52} />
-          </Link>
+          <Logo size={38} />
 
 
 

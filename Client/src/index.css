@@ -57,11 +57,11 @@
 @layer components {
   /* ── Cards & Surfaces ───────────────────────────────────── */
   .card-surface {
-    @apply bg-white dark:bg-card-dark border border-border dark:border-border-dark rounded-3xl shadow-card transition-all duration-300;
+    @apply bg-white dark:bg-[#161719] border border-[#EBE8E1] dark:border-white/10 rounded-3xl shadow-card transition-all duration-300;
   }
   
   .craft-card {
-    @apply bg-white dark:bg-[#1C1D20] border border-[#EBE8E1] dark:border-white/10 rounded-3xl shadow-soft transition-all duration-300 hover:shadow-craft;
+    @apply bg-white dark:bg-[#1C1D20] border border-[#EBE8E1] dark:border-white/10 rounded-3xl shadow-soft transition-all duration-300 hover:shadow-craft hover:-translate-y-0.5;
   }
 
   /* ── Craft Floating Glass Capsule ──────────────────────── Drop-shadow, rounded-full, backdrop-blur */
@@ -71,15 +71,15 @@
 
   /* ── Craft Pill Buttons ─────────────────────────────────── */
 
-  /* Primary Black Pill (Try Craft Free style) */
+  /* Primary Black Pill */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-full
     bg-[#0F0F0F] dark:bg-white
     text-white dark:text-[#0F0F0F]
-    font-semibold px-6 py-2.5 text-sm
+    font-semibold px-5 py-2.5 text-sm
     shadow-sm transition-all duration-200 ease-out
-    hover:scale-[1.02] hover:bg-[#222222] dark:hover:bg-neutral-100 active:scale-[0.98]
-    disabled:opacity-40 disabled:pointer-events-none;
+    hover:scale-[1.02] hover:bg-[#242424] dark:hover:bg-neutral-100 active:scale-[0.98]
+    disabled:opacity-40 disabled:pointer-events-none cursor-pointer;
   }
 
   /* Secondary Capsule */
@@ -88,32 +88,32 @@
     bg-white/90 dark:bg-white/10
     border border-black/10 dark:border-white/20
     text-[#0F0F0F] dark:text-white
-    font-semibold px-6 py-2.5 text-sm
+    font-semibold px-5 py-2.5 text-sm
     hover:bg-black/[0.04] dark:hover:bg-white/[0.15]
     active:scale-[0.98]
     transition-all duration-200 ease-out
-    disabled:opacity-40 disabled:pointer-events-none;
+    disabled:opacity-40 disabled:pointer-events-none cursor-pointer;
   }
 
   /* Ghost Pill: subtle hover */
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-full
-    text-neutral-600 dark:text-text-dark/80 font-medium px-4 py-2 text-sm
+    text-neutral-600 dark:text-neutral-300 font-medium px-4 py-2 text-sm
     hover:bg-black/[0.05] dark:hover:bg-white/[0.08]
     hover:text-[#0F0F0F] dark:hover:text-white
     transition-colors duration-150
-    disabled:opacity-50 disabled:pointer-events-none;
+    disabled:opacity-50 disabled:pointer-events-none cursor-pointer;
   }
 
   /* ── Inputs ──────────────────────────────────────────── */
   .input-field {
-    @apply w-full rounded-2xl border border-border dark:border-border-dark
-    bg-white dark:bg-bg-dark
-    text-text-primary dark:text-text-dark
-    placeholder:text-neutral-400 dark:placeholder:text-text-dark/30
+    @apply w-full rounded-2xl border border-[#EBE8E1] dark:border-white/10
+    bg-white dark:bg-[#161719]
+    text-neutral-900 dark:text-neutral-100
+    placeholder:text-neutral-400 dark:placeholder:text-neutral-500
     px-4 py-3 text-sm outline-none transition-all duration-150
-    focus:border-[#0F0F0F]/50 dark:focus:border-white/30
-    focus:ring-4 focus:ring-black/[0.04] dark:focus:ring-white/[0.04];
+    focus:border-[#0F0F0F] dark:focus:border-white/40
+    focus:ring-2 focus:ring-black/[0.05] dark:focus:ring-white/[0.05];
   }
 
   /* ── Typography helpers ───────────────────────────────── */

@@ -25,7 +25,7 @@ export default function Sidebar({ open, onClose }) {
   const content = (
     <div className="h-full flex flex-col">
       <div className="px-5 h-16 flex items-center justify-between shrink-0 border-b border-border dark:border-border-dark">
-        <Logo size={60} />
+        <Logo size={36} />
 
 
 
