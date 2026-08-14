@@ -143,36 +143,63 @@ async def predict(image: UploadFile = File(...)):
         except Exception as err:
             print(f"Error during Pothole model inference: {err}")
 
-    # Fallback heuristics if no objects were detected by either model
-    if not detections:
-        aspect_ratio = width / max(height, 1)
-        simulated_class = "plastic" if aspect_ratio > 1.2 else "paper" if aspect_ratio < 0.9 else "organic"
+    # Filter out spurious full-image bounding boxes (e.g. background false positives taking >95% frame with low/moderate conf)
+    valid_detections: List[Dict[str, Any]] = []
+    for det in detections:
+        bbox = det.get("bbox", [])
+        if len(bbox) == 4:
+            box_w = bbox[2] - bbox[0]
+            box_h = bbox[3] - bbox[1]
+            is_full_frame = (box_w >= 0.95 * width) and (box_h >= 0.95 * height)
+            if is_full_frame and det["confidence"] < 0.70:
+                print(f"⚠️ Filtered full-frame spurious YOLO detection: class={det['class']}, conf={det['confidence']}")
+                continue
+        valid_detections.append(det)
 
-        detections.append({
-            "class": simulated_class,
-            "confidence": 0.88,
-            "bbox": [int(width * 0.15), int(height * 0.15), int(width * 0.85), int(height * 0.85)],
-            "source": "fallback"
-        })
+    # Sort valid detections by confidence descending
+    valid_detections = sorted(valid_detections, key=lambda x: x["confidence"], reverse=True)
 
-    # Sort detections by confidence descending
-    detections = sorted(detections, key=lambda x: x["confidence"], reverse=True)
+    waste_detections = [d for d in valid_detections if d.get("source") == "waste_model"]
+    pothole_detections = [d for d in valid_detections if d.get("source") == "pothole_model"]
 
-    # Determine primary category
-    if len(detections) == 1:
-        primary_category = detections[0]["class"]
-    elif len(detections) > 1:
-        unique_classes = set(d["class"] for d in detections)
-        primary_category = detections[0]["class"] if len(unique_classes) == 1 else detections[0]["class"]
+    top_waste = waste_detections[0] if waste_detections else None
+    top_pothole = pothole_detections[0] if pothole_detections else None
+
+    if top_waste:
+        is_waste = True
+        yolo_detected = True
+        yolo_category = top_waste["class"].upper()
+        yolo_confidence = top_waste["confidence"]
+        verification_source = "yolo"
+        primary_category = top_waste["class"].lower()
+    elif top_pothole:
+        is_waste = False
+        yolo_detected = True
+        yolo_category = "POTHOLE"
+        yolo_confidence = top_pothole["confidence"]
+        verification_source = "pothole_model"
+        primary_category = "pothole"
     else:
+        is_waste = False
+        yolo_detected = False
+        yolo_category = None
+        yolo_confidence = 0.0
+        verification_source = "none"
         primary_category = "unknown"
 
     return {
         "success": True,
-        "detections": detections,
+        "is_waste": is_waste,
+        "category": yolo_category or "UNKNOWN",
+        "yolo_detected": yolo_detected,
+        "yolo_category": yolo_category,
+        "yolo_confidence": yolo_confidence,
+        "verification_source": verification_source,
+        "detections": valid_detections,
         "summary": {
             "primaryCategory": primary_category,
-            "totalObjects": len(detections)
+            "primaryLabel": yolo_category or "Unknown",
+            "totalObjects": len(valid_detections)
         }
     }
 

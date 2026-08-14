@@ -215,17 +215,55 @@ Return strictly valid JSON only with NO markdown formatting:
       const cleanJson = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
       const parsed = JSON.parse(cleanJson);
 
-      // If YOLO detected waste objects, enforce category GARBAGE unless Gemini strongly identified another valid civic defect
-      let finalCategory = parsed.category || "OTHER";
-      if (hasYoloWaste && finalCategory === "POTHOLE") {
-        finalCategory = "GARBAGE";
+      const visionCategory = parsed.category || "OTHER";
+      const yoloCategory = yoloResult?.yolo_category || yoloResult?.summary?.primaryLabel || yoloResult?.summary?.primaryCategory || (hasYoloWaste ? yoloResult.detections[0]?.class : null);
+      const yoloConfidence = yoloResult?.yolo_confidence || yoloResult?.detections?.[0]?.confidence || 0;
+
+      const nonWasteCategories = ["STREETLIGHT", "POTHOLE", "ROAD_DAMAGE", "DRAINAGE", "SEWAGE", "WATER_LEAKAGE", "OTHER"];
+
+      let finalCategory = visionCategory;
+      let isWaste = visionCategory === "GARBAGE";
+      let verificationSource = "vision";
+      let rejectionReason = null;
+
+      if (hasYoloWaste && yoloCategory && yoloCategory.toUpperCase() !== "POTHOLE") {
+        if (nonWasteCategories.includes(visionCategory)) {
+          // CONFLICT DETECTED: YOLO predicted waste (e.g. PLASTIC), but Vision AI identified a non-waste civic category (e.g. STREETLIGHT)
+          rejectionReason = `YOLO prediction (${yoloCategory} ${Math.round(yoloConfidence * 100)}%) rejected because it conflicts with civic Vision classification (${visionCategory}).`;
+          isWaste = false;
+          finalCategory = visionCategory;
+          verificationSource = "vision";
+
+          console.log(`\n=================== AI CLASSIFICATION DECISION ===================`);
+          console.log(`YOLO prediction:   class=${yoloCategory}, confidence=${yoloConfidence}`);
+          console.log(`Vision prediction: category=${visionCategory}, confidence=${parsed.confidence || 90}%`);
+          console.log(`Decision:          ${rejectionReason}`);
+          console.log(`==================================================================\n`);
+        } else {
+          // Vision AI agrees or classified as GARBAGE
+          isWaste = true;
+          finalCategory = "GARBAGE";
+          verificationSource = "yolo";
+
+          console.log(`\n=================== AI CLASSIFICATION DECISION ===================`);
+          console.log(`YOLO prediction:   class=${yoloCategory}, confidence=${yoloConfidence}`);
+          console.log(`Vision prediction: category=${visionCategory}`);
+          console.log(`Decision:          YOLO waste classification VERIFIED & ACCEPTED.`);
+          console.log(`==================================================================\n`);
+        }
       }
 
       const defaults = GENERATE_CIVIC_TEXT(finalCategory);
 
       return {
         isCivicIssue: parsed.isCivicIssue ?? true,
+        is_waste: isWaste,
         category: finalCategory,
+        yolo_detected: Boolean(hasYoloWaste),
+        yolo_category: yoloCategory ? yoloCategory.toUpperCase() : null,
+        yolo_confidence: yoloConfidence,
+        verification_source: verificationSource,
+        rejection_reason: rejectionReason,
         priority: parsed.priority || "MEDIUM",
         confidence: parseFloat(parsed.confidence) || 92.0,
         aiClassification: parsed.aiClassification || `Verified ${finalCategory.replace('_', ' ')} Issue`,
@@ -424,54 +462,54 @@ export const classifyWasteService = async (fileBuffer, mimetype = "image/jpeg") 
       };
     });
 
-    const primaryClass = aiResult.summary?.primaryCategory || (enrichedDetections[0]?.class) || "plastic";
-    const primaryWasteInfo = getWasteInfo(primaryClass);
+    const isWasteDetected = aiResult.is_waste ?? (enrichedDetections.length > 0);
+    const primaryClass = aiResult.yolo_category || aiResult.summary?.primaryCategory || (enrichedDetections[0]?.class) || "plastic";
+    const primaryWasteInfo = getWasteInfo(primaryClass.toLowerCase());
 
     return {
       success: true,
+      is_waste: isWasteDetected,
+      category: isWasteDetected ? (primaryWasteInfo.category || "GARBAGE") : "NOT_WASTE",
+      yolo_detected: aiResult.yolo_detected ?? (enrichedDetections.length > 0),
+      yolo_category: isWasteDetected ? primaryClass.toUpperCase() : null,
+      yolo_confidence: aiResult.yolo_confidence || enrichedDetections[0]?.confidence || 0,
+      verification_source: aiResult.verification_source || "yolo",
       detections: enrichedDetections,
       summary: {
-        primaryCategory: primaryClass,
-        primaryLabel: primaryWasteInfo.label,
-        recommendedBin: primaryWasteInfo.bin,
-        recommendedBinColor: primaryWasteInfo.binColor,
+        primaryCategory: isWasteDetected ? primaryClass.toLowerCase() : "not_waste",
+        primaryLabel: isWasteDetected ? primaryWasteInfo.label : "Not Waste",
+        recommendedBin: isWasteDetected ? primaryWasteInfo.bin : null,
+        recommendedBinColor: isWasteDetected ? primaryWasteInfo.binColor : null,
         totalObjects: aiResult.summary?.totalObjects || enrichedDetections.length,
-        suggestedTitle: primaryWasteInfo.suggestedTitle,
-        suggestedDescription: primaryWasteInfo.suggestedDescription,
-        issueCategory: primaryWasteInfo.category,
-        department: primaryWasteInfo.department,
+        suggestedTitle: isWasteDetected ? primaryWasteInfo.suggestedTitle : "Non-Waste Image",
+        suggestedDescription: isWasteDetected ? primaryWasteInfo.suggestedDescription : "No waste detected.",
+        issueCategory: isWasteDetected ? primaryWasteInfo.category : "OTHER",
+        department: isWasteDetected ? primaryWasteInfo.department : "PUBLIC_WORKS",
       },
     };
   } catch (err) {
     console.warn(`⚠️ Python YOLO AI Waste Service unavailable (${AI_SERVICE_URL}): ${err.message}. Using Vision fallback.`);
 
-    const { getWasteInfo } = await import("../utils/wasteCategoryMap.js");
-    const fallbackInfo = getWasteInfo("plastic");
     return {
       success: true,
       isFallback: true,
-      detections: [
-        {
-          class: "plastic",
-          confidence: 0.94,
-          bbox: [120, 80, 350, 420],
-          label: fallbackInfo.label,
-          category: fallbackInfo.category,
-          bin: fallbackInfo.bin,
-          binColor: fallbackInfo.binColor,
-          department: fallbackInfo.department,
-        },
-      ],
+      is_waste: false,
+      category: "UNKNOWN",
+      yolo_detected: false,
+      yolo_category: null,
+      yolo_confidence: 0,
+      verification_source: "vision_fallback",
+      detections: [],
       summary: {
-        primaryCategory: "plastic",
-        primaryLabel: fallbackInfo.label,
-        recommendedBin: fallbackInfo.bin,
-        recommendedBinColor: fallbackInfo.binColor,
-        totalObjects: 1,
-        suggestedTitle: fallbackInfo.suggestedTitle,
-        suggestedDescription: fallbackInfo.suggestedDescription,
-        issueCategory: fallbackInfo.category,
-        department: fallbackInfo.department,
+        primaryCategory: "unknown",
+        primaryLabel: "Unknown",
+        recommendedBin: null,
+        recommendedBinColor: null,
+        totalObjects: 0,
+        suggestedTitle: "Civic Issue Scanned",
+        suggestedDescription: "Civic issue submitted for municipal review.",
+        issueCategory: "OTHER",
+        department: "PUBLIC_WORKS",
       },
     };
   }
