@@ -173,7 +173,8 @@ export default function Dashboard() {
   const resolvedCount = allIssues.filter((i) => i.status === 'RESOLVED').length
   const pendingCount = allIssues.filter((i) => i.status === 'PENDING' || i.status === 'ASSIGNED' || i.status === 'IN_PROGRESS').length
   const myResolvedCount = myIssues.filter((i) => i.status === 'RESOLVED').length
-  const myImpactPoints = Math.max(150, (myIssues.length * 50) + (myResolvedCount * 100))
+  const myUpvotes = myIssues.reduce((sum, i) => sum + (i.upvoteCount || 0), 0)
+  const myImpactPoints = (myIssues.length * 50) + (myResolvedCount * 100) + (myUpvotes * 10)
 
   const filteredIssues = allIssues.filter((issue) => {
     const matchesSearch =
