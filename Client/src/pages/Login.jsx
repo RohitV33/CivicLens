@@ -9,6 +9,8 @@ import { useAuth } from '../context/AuthContext'
 import { loginAPI, forgotPasswordAPI, resetPasswordAPI } from '../services/api'
 import GoogleAuthButton from '../components/GoogleAuthButton'
 
+import UniqueMotionBackground from '../components/UniqueMotionBackground'
+
 export default function Login() {
   const [showPw, setShowPw] = useState(false)
   const [form, setForm] = useState({ email: '', password: '' })
@@ -95,12 +97,9 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen w-full relative flex flex-col justify-between items-center p-4 sm:p-8 bg-[#FAF8F5] dark:bg-[#07090C] font-sans overflow-hidden selection:bg-blue-500/20">
-      {/* Static Subtle Sky Background Accent */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-[#E2EEFE] dark:bg-[#0F1B2D] blur-3xl opacity-70" />
-        <div className="absolute -bottom-40 -right-40 w-[700px] h-[700px] rounded-full bg-[#E8F2FE] dark:bg-[#0C1625] blur-3xl opacity-70" />
-      </div>
+    <div className="min-h-screen w-full relative flex flex-col justify-between items-center p-4 sm:p-8 font-sans overflow-hidden selection:bg-blue-500/20">
+      {/* ── Unique Interactive Motion Background ── */}
+      <UniqueMotionBackground />
 
       {/* Top Header Bar */}
       <div className="w-full max-w-6xl flex items-center justify-between z-20 py-2">
