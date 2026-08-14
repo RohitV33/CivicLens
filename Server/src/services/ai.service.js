@@ -120,12 +120,14 @@ export const analyzeIssueImageService = async ({ imageUrl = "", title = "", desc
   if (apiKey && apiKey.length > 10 && !apiKey.includes("your_gemini_api_key")) {
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
-      const modelsToTry = [
-        "gemini-1.5-flash-latest",
-        "gemini-2.0-flash",
-        "gemini-1.5-flash",
-        "gemini-1.5-pro",
-      ];
+      const modelsToTry = Array.from(new Set([
+        process.env.GEMINI_MODEL,
+        "gemini-2.5-flash",
+        "gemini-2.5-pro",
+        "gemini-2.5-flash-lite",
+        "gemini-2.0-flash-001",
+        "gemini-1.5-flash-8b",
+      ].filter(Boolean)));
 
       const imagePart = await fetchImagePart(imageUrl);
 
