@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import gsap from 'gsap'
 import { Mail, Lock, User, Eye, EyeOff, UserPlus, CheckCircle2 } from 'lucide-react'
 import Logo from '../components/Logo'
 import ThemeToggle from '../components/ThemeToggle'
@@ -9,8 +8,6 @@ import { useToast } from '../context/ToastContext'
 import { useAuth } from '../context/AuthContext'
 import { registerAPI, loginAPI } from '../services/api'
 import GoogleAuthButton from '../components/GoogleAuthButton'
-
-import MotionSkyBackground from '../components/MotionSkyBackground'
 
 const requirements = [
   { id: 'len', label: 'At least 8 characters', test: (v) => v.length >= 8 },
@@ -24,11 +21,6 @@ export default function Signup() {
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
 
-  const cardRef = useRef(null)
-  const badgeRef = useRef(null)
-  const titleRef = useRef(null)
-  const formRef = useRef(null)
-
   const { addToast } = useToast()
   const { user, login } = useAuth()
   const navigate = useNavigate()
@@ -38,39 +30,6 @@ export default function Signup() {
       navigate('/dashboard', { replace: true })
     }
   }, [user, navigate])
-
-  // GSAP Smooth Entrance Timeline
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
-
-      tl.fromTo(
-        cardRef.current,
-        { y: 35, opacity: 0, scale: 0.95 },
-        { y: 0, opacity: 1, scale: 1, duration: 0.7 }
-      )
-        .fromTo(
-          badgeRef.current,
-          { scale: 0, rotate: -25 },
-          { scale: 1, rotate: 0, duration: 0.5, ease: 'back.out(1.7)' },
-          '-=0.4'
-        )
-        .fromTo(
-          titleRef.current,
-          { y: 15, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.4 },
-          '-=0.3'
-        )
-        .fromTo(
-          formRef.current?.children || [],
-          { y: 15, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.4, stagger: 0.08 },
-          '-=0.2'
-        )
-    })
-
-    return () => ctx.revert()
-  }, [])
 
   const validate = () => {
     const e = {}
@@ -98,9 +57,12 @@ export default function Signup() {
   }
 
   return (
-    <div className="min-h-screen w-full relative flex flex-col justify-between items-center p-4 sm:p-8 bg-[#E9F2FE] dark:bg-[#07090C] font-sans overflow-hidden selection:bg-blue-500/20">
-      {/* ── Dynamic Motion Sky Background ── */}
-      <MotionSkyBackground />
+    <div className="min-h-screen w-full relative flex flex-col justify-between items-center p-4 sm:p-8 bg-[#FAF8F5] dark:bg-[#07090C] font-sans overflow-hidden selection:bg-blue-500/20">
+      {/* Static Subtle Sky Background Accent */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-[#E2EEFE] dark:bg-[#0F1B2D] blur-3xl opacity-70" />
+        <div className="absolute -bottom-40 -right-40 w-[700px] h-[700px] rounded-full bg-[#E8F2FE] dark:bg-[#0C1625] blur-3xl opacity-70" />
+      </div>
 
       {/* Top Header Bar */}
       <div className="w-full max-w-6xl flex items-center justify-between z-20 py-2">
@@ -110,67 +72,64 @@ export default function Signup() {
         <ThemeToggle />
       </div>
 
-      {/* Central Glassmorphism Card (GSAP Ref) */}
+      {/* Central Clean Card */}
       <div className="w-full flex items-center justify-center my-auto py-8 z-20">
-        <div
-          ref={cardRef}
-          className="w-full max-w-[430px] bg-white/85 dark:bg-[#121418]/90 backdrop-blur-2xl rounded-[2.6rem] p-7 sm:p-10 border border-white/90 dark:border-white/10 shadow-[0_25px_70px_rgba(0,0,0,0.09)] text-center relative"
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="w-full max-w-[430px] bg-white dark:bg-[#121418] rounded-[2.6rem] p-7 sm:p-10 border border-black/5 dark:border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.06)] text-center relative"
         >
-          {/* Top Floating Icon Badge */}
-          <div
-            ref={badgeRef}
-            className="w-12 h-12 rounded-2xl bg-white dark:bg-[#1B1E24] shadow-sm border border-black/5 dark:border-white/10 flex items-center justify-center mx-auto mb-5 text-neutral-800 dark:text-white"
-          >
+          {/* Top Icon Badge */}
+          <div className="w-12 h-12 rounded-2xl bg-neutral-100 dark:bg-[#1B1E24] border border-black/5 dark:border-white/10 flex items-center justify-center mx-auto mb-5 text-neutral-800 dark:text-white">
             <UserPlus size={20} />
           </div>
 
-          <div ref={titleRef}>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
-              Create your account
-            </h1>
-            <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-2 mb-7 leading-relaxed max-w-xs mx-auto">
-              Join thousands of citizens reporting civic issues.
-            </p>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
+            Create your account
+          </h1>
+          <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-2 mb-7 leading-relaxed max-w-xs mx-auto">
+            Join thousands of citizens reporting civic issues.
+          </p>
 
-          <form ref={formRef} onSubmit={submit} noValidate className="space-y-4 text-left">
+          <form onSubmit={submit} noValidate className="space-y-4 text-left">
             <div>
-              <div className="relative group">
-                <User size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-blue-500 transition-colors" />
+              <div className="relative">
+                <User size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
                 <input
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="Full name"
-                  className="w-full rounded-2xl bg-neutral-100/90 dark:bg-neutral-800/60 border border-transparent focus:border-blue-500/50 focus:bg-white dark:focus:bg-neutral-800 pl-11 pr-4 py-3.5 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 transition-all outline-none shadow-xs"
+                  className="w-full rounded-2xl bg-neutral-100/90 dark:bg-neutral-800/60 border border-transparent focus:border-blue-500/50 focus:bg-white dark:focus:bg-neutral-800 pl-11 pr-4 py-3.5 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 transition-all outline-none"
                 />
               </div>
               {errors.name && <p className="text-xs text-red-500 mt-1 pl-3 font-medium">{errors.name}</p>}
             </div>
 
             <div>
-              <div className="relative group">
-                <Mail size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-blue-500 transition-colors" />
+              <div className="relative">
+                <Mail size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
                 <input
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   placeholder="Email address"
-                  className="w-full rounded-2xl bg-neutral-100/90 dark:bg-neutral-800/60 border border-transparent focus:border-blue-500/50 focus:bg-white dark:focus:bg-neutral-800 pl-11 pr-4 py-3.5 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 transition-all outline-none shadow-xs"
+                  className="w-full rounded-2xl bg-neutral-100/90 dark:bg-neutral-800/60 border border-transparent focus:border-blue-500/50 focus:bg-white dark:focus:bg-neutral-800 pl-11 pr-4 py-3.5 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 transition-all outline-none"
                 />
               </div>
               {errors.email && <p className="text-xs text-red-500 mt-1 pl-3 font-medium">{errors.email}</p>}
             </div>
 
             <div>
-              <div className="relative group">
-                <Lock size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-blue-500 transition-colors" />
+              <div className="relative">
+                <Lock size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
                 <input
                   type={showPw ? 'text' : 'password'}
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   placeholder="Password"
-                  className="w-full rounded-2xl bg-neutral-100/90 dark:bg-neutral-800/60 border border-transparent focus:border-blue-500/50 focus:bg-white dark:focus:bg-neutral-800 pl-11 pr-11 py-3.5 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 transition-all outline-none shadow-xs"
+                  className="w-full rounded-2xl bg-neutral-100/90 dark:bg-neutral-800/60 border border-transparent focus:border-blue-500/50 focus:bg-white dark:focus:bg-neutral-800 pl-11 pr-11 py-3.5 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 transition-all outline-none"
                 />
                 <button
                   type="button"
@@ -225,7 +184,7 @@ export default function Signup() {
               </Link>
             </p>
           </form>
-        </div>
+        </motion.div>
       </div>
 
       {/* Bottom Footer */}
