@@ -89,17 +89,13 @@ export default function Profile() {
       setName(u?.name || 'Citizen')
       setAvatarUrl(u?.avatarUrl || '')
       setBio(u?.bio || 'Active citizen contributor on CivicLens AI platform.')
-      setLocationStr(u?.location || 'Ghaziabad, UP')
+      setLocationStr(u?.location || 'Location not specified')
 
       const fetchedIssues = issuesRes?.data || (Array.isArray(issuesRes) ? issuesRes : [])
-      if (fetchedIssues && fetchedIssues.length > 0) {
-        setMyIssues(fetchedIssues)
-      } else {
-        setMyIssues(SAMPLE_MY_ISSUES)
-      }
+      setMyIssues(fetchedIssues)
     } catch (err) {
       console.error('Failed to load profile data', err)
-      setMyIssues(SAMPLE_MY_ISSUES)
+      setMyIssues([])
     } finally {
       setLoading(false)
     }
@@ -189,15 +185,15 @@ export default function Profile() {
   const submittedCount = myIssues.length
   const resolvedCount = myIssues.filter((i) => i.status === 'RESOLVED').length
   const totalUpvotes = myIssues.reduce((sum, i) => sum + (i.upvoteCount || 0), 0)
-  const totalPoints = Math.max(150, (submittedCount * 50) + (resolvedCount * 100) + (totalUpvotes * 10))
+  const totalPoints = (submittedCount * 50) + (resolvedCount * 100) + (totalUpvotes * 10)
 
   const realAchievements = [
-    { id: 1, label: 'First Report', icon: 'Flag', earned: true, progress: '1/1' },
+    { id: 1, label: 'First Report', icon: 'Flag', earned: submittedCount >= 1, progress: `${Math.min(submittedCount, 1)}/1` },
     { id: 2, label: '10 Reports', icon: 'Layers', earned: submittedCount >= 10, progress: `${Math.min(submittedCount, 10)}/10` },
     { id: 3, label: 'Community Voice', icon: 'Megaphone', earned: submittedCount >= 5, progress: `${Math.min(submittedCount, 5)}/5` },
     { id: 4, label: '50 Upvotes', icon: 'ThumbsUp', earned: totalUpvotes >= 50, progress: `${Math.min(totalUpvotes, 50)}/50` },
     { id: 5, label: 'Resolution Hero', icon: 'Flame', earned: resolvedCount >= 3, progress: `${Math.min(resolvedCount, 3)}/3` },
-    { id: 6, label: 'Top Contributor', icon: 'Trophy', earned: true, progress: `${totalPoints}/1000 pts` },
+    { id: 6, label: 'Top Contributor', icon: 'Trophy', earned: totalPoints >= 500, progress: `${totalPoints}/1000 pts` },
   ]
 
   const joinedDateStr = user?.createdAt

@@ -118,7 +118,7 @@ export default function Dashboard() {
       const fetchedAll = allRes?.items || allRes?.data || (Array.isArray(allRes) ? allRes : null)
       const fetchedMy = myRes?.data || (Array.isArray(myRes) ? myRes : [])
 
-      if (fetchedAll && fetchedAll.length > 0) {
+      if (Array.isArray(fetchedAll)) {
         setAllIssues(fetchedAll)
       } else {
         setAllIssues(SAMPLE_ISSUES)
@@ -127,7 +127,7 @@ export default function Dashboard() {
       setMyIssues(fetchedMy)
     } catch (err) {
       console.error('Failed to load issues', err)
-      setAllIssues(SAMPLE_ISSUES)
+      setAllIssues([])
     } finally {
       setLoading(false)
     }
