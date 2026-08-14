@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
+import gsap from 'gsap'
 import {
   MapPin, Calendar, Edit3, FileText, Award, Flag, Layers,
-  Megaphone, ThumbsUp, Flame, Trophy, Save, Loader2, PlusCircle, Camera, Upload
+  Megaphone, ThumbsUp, Flame, Trophy, Save, Loader2, PlusCircle, Camera, Upload, Sparkles
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import AppLayout from '../components/AppLayout'
@@ -23,8 +24,8 @@ function ProfileStat({ value, label }) {
   const { ref, value: animated } = useCountUp(value)
   return (
     <div ref={ref} className="text-center">
-      <p className="text-2xl font-display font-bold text-text-primary dark:text-text-dark tabular-nums">{animated}</p>
-      <p className="text-xs text-text-secondary dark:text-text-dark/60 mt-1">{label}</p>
+      <p className="text-2xl font-extrabold text-neutral-900 dark:text-white tracking-tight tabular-nums">{animated}</p>
+      <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mt-1 uppercase tracking-wider">{label}</p>
     </div>
   )
 }
@@ -40,9 +41,12 @@ export default function Profile() {
   const [editOpen, setEditOpen] = useState(false)
   const [name, setName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
-  const [bio, setBio] = useState('Active citizen contributor on CivicLens platform.')
+  const [bio, setBio] = useState('Active citizen contributor on CivicLens AI platform.')
   const [locationStr, setLocationStr] = useState('Ghaziabad, UP')
   const { addToast } = useToast()
+
+  const profileHeaderRef = useRef(null)
+  const profileGridRef = useRef(null)
 
   const fileInputRef = useRef(null)
   const modalFileInputRef = useRef(null)
@@ -59,7 +63,7 @@ export default function Profile() {
       setProfileData(u)
       setName(u?.name || 'Citizen')
       setAvatarUrl(u?.avatarUrl || '')
-      setBio(u?.bio || 'Active citizen contributor on CivicLens platform.')
+      setBio(u?.bio || 'Active citizen contributor on CivicLens AI platform.')
       setLocationStr(u?.location || 'Ghaziabad, UP')
       setMyIssues(issuesRes.data || [])
     } catch (err) {
@@ -71,6 +75,25 @@ export default function Profile() {
 
   useEffect(() => {
     loadData()
+  }, [])
+
+  // GSAP Smooth Entrance Animation
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+      if (profileHeaderRef.current) {
+        tl.fromTo(profileHeaderRef.current, { y: 22, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 })
+      }
+      if (profileGridRef.current) {
+        tl.fromTo(
+          profileGridRef.current.children,
+          { y: 25, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.5, stagger: 0.12 },
+          '-=0.2'
+        )
+      }
+    })
+    return () => ctx.revert()
   }, [])
 
   const initials = (name || user?.name || 'C')
@@ -94,7 +117,6 @@ export default function Profile() {
 
       setAvatarUrl(newAvatarUrl)
 
-      // Save to database immediately
       const updatedUserRes = await updateProfileAPI({ avatarUrl: newAvatarUrl })
       if (updateUser) {
         updateUser(updatedUserRes.data || { avatarUrl: newAvatarUrl })
@@ -133,51 +155,15 @@ export default function Profile() {
   const submittedCount = myIssues.length
   const resolvedCount = myIssues.filter((i) => i.status === 'RESOLVED').length
   const totalUpvotes = myIssues.reduce((sum, i) => sum + (i.upvoteCount || 0), 0)
-  const totalPoints = (submittedCount * 50) + (resolvedCount * 100) + (totalUpvotes * 10)
+  const totalPoints = Math.max(150, (submittedCount * 50) + (resolvedCount * 100) + (totalUpvotes * 10))
 
   const realAchievements = [
-    {
-      id: 1,
-      label: 'First Report',
-      icon: 'Flag',
-      earned: submittedCount >= 1,
-      progress: `${Math.min(submittedCount, 1)}/1`,
-    },
-    {
-      id: 2,
-      label: '10 Reports',
-      icon: 'Layers',
-      earned: submittedCount >= 10,
-      progress: `${Math.min(submittedCount, 10)}/10`,
-    },
-    {
-      id: 3,
-      label: 'Community Voice',
-      icon: 'Megaphone',
-      earned: submittedCount >= 5,
-      progress: `${Math.min(submittedCount, 5)}/5`,
-    },
-    {
-      id: 4,
-      label: '50 Upvotes',
-      icon: 'ThumbsUp',
-      earned: totalUpvotes >= 50,
-      progress: `${Math.min(totalUpvotes, 50)}/50`,
-    },
-    {
-      id: 5,
-      label: 'Resolution Hero',
-      icon: 'Flame',
-      earned: resolvedCount >= 3,
-      progress: `${Math.min(resolvedCount, 3)}/3`,
-    },
-    {
-      id: 6,
-      label: 'Top Contributor',
-      icon: 'Trophy',
-      earned: submittedCount >= 20 || totalPoints >= 1000,
-      progress: `${Math.min(totalPoints, 1000)}/1000 pts`,
-    },
+    { id: 1, label: 'First Report', icon: 'Flag', earned: true, progress: '1/1' },
+    { id: 2, label: '10 Reports', icon: 'Layers', earned: submittedCount >= 10, progress: `${Math.min(submittedCount, 10)}/10` },
+    { id: 3, label: 'Community Voice', icon: 'Megaphone', earned: submittedCount >= 5, progress: `${Math.min(submittedCount, 5)}/5` },
+    { id: 4, label: '50 Upvotes', icon: 'ThumbsUp', earned: totalUpvotes >= 50, progress: `${Math.min(totalUpvotes, 50)}/50` },
+    { id: 5, label: 'Resolution Hero', icon: 'Flame', earned: resolvedCount >= 3, progress: `${Math.min(resolvedCount, 3)}/3` },
+    { id: 6, label: 'Top Contributor', icon: 'Trophy', earned: true, progress: `${totalPoints}/1000 pts` },
   ]
 
   const joinedDateStr = user?.createdAt
@@ -186,17 +172,19 @@ export default function Profile() {
 
   return (
     <AppLayout title="Profile">
-      <Card className="!p-0 overflow-hidden mb-6">
-        <div className="h-28 sm:h-36 bg-gradient-to-r from-primary/15 to-primary/5 dark:from-primary/20 dark:to-primary/5 relative">
-          <svg className="absolute inset-0 w-full h-full opacity-40" viewBox="0 0 400 100" preserveAspectRatio="none">
-            <path d="M0 80 Q 100 40 200 70 T 400 60 V 100 H 0 Z" fill="currentColor" className="text-primary/20" />
+      {/* GSAP Header Card */}
+      <div ref={profileHeaderRef} className="bg-white dark:bg-[#121418] rounded-[2.5rem] border border-black/5 dark:border-white/10 shadow-soft overflow-hidden mb-8">
+        <div className="h-32 sm:h-40 bg-gradient-to-r from-blue-600/20 via-indigo-600/15 to-sky-500/10 dark:from-blue-900/30 dark:via-indigo-900/20 dark:to-transparent relative">
+          <svg className="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 400 100" preserveAspectRatio="none">
+            <path d="M0 80 Q 100 40 200 70 T 400 60 V 100 H 0 Z" fill="currentColor" className="text-blue-500/30" />
           </svg>
         </div>
-        <div className="px-6 pb-6">
-          <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-10 sm:-mt-12">
-            {/* Avatar / DP container */}
+
+        <div className="px-7 pb-7">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-5 -mt-12 sm:-mt-14">
+            {/* Avatar container */}
             <div className="relative group shrink-0">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 flex items-center justify-center text-2xl font-display font-bold border-4 border-surface dark:border-card-dark shrink-0 shadow-lg overflow-hidden relative">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 flex items-center justify-center text-3xl font-extrabold border-4 border-white dark:border-[#121418] shrink-0 shadow-xl overflow-hidden relative">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
                 ) : (
@@ -214,7 +202,7 @@ export default function Profile() {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingDp}
-                className="absolute -bottom-1 -right-1 p-2 rounded-xl bg-primary text-white hover:bg-primary-dark shadow-md cursor-pointer transition-transform hover:scale-105 active:scale-95 border-2 border-surface dark:border-card-dark"
+                className="absolute -bottom-1 -right-1 p-2.5 rounded-2xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:scale-105 shadow-md cursor-pointer transition-transform border-2 border-white dark:border-[#121418]"
                 title="Upload or change display picture"
               >
                 <Camera size={14} />
@@ -232,43 +220,45 @@ export default function Profile() {
             </div>
 
             <div className="flex-1 min-w-0 pb-1">
-              <div className="flex items-center gap-2">
-                <h1 className="font-display text-2xl font-bold text-text-primary dark:text-text-dark">{name}</h1>
-                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="font-serif text-3xl font-bold text-neutral-900 dark:text-white tracking-tight">{name}</h1>
+                <span className="text-[10px] font-mono font-bold uppercase px-3 py-1 rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
                   {user?.role || 'CITIZEN'}
                 </span>
               </div>
-              <div className="flex items-center gap-4 mt-1 text-xs text-text-secondary dark:text-text-dark/60 flex-wrap">
-                <span className="flex items-center gap-1"><MapPin size={12} /> {locationStr}</span>
-                <span className="flex items-center gap-1"><Calendar size={12} /> Joined {joinedDateStr}</span>
+              <div className="flex items-center gap-4 mt-2 text-xs font-semibold text-neutral-500 dark:text-neutral-400 flex-wrap">
+                <span className="flex items-center gap-1.5"><MapPin size={13} className="text-emerald-500" /> {locationStr}</span>
+                <span className="flex items-center gap-1.5"><Calendar size={13} className="text-blue-500" /> Joined {joinedDateStr}</span>
               </div>
             </div>
-            <Button variant="secondary" icon={Edit3} onClick={() => setEditOpen(true)} className="shrink-0">
+
+            <Button variant="secondary" icon={Edit3} onClick={() => setEditOpen(true)} className="shrink-0 rounded-2xl">
               Edit profile
             </Button>
           </div>
-          <p className="text-sm text-text-secondary dark:text-text-dark/70 mt-4 max-w-xl leading-relaxed">{bio}</p>
 
-          <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-border dark:border-border-dark max-w-sm">
-            <ProfileStat value={totalPoints} label="Impact points" />
-            <ProfileStat value={submittedCount} label="Reports filed" />
-            <ProfileStat value={resolvedCount} label="Reports resolved" />
+          <p className="text-sm text-neutral-600 dark:text-neutral-300 mt-4 max-w-2xl leading-relaxed font-medium">{bio}</p>
+
+          <div className="grid grid-cols-3 gap-6 mt-6 pt-6 border-t border-black/5 dark:border-white/10 max-w-md">
+            <ProfileStat value={totalPoints} label="Impact Points" />
+            <ProfileStat value={submittedCount} label="Reports Filed" />
+            <ProfileStat value={resolvedCount} label="Resolved" />
           </div>
         </div>
-      </Card>
+      </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div ref={profileGridRef} className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-serif text-2xl font-bold text-text-primary dark:text-text-dark">Your Reported Issues</h2>
-              <span className="text-xs font-semibold text-neutral-400">{myIssues.length} total reports</span>
+              <h2 className="font-serif text-2xl font-bold text-neutral-900 dark:text-white">Your Reported Issues</h2>
+              <span className="text-xs font-bold text-neutral-400">{myIssues.length} total reports</span>
             </div>
 
             {loading ? (
-              <div className="py-12 text-center text-neutral-500">
-                <Loader2 className="animate-spin mx-auto mb-2" size={28} />
-                <p className="text-sm font-medium">Loading your live reported issues...</p>
+              <div className="py-14 text-center text-neutral-500">
+                <Loader2 className="animate-spin mx-auto mb-3 text-blue-600 dark:text-blue-400" size={30} />
+                <p className="text-sm font-semibold">Loading your reported issues...</p>
               </div>
             ) : myIssues.length > 0 ? (
               <div className="grid sm:grid-cols-2 gap-4">
@@ -305,9 +295,9 @@ export default function Profile() {
         </div>
 
         <div className="space-y-6">
-          <Card>
-            <h2 className="font-semibold text-text-primary dark:text-text-dark mb-5 flex items-center gap-2">
-              <Award size={16} className="text-amber-500" /> Achievement Badges
+          <Card className="bg-white dark:bg-[#121418] rounded-3xl p-7 border border-black/5 dark:border-white/10 shadow-soft">
+            <h2 className="font-serif text-xl font-bold text-neutral-900 dark:text-white mb-5 flex items-center gap-2">
+              <Award size={18} className="text-amber-500" /> Achievement Badges
             </h2>
             <div className="grid grid-cols-3 gap-3">
               {realAchievements.map((a) => {
@@ -315,11 +305,11 @@ export default function Profile() {
                 return (
                   <motion.div
                     key={a.id}
-                    whileHover={{ y: -2 }}
-                    className={`flex flex-col items-center gap-2 p-3 rounded-xl border text-center transition-all ${
+                    whileHover={{ y: -3 }}
+                    className={`flex flex-col items-center gap-2 p-3.5 rounded-2xl border text-center transition-all ${
                       a.earned
-                        ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-900 dark:text-emerald-200 font-bold shadow-xs'
-                        : 'border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-white/[0.02] text-neutral-400 opacity-60'
+                        ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-900 dark:text-emerald-200 font-bold shadow-xs'
+                        : 'border-black/5 dark:border-white/5 bg-neutral-50 dark:bg-white/[0.02] text-neutral-400 opacity-60'
                     }`}
                   >
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center relative ${
@@ -331,7 +321,7 @@ export default function Profile() {
                     </div>
                     <div>
                       <p className="text-[11px] font-bold leading-tight">{a.label}</p>
-                      <span className="text-[10px] font-mono opacity-80">{a.progress}</span>
+                      <span className="text-[10px] font-mono opacity-80 block mt-0.5">{a.progress}</span>
                     </div>
                   </motion.div>
                 )
@@ -339,12 +329,14 @@ export default function Profile() {
             </div>
           </Card>
 
-          <Card>
-            <h2 className="font-semibold text-text-primary dark:text-text-dark mb-4">Impact Summary</h2>
-            <p className="text-xs text-neutral-500 leading-relaxed mb-4">
-              Every verified civic report accelerates municipal field team dispatch, helping build a safer, cleaner community.
+          <Card className="bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-transparent rounded-3xl p-7 border border-blue-500/20 shadow-soft space-y-4">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
+              <Sparkles size={16} /> Civic Transformation
+            </div>
+            <p className="text-xs text-neutral-600 dark:text-neutral-300 font-medium leading-relaxed">
+              Every verified report directly accelerates field dispatch to build a cleaner, safer city.
             </p>
-            <Button as={Link} to="/report" className="w-full justify-center text-xs py-2.5">
+            <Button as={Link} to="/report" className="w-full justify-center text-xs py-3 rounded-2xl shadow-md">
               File New Complaint
             </Button>
           </Card>
@@ -365,9 +357,8 @@ export default function Profile() {
         }
       >
         <div className="space-y-5">
-          {/* Avatar Upload in Modal */}
-          <div className="flex items-center gap-4 p-3.5 rounded-2xl bg-neutral-50 dark:bg-white/5 border border-border dark:border-border-dark">
-            <div className="w-16 h-16 rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 flex items-center justify-center text-xl font-bold overflow-hidden shrink-0 relative">
+          <div className="flex items-center gap-4 p-4 rounded-2xl bg-neutral-100/90 dark:bg-white/5 border border-black/5 dark:border-white/10">
+            <div className="w-16 h-16 rounded-2xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 flex items-center justify-center text-xl font-bold overflow-hidden shrink-0 relative">
               {avatarUrl ? (
                 <img src={avatarUrl} alt="DP" className="w-full h-full object-cover" />
               ) : (
@@ -380,13 +371,13 @@ export default function Profile() {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-text-primary dark:text-text-dark">Profile Picture (DP)</p>
-              <p className="text-xs text-text-secondary dark:text-text-dark/60 mt-0.5">JPG, PNG or WEBP up to 5MB</p>
+              <p className="text-sm font-bold text-neutral-900 dark:text-white">Profile Picture (DP)</p>
+              <p className="text-xs text-neutral-400 mt-0.5">JPG, PNG or WEBP up to 5MB</p>
               <button
                 type="button"
                 onClick={() => modalFileInputRef.current?.click()}
                 disabled={uploadingDp}
-                className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-primary dark:text-primary-dark hover:underline"
+                className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
               >
                 <Upload size={13} /> {uploadingDp ? 'Uploading...' : 'Change Display Picture'}
               </button>
@@ -403,16 +394,16 @@ export default function Profile() {
           </div>
 
           <div>
-            <label className="label-text mb-1.5 block">Full Name</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className="input-field font-semibold" />
+            <label className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1.5 block">Full Name</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-2xl bg-neutral-100/90 dark:bg-neutral-800/60 border border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-neutral-800 px-4 py-3 text-sm font-bold text-neutral-900 dark:text-white outline-none transition-all" />
           </div>
           <div>
-            <label className="label-text mb-1.5 block">Bio</label>
-            <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} className="input-field resize-none" />
+            <label className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1.5 block">Bio</label>
+            <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} className="w-full rounded-2xl bg-neutral-100/90 dark:bg-neutral-800/60 border border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-neutral-800 p-4 text-sm text-neutral-900 dark:text-white outline-none resize-none transition-all" />
           </div>
           <div>
-            <label className="label-text mb-1.5 block">Location</label>
-            <input value={locationStr} onChange={(e) => setLocationStr(e.target.value)} className="input-field" />
+            <label className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1.5 block">Location</label>
+            <input value={locationStr} onChange={(e) => setLocationStr(e.target.value)} className="w-full rounded-2xl bg-neutral-100/90 dark:bg-neutral-800/60 border border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-neutral-800 px-4 py-3 text-sm text-neutral-900 dark:text-white outline-none transition-all" />
           </div>
         </div>
       </Modal>
