@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 
-export default function Logo({ size = 42, showText = true, className = '', to = '/' }) {
+export default function Logo({ size = 42, showText = true, className = '', to = '/', inverse = false }) {
   // Scale vector icon proportionally based on size prop
   const iconSize = Math.max(28, Math.min(size, 64))
 
@@ -24,14 +24,20 @@ export default function Logo({ size = 42, showText = true, className = '', to = 
         style={{ width: iconSize, height: iconSize }}
       >
         {/* Ambient background glow ring */}
-        <div className="absolute inset-0 rounded-2xl bg-black/[0.04] dark:bg-white/[0.08] border border-black/10 dark:border-white/15 transition-all duration-300 group-hover:bg-black/[0.08] dark:group-hover:bg-white/[0.14] group-hover:border-black/20 dark:group-hover:border-white/30 group-hover:shadow-sm" />
+        <div className={`absolute inset-0 rounded-2xl border transition-all duration-300 ${
+          inverse
+            ? 'bg-white/10 border-white/20 group-hover:bg-white/20'
+            : 'bg-black/[0.04] dark:bg-white/[0.08] border-black/10 dark:border-white/15 group-hover:bg-black/[0.08] dark:group-hover:bg-white/[0.14]'
+        }`} />
 
         {/* SVG Aperture Lens + Location Pin Icon */}
         <svg
           viewBox="0 0 44 44"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="w-full h-full p-1.5 relative z-10 text-neutral-900 dark:text-white"
+          className={`w-full h-full p-1.5 relative z-10 ${
+            inverse ? 'text-white' : 'text-neutral-900 dark:text-white'
+          }`}
         >
           {/* Outer precision aperture ring */}
           <circle
@@ -91,13 +97,21 @@ export default function Logo({ size = 42, showText = true, className = '', to = 
       {/* ── Brand Typography ── */}
       {showText && (
         <div className="flex items-center gap-1.5 leading-none">
-          <span className="font-extrabold tracking-tight text-neutral-900 dark:text-white text-lg sm:text-xl font-sans">
+          <span className={`font-extrabold tracking-tight text-lg sm:text-xl font-sans ${
+            inverse ? 'text-white' : 'text-neutral-900 dark:text-white'
+          }`}>
             Civic
           </span>
-          <span className="font-serif italic text-neutral-700 dark:text-neutral-300 text-lg sm:text-xl font-normal">
+          <span className={`font-serif italic text-lg sm:text-xl font-normal ${
+            inverse ? 'text-neutral-300' : 'text-neutral-700 dark:text-neutral-300'
+          }`}>
             Lens
           </span>
-          <span className="ml-1 px-1.5 py-0.5 rounded-md text-[10px] font-extrabold tracking-wider bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 uppercase">
+          <span className={`ml-1 px-1.5 py-0.5 rounded-md text-[10px] font-extrabold tracking-wider uppercase ${
+            inverse
+              ? 'bg-white text-neutral-900'
+              : 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
+          }`}>
             AI
           </span>
         </div>
@@ -115,4 +129,3 @@ export default function Logo({ size = 42, showText = true, className = '', to = 
 
   return logoContent
 }
-

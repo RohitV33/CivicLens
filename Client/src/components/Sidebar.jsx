@@ -25,7 +25,7 @@ export default function Sidebar({ open, onClose }) {
     <div className="h-full flex flex-col justify-between p-5 text-white">
       {/* Top Logo Header */}
       <div className="flex items-center justify-between shrink-0 pb-6 border-b border-white/10">
-        <Logo size={36} />
+        <Logo size={36} inverse={true} />
         <button onClick={onClose} className="md:hidden text-neutral-400 hover:text-white">
           <X size={18} />
         </button>
