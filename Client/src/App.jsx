@@ -1,9 +1,10 @@
 import { useEffect } from 'react'
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ThemeProvider } from './context/ThemeContext'
 import { ToastProvider } from './context/ToastContext'
 import { AuthProvider } from './context/AuthContext'
+import { useAuth } from './context/AuthContext'
 import PageTransition from './components/PageTransition'
 
 import Landing from './pages/Landing'
@@ -17,6 +18,43 @@ import Profile from './pages/Profile'
 import Admin from './pages/Admin'
 import NotFound from './pages/NotFound'
 
+// ---- Route Guards ----
+
+/**
+ * Redirects unauthenticated users to /login.
+ * Shows a minimal spinner while auth state is still loading.
+ */
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth()
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+  return user ? children : <Navigate to="/login" replace />
+}
+
+/**
+ * Like ProtectedRoute but also enforces the ADMIN role.
+ * Non-admin authenticated users are sent to /dashboard.
+ */
+function AdminRoute({ children }) {
+  const { user, loading } = useAuth()
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+  if (!user) return <Navigate to="/login" replace />
+  if (user.role !== 'ADMIN') return <Navigate to="/dashboard" replace />
+  return children
+}
+
+// ---- Scroll reset on route change ----
 function ScrollToTop() {
   const { pathname } = useLocation()
   useEffect(() => {
@@ -41,16 +79,22 @@ function AnimatedRoutes() {
           transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
         >
           <Routes location={location}>
+            {/* Public routes */}
             <Route path="/" element={<Landing />} />
             <Route path="/about" element={<AboutUs />} />
             <Route path="/login" element={<Auth initialMode="login" />} />
             <Route path="/signup" element={<Auth initialMode="signup" />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/report" element={<ReportIssue />} />
-            <Route path="/complaint/:id" element={<ComplaintDetails />} />
-            <Route path="/map" element={<MapExplorer />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/admin" element={<Admin />} />
+
+            {/* Protected routes (auth required) */}
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/report" element={<ProtectedRoute><ReportIssue /></ProtectedRoute>} />
+            <Route path="/complaint/:id" element={<ProtectedRoute><ComplaintDetails /></ProtectedRoute>} />
+            <Route path="/map" element={<ProtectedRoute><MapExplorer /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+
+            {/* Admin-only route */}
+            <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </motion.div>

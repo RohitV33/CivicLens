@@ -174,6 +174,21 @@ export const assignIssueService = async (issueId, assignedToId, adminId) => {
     throw error;
   }
 
+  // Capture the current status BEFORE the transaction updates it,
+  // so oldStatus in IssueHistory is always accurate.
+  const existingIssue = await prisma.issue.findUnique({
+    where: { id: issueId },
+    select: { id: true, status: true, createdById: true },
+  });
+
+  if (!existingIssue) {
+    const error = new Error("Issue not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const oldStatus = existingIssue.status;
+
   const result = await prisma.$transaction(async (tx) => {
     const issue = await tx.issue.update({
       where: { id: issueId },
@@ -191,7 +206,7 @@ export const assignIssueService = async (issueId, assignedToId, adminId) => {
       data: {
         issueId,
         changedById: adminId,
-        oldStatus: issue.status,
+        oldStatus,               // ✅ correctly captured before the update
         newStatus: "ASSIGNED",
         comment: `Assigned to ${assignee.name} (${assignee.email})`,
       },
@@ -199,7 +214,7 @@ export const assignIssueService = async (issueId, assignedToId, adminId) => {
 
     await tx.notification.create({
       data: {
-        userId: issue.createdById,
+        userId: existingIssue.createdById,
         issueId,
         message: `Your issue #${issueId} has been assigned to ${assignee.name}.`,
       },

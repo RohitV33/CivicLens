@@ -2,83 +2,89 @@
 
 > **AI-Powered Urban Governance Platform for Smarter Cities**
 
-CivicLens AI is a modern civic issue reporting platform that helps citizens report public infrastructure problems such as potholes, garbage overflow, water leakage, damaged roads, and broken streetlights. The platform streamlines complaint management by connecting citizens with municipal authorities through an intuitive digital workflow.
-
-Designed with scalability in mind, CivicLens AI aims to evolve into an AI-assisted governance platform capable of intelligent complaint verification, duplicate detection, smart department routing, priority prediction, and analytics to improve public service delivery.
+CivicLens AI is a full-stack civic issue reporting platform that empowers citizens to report public infrastructure problems — potholes, garbage overflow, water leakage, damaged roads, broken streetlights, and more. The platform connects citizens with municipal authorities through an AI-assisted digital workflow featuring real-time status tracking, SLA enforcement, and computer-vision-powered issue verification.
 
 ---
 
 ## ✨ Features
 
-### Current Prototype
-- ✅ Secure User Authentication (JWT)
-- ✅ Citizen Registration & Login
-- ✅ Complaint Submission
-- ✅ PostgreSQL Database Integration
-- ✅ Responsive React UI
-- ✅ REST API Architecture
+### 🌐 Frontend (React + Vite + Tailwind CSS)
+- ✅ Animated page transitions with Framer Motion & GSAP
+- ✅ Citizen & Admin dashboards
+- ✅ Issue reporting with AI-powered image verification
+- ✅ Interactive map explorer (Leaflet + OpenStreetMap)
+- ✅ SLA countdown tracking per issue
+- ✅ Real-time notifications
+- ✅ Google OAuth + Email/Password authentication
+- ✅ Before/After image slider for resolved issues
+- ✅ Dark mode support
+- ✅ Protected routes with role-based access control (USER / ADMIN)
 
-### Planned AI Features
-- 🤖 AI Image Verification
-- 🧠 Duplicate Complaint Detection
-- 🚦 Priority Prediction
-- 🗺️ Smart Location Mapping
-- 📊 Officer Analytics Dashboard
-- 🔔 Real-time Notifications
+### ⚙️ Backend (Node.js + Express + Prisma)
+- ✅ JWT-based authentication with HttpOnly cookies
+- ✅ Google OAuth (google-auth-library)
+- ✅ Password reset via email (Nodemailer)
+- ✅ Cloudinary image uploads
+- ✅ Full issue lifecycle management (PENDING → REVIEWING → ASSIGNED → IN_PROGRESS → RESOLVED / REJECTED)
+- ✅ Admin analytics dashboard
+- ✅ Priority override, officer assignment
+- ✅ Audit history (IssueHistory) with Prisma transactions
+- ✅ Upvoting and community comments
+- ✅ Helmet, CORS, rate limiting (auth + API)
+- ✅ Zod request validation
+
+### 🤖 AI Service (Python + FastAPI + YOLOv8)
+- ✅ Dual YOLOv8 model pipeline:
+  - `best.pt` — Waste / garbage detection & classification
+  - `civicmodel.pt` — Pothole detection
+- ✅ Full-frame spurious detection filter (noise suppression)
+- ✅ Configurable confidence threshold (env-based)
+- ✅ `/predict` endpoint returning structured detection JSON
+- ✅ Health check endpoint
+- ✅ Origin-restricted CORS via environment variable
+
+### 🗄️ Database (PostgreSQL + Prisma ORM)
+- ✅ `User`, `Issue`, `Comment`, `Upvote`, `IssueHistory`, `Notification`, `PasswordResetToken`
+- ✅ Enum-driven Category, Status, Priority, Department, Role
+- ✅ Atomic Prisma transactions for status changes and assignments
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Frontend
-- React.js
-- Vite
-- Tailwind CSS
-
-### Backend
-- Node.js
-- Express.js
-- REST APIs
-- JWT Authentication
-
-### Database
-- PostgreSQL
-- Prisma ORM
-
-### Future AI
-- Python
-- Computer Vision
-- Gemini API
+| Layer | Technology |
+|---|---|
+| Frontend | React 18, Vite, Tailwind CSS, Framer Motion, GSAP, Leaflet |
+| Backend | Node.js, Express 5, Prisma ORM, Zod, JWT, Nodemailer |
+| AI Service | Python, FastAPI, YOLOv8 (Ultralytics), Pillow |
+| Database | PostgreSQL (Supabase) |
+| Storage | Cloudinary |
+| Auth | JWT, Google OAuth 2.0 |
+| Deployment | Vercel (Client), Render (Server + AI) |
 
 ---
 
 ## 🏗️ System Architecture
 
 ```text
-Citizen
+Citizen (Browser)
       │
       ▼
-React Frontend
+React Frontend (Vite + Tailwind)
+      │
+      ├──────────────────────────────────────┐
+      ▼                                      ▼
+Node.js + Express API              FastAPI AI Service
+      │   JWT / Cookie Auth               │   YOLOv8 Models
+      ▼                                   │   (waste + pothole)
+Prisma ORM ──► PostgreSQL        ◄────────┘
+                                    /predict endpoint
       │
       ▼
-Node.js + Express
+Admin Dashboard (Role-based)
       │
       ▼
-JWT Authentication
-      │
-      ▼
-Complaint Service
-      │
-      ▼
-PostgreSQL + Prisma
-      │
-      ▼
-Officer Dashboard
-
-(Future AI Module)
-• Image Verification
-• Duplicate Detection
-• Priority Prediction
+Notifications, SLA Tracking, Analytics
 ```
 
 ---
@@ -87,6 +93,7 @@ Officer Dashboard
 
 ```bash
 git clone https://github.com/RohitV33/CivicLens.git
+cd civiclens-ai
 ```
 
 ### Client
@@ -102,23 +109,32 @@ npm run dev
 ```bash
 cd Server
 npm install
+npx prisma migrate dev
 npm run dev
 ```
+
+### AI Service
+
+```bash
+cd AI
+pip install -r requirements.txt
+uvicorn app:app --reload --port 8000
+```
+
+Set `ALLOWED_ORIGINS` in the AI `.env` to match your frontend URL.
 
 ---
 
 ## 🎯 Vision
 
-Our vision is to build an indigenous AI-powered civic governance platform that enables municipalities to process complaints faster, improve operational efficiency, and deliver smarter public services across India.
+To build an indigenous AI-powered civic governance platform that enables municipalities to process complaints faster, improve operational efficiency, and deliver smarter public services across India.
 
 ---
 
 ## 👨‍💻 Developer
 
-**Rohit Verma**
-
-B.Tech Computer Science Engineering
-
+**Rohit Verma**  
+B.Tech Computer Science Engineering  
 KIET Group of Institutions
 
 ---

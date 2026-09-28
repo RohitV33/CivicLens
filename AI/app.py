@@ -1,6 +1,7 @@
 import os
 import io
 import time
+from contextlib import asynccontextmanager
 from typing import List, Dict, Any
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,21 +11,6 @@ from PIL import Image
 WASTE_MODEL_PATH = os.getenv("WASTE_MODEL_PATH", "./model/best.pt")
 POTHOLE_MODEL_PATH = os.getenv("POTHOLE_MODEL_PATH", "./model/civicmodel.pt")
 CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.45"))
-
-app = FastAPI(
-    title="CivicLens AI Vision Service",
-    description="Multi-Model YOLOv8 Object Detection Service for Waste Categorization & Pothole Detection",
-    version="2.0.0"
-)
-
-# Enable CORS for backend communication
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # Global YOLO model instances
 waste_model = None
@@ -58,9 +44,36 @@ def load_models():
     else:
         print(f"ℹ️ Pothole model '{POTHOLE_MODEL_PATH}' not found.")
 
-@app.on_event("startup")
-async def startup_event():
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """FastAPI recommended lifespan handler (replaces deprecated @app.on_event)."""
     load_models()
+    yield
+    # Cleanup on shutdown (if needed)
+
+
+app = FastAPI(
+    title="CivicLens AI Vision Service",
+    description="Multi-Model YOLOv8 Object Detection Service for Waste Categorization & Pothole Detection",
+    version="2.0.0",
+    lifespan=lifespan,
+)
+
+# Restrict CORS to known trusted origins
+_RAW_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:5173,http://localhost:3000,https://civic-lens-blush.vercel.app"
+)
+ALLOWED_ORIGINS = [o.strip() for o in _RAW_ORIGINS.split(",") if o.strip()]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 async def root():
