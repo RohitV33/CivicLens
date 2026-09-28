@@ -36,7 +36,7 @@ Citizens can report public infrastructure problems like potholes, garbage overfl
 
 ```bash
 git clone https://github.com/RohitV33/CivicLens.git
-cd civiclens-ai
+cd CivicLens
 ```
 
 **Client**
