@@ -35,14 +35,27 @@ export function AuthProvider({ children }) {
       setLoading(false) // no token, definitely not logged in
       return
     }
+
+    // Abort if server doesn't respond in 8s (Render free tier cold start)
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 8000)
+
     // Token exists — verify it by fetching the user's profile
-    getProfileAPI()
-      .then((res) => setUser(res.data))
+    getProfileAPI(controller.signal)
+      .then((res) => setUser(res.data ?? res))
       .catch(() => {
-        // Token was invalid or expired — clear it
+        // Token was invalid, expired, or server timed out — clear it
         localStorage.removeItem('token')
       })
-      .finally(() => setLoading(false))
+      .finally(() => {
+        clearTimeout(timeout)
+        setLoading(false)
+      })
+
+    return () => {
+      clearTimeout(timeout)
+      controller.abort()
+    }
   }, [])
 
   // Called after a successful login API response

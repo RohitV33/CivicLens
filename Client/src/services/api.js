@@ -6,7 +6,7 @@ const getToken = () => localStorage.getItem('token')
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
-const apiFetch = async (url, options = {}) => {
+const apiFetch = async (url, options = {}, signal = null) => {
   const token = getToken()
   const isFormData = options.body instanceof FormData
 
@@ -23,8 +23,12 @@ const apiFetch = async (url, options = {}) => {
     response = await fetch(fullUrl, {
       ...options,
       headers,
+      signal: signal ?? options.signal ?? null,
     })
   } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error('Request timed out. The server may be waking up — please try again in a moment.')
+    }
     throw new Error('Connecting to backend server... If the server was asleep, please wait 15 seconds and try again.')
   }
 
@@ -52,6 +56,7 @@ const apiFetch = async (url, options = {}) => {
 
   return data
 }
+
 
 
 // ---- AUTH API CALLS ----
@@ -91,7 +96,8 @@ export const logoutAPI = () =>
 
 
 // ---- USER API CALLS ----
-export const getProfileAPI = () => apiFetch('/api/users/profile')
+export const getProfileAPI = (signal) => apiFetch('/api/users/profile', {}, signal)
+
 
 export const updateProfileAPI = (profileData) =>
   apiFetch('/api/users/profile', {
