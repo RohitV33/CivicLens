@@ -1,7 +1,4 @@
-// ============================================================
-// routes/location.routes.js - LOCATION & MAP ROUTES
-// ============================================================
-
+﻿
 import express from "express";
 import { getReverseGeocode } from "../controllers/location.controller.js";
 

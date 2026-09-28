@@ -1,7 +1,4 @@
-// ============================================================
-// services/upload.service.js - CLOUDINARY UPLOAD SERVICE LAYER
-// ============================================================
-
+﻿
 import cloudinary from "../config/cloudinary.js";
 import { Readable } from "stream";
 

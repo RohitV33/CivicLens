@@ -1,7 +1,4 @@
-// ============================================================
-// routes/notification.routes.js - NOTIFICATION ROUTES
-// ============================================================
-
+﻿
 import express from "express";
 import {
   getUserNotifications,

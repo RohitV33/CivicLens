@@ -1,7 +1,4 @@
-// ============================================================
-// validators/auth.validator.js - AUTHENTICATION VALIDATORS (ZOD)
-// ============================================================
-
+﻿
 import { z } from "zod";
 
 export const registerSchema = z.object({

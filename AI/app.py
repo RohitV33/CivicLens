@@ -1,18 +1,15 @@
 import os
 import io
-import time
 from contextlib import asynccontextmanager
 from typing import List, Dict, Any
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 
-# Load environment configuration
 WASTE_MODEL_PATH = os.getenv("WASTE_MODEL_PATH", "./model/best.pt")
 POTHOLE_MODEL_PATH = os.getenv("POTHOLE_MODEL_PATH", "./model/civicmodel.pt")
 CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.45"))
 
-# Global YOLO model instances
 waste_model = None
 pothole_model = None
 
@@ -20,47 +17,40 @@ def load_models():
     global waste_model, pothole_model
     from ultralytics import YOLO
 
-    # 1. Load Waste Detection Model (best.pt)
     if os.path.exists(WASTE_MODEL_PATH):
         try:
-            print(f"Loading Waste YOLOv8 model from: {WASTE_MODEL_PATH}")
             waste_model = YOLO(WASTE_MODEL_PATH)
-            print("✅ Waste YOLOv8 model loaded successfully!")
+            print(f"Waste model loaded: {WASTE_MODEL_PATH}")
         except Exception as e:
-            print(f"⚠️ Failed to load Waste model: {e}")
+            print(f"Failed to load waste model: {e}")
             waste_model = None
     else:
-        print(f"ℹ️ Waste model '{WASTE_MODEL_PATH}' not found.")
+        print(f"Waste model not found at {WASTE_MODEL_PATH}")
 
-    # 2. Load Pothole Detection Model (civicmodel.pt)
     if os.path.exists(POTHOLE_MODEL_PATH):
         try:
-            print(f"Loading Pothole YOLOv8 model from: {POTHOLE_MODEL_PATH}")
             pothole_model = YOLO(POTHOLE_MODEL_PATH)
-            print("✅ Pothole YOLOv8 model loaded successfully!")
+            print(f"Pothole model loaded: {POTHOLE_MODEL_PATH}")
         except Exception as e:
-            print(f"⚠️ Failed to load Pothole model: {e}")
+            print(f"Failed to load pothole model: {e}")
             pothole_model = None
     else:
-        print(f"ℹ️ Pothole model '{POTHOLE_MODEL_PATH}' not found.")
+        print(f"Pothole model not found at {POTHOLE_MODEL_PATH}")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """FastAPI recommended lifespan handler (replaces deprecated @app.on_event)."""
     load_models()
     yield
-    # Cleanup on shutdown (if needed)
 
 
 app = FastAPI(
     title="CivicLens AI Vision Service",
-    description="Multi-Model YOLOv8 Object Detection Service for Waste Categorization & Pothole Detection",
+    description="YOLOv8 Object Detection for Waste and Pothole Detection",
     version="2.0.0",
     lifespan=lifespan,
 )
 
-# Restrict CORS to known trusted origins
 _RAW_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS",
     "http://localhost:5173,http://localhost:3000,https://civic-lens-blush.vercel.app"
@@ -78,7 +68,7 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return {
-        "service": "CivicLens AI Multi-Model Vision Service",
+        "service": "CivicLens AI Vision Service",
         "status": "online",
         "wasteModelLoaded": waste_model is not None,
         "potholeModelLoaded": pothole_model is not None,
@@ -95,7 +85,6 @@ async def health():
 
 @app.post("/predict")
 async def predict(image: UploadFile = File(...)):
-    # Validate uploaded file type
     if not image.content_type.startswith("image/"):
         raise HTTPException(
             status_code=400,
@@ -109,12 +98,11 @@ async def predict(image: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(
             status_code=422,
-            detail=f"Unable to decode image file: {str(e)}"
+            detail=f"Unable to decode image: {str(e)}"
         )
 
     detections: List[Dict[str, Any]] = []
 
-    # 1. Run Waste Model Inference (best.pt)
     if waste_model is not None:
         try:
             results = waste_model(pil_image, conf=CONFIDENCE_THRESHOLD)
@@ -124,7 +112,6 @@ async def predict(image: UploadFile = File(...)):
                     cls_name = r.names.get(cls_id, f"class_{cls_id}").lower()
                     conf = float(box.conf[0])
                     xyxy = [float(val) for val in box.xyxy[0].tolist()]
-
                     if conf >= CONFIDENCE_THRESHOLD:
                         detections.append({
                             "class": cls_name,
@@ -133,9 +120,8 @@ async def predict(image: UploadFile = File(...)):
                             "source": "waste_model"
                         })
         except Exception as err:
-            print(f"Error during Waste model inference: {err}")
+            print(f"Waste model inference error: {err}")
 
-    # 2. Run Pothole Model Inference (civicmodel.pt)
     if pothole_model is not None:
         try:
             results = pothole_model(pil_image, conf=CONFIDENCE_THRESHOLD)
@@ -145,7 +131,6 @@ async def predict(image: UploadFile = File(...)):
                     cls_name = r.names.get(cls_id, f"class_{cls_id}").lower()
                     conf = float(box.conf[0])
                     xyxy = [float(val) for val in box.xyxy[0].tolist()]
-
                     if conf >= CONFIDENCE_THRESHOLD:
                         detections.append({
                             "class": "pothole" if "pothole" in cls_name else cls_name,
@@ -154,9 +139,9 @@ async def predict(image: UploadFile = File(...)):
                             "source": "pothole_model"
                         })
         except Exception as err:
-            print(f"Error during Pothole model inference: {err}")
+            print(f"Pothole model inference error: {err}")
 
-    # Filter out spurious full-image bounding boxes (e.g. background false positives taking >95% frame with low/moderate conf)
+    # Filter out full-frame false positives
     valid_detections: List[Dict[str, Any]] = []
     for det in detections:
         bbox = det.get("bbox", [])
@@ -165,11 +150,9 @@ async def predict(image: UploadFile = File(...)):
             box_h = bbox[3] - bbox[1]
             is_full_frame = (box_w >= 0.95 * width) and (box_h >= 0.95 * height)
             if is_full_frame and det["confidence"] < 0.70:
-                print(f"⚠️ Filtered full-frame spurious YOLO detection: class={det['class']}, conf={det['confidence']}")
                 continue
         valid_detections.append(det)
 
-    # Sort valid detections by confidence descending
     valid_detections = sorted(valid_detections, key=lambda x: x["confidence"], reverse=True)
 
     waste_detections = [d for d in valid_detections if d.get("source") == "waste_model"]
@@ -219,4 +202,3 @@ async def predict(image: UploadFile = File(...)):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app:app", host="0.0.0.0", port=8000)
-

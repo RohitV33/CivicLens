@@ -1,7 +1,4 @@
-// ============================================================
-// controllers/ai.controller.js - AI CONTROLLER
-// ============================================================
-
+﻿
 import {
   analyzeIssueImageService,
   detectDuplicateIssueService,

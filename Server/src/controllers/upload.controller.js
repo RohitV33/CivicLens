@@ -1,7 +1,4 @@
-// ============================================================
-// controllers/upload.controller.js - IMAGE UPLOAD CONTROLLER
-// ============================================================
-
+﻿
 import { uploadToCloudinaryService } from "../services/upload.service.js";
 
 export const uploadImage = async (req, res, next) => {

@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // lib/prisma.js - DATABASE CLIENT (Singleton)
 //
 // Prisma is our ORM (Object Relational Mapper).

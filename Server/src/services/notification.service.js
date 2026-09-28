@@ -1,10 +1,6 @@
-// ============================================================
-// services/notification.service.js - NOTIFICATION BUSINESS LOGIC
-// ============================================================
-
+﻿
 import prisma from "../lib/prisma.js";
 
-// ---- Get Notifications for Logged-In User ----
 export const getUserNotificationsService = async (userId) => {
   const [notifications, unreadCount] = await Promise.all([
     prisma.notification.findMany({
@@ -32,7 +28,6 @@ export const getUserNotificationsService = async (userId) => {
   };
 };
 
-// ---- Mark Single Notification as Read ----
 export const markNotificationAsReadService = async (notificationId, userId) => {
   if (isNaN(notificationId)) {
     const error = new Error("Invalid notification ID");
@@ -64,7 +59,6 @@ export const markNotificationAsReadService = async (notificationId, userId) => {
   return updatedNotification;
 };
 
-// ---- Mark All Notifications as Read ----
 export const markAllNotificationsAsReadService = async (userId) => {
   await prisma.notification.updateMany({
     where: { userId, isRead: false },
@@ -74,7 +68,6 @@ export const markAllNotificationsAsReadService = async (userId) => {
   return { message: "All notifications marked as read" };
 };
 
-// ---- Delete Notification ----
 export const deleteNotificationService = async (notificationId, userId) => {
   if (isNaN(notificationId)) {
     const error = new Error("Invalid notification ID");

@@ -1,10 +1,6 @@
-// ============================================================
-// services/admin.service.js - ADMIN BUSINESS LOGIC & TRANSACTIONS
-// ============================================================
-
+﻿
 import prisma from "../lib/prisma.js";
 
-// ---- Admin List Issues with Advanced Filters ----
 export const getAdminIssuesService = async (query = {}) => {
   const page = Math.max(1, parseInt(query.page) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(query.limit) || 20));
@@ -50,7 +46,6 @@ export const getAdminIssuesService = async (query = {}) => {
   };
 };
 
-// ---- Update Issue Status (Prisma Transaction) ----
 export const updateIssueStatusService = async (issueId, newStatus, comment, adminId, resolvedData = {}) => {
   if (isNaN(issueId)) {
     const error = new Error("Invalid issue ID");
@@ -128,7 +123,6 @@ export const updateIssueStatusService = async (issueId, newStatus, comment, admi
 };
 
 
-// ---- Update Issue Priority (Admin Override) ----
 export const updateIssuePriorityService = async (issueId, newPriority, adminId) => {
   if (isNaN(issueId)) {
     const error = new Error("Invalid issue ID");
@@ -156,7 +150,6 @@ export const updateIssuePriorityService = async (issueId, newPriority, adminId) 
   return issue;
 };
 
-// ---- Assign Issue to Admin/Officer ----
 export const assignIssueService = async (issueId, assignedToId, adminId) => {
   if (isNaN(issueId) || isNaN(assignedToId)) {
     const error = new Error("Invalid issue or assignee ID");
@@ -226,7 +219,6 @@ export const assignIssueService = async (issueId, assignedToId, adminId) => {
   return result;
 };
 
-// ---- Admin Analytics Dashboard ----
 export const getAdminAnalyticsService = async () => {
   const [
     totalUsers,

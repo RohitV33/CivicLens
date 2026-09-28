@@ -1,7 +1,4 @@
-// ============================================================
-// middleware/validate.js - ZOD INPUT VALIDATION MIDDLEWARE
-// ============================================================
-
+﻿
 export const validate = (schema, source = "body") => {
   return async (req, res, next) => {
     try {

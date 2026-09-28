@@ -1,9 +1,8 @@
-import {
+﻿import {
   createCommentService,
   getIssueCommentsService,
 } from "../services/comment.service.js";
 
-// ---- GET /api/issues/:id/comments ----
 export const getIssueComments = async (req, res, next) => {
   try {
     const issueId = parseInt(req.params.id);
@@ -19,7 +18,6 @@ export const getIssueComments = async (req, res, next) => {
   }
 };
 
-// ---- POST /api/issues/:id/comments ----
 export const createComment = async (req, res, next) => {
   try {
     const issueId = parseInt(req.params.id);

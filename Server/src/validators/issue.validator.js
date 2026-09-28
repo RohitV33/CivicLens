@@ -1,7 +1,4 @@
-// ============================================================
-// validators/issue.validator.js - ISSUE VALIDATORS (ZOD)
-// ============================================================
-
+﻿
 import { z } from "zod";
 
 const CategoryEnum = z.enum([

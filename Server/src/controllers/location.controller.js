@@ -1,7 +1,4 @@
-// ============================================================
-// controllers/location.controller.js - LOCATION CONTROLLER
-// ============================================================
-
+﻿
 import { reverseGeocodeService } from "../services/location.service.js";
 
 export const getReverseGeocode = async (req, res, next) => {

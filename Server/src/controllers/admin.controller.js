@@ -1,7 +1,4 @@
-// ============================================================
-// controllers/admin.controller.js - ADMIN CONTROLLER
-// ============================================================
-
+﻿
 import {
   getAdminIssuesService,
   updateIssueStatusService,
@@ -10,7 +7,6 @@ import {
   getAdminAnalyticsService,
 } from "../services/admin.service.js";
 
-// ---- GET /api/admin/issues ----
 export const getAdminIssues = async (req, res, next) => {
   try {
     const result = await getAdminIssuesService(req.query);
@@ -24,7 +20,6 @@ export const getAdminIssues = async (req, res, next) => {
   }
 };
 
-// ---- PATCH /api/admin/issues/:id/status ----
 export const updateIssueStatus = async (req, res, next) => {
   try {
     const issueId = parseInt(req.params.id);
@@ -56,7 +51,6 @@ export const updateIssueStatus = async (req, res, next) => {
 };
 
 
-// ---- PATCH /api/admin/issues/:id/priority ----
 export const updateIssuePriority = async (req, res, next) => {
   try {
     const issueId = parseInt(req.params.id);
@@ -81,7 +75,6 @@ export const updateIssuePriority = async (req, res, next) => {
   }
 };
 
-// ---- PATCH /api/admin/issues/:id/assign ----
 export const assignIssue = async (req, res, next) => {
   try {
     const issueId = parseInt(req.params.id);
@@ -106,7 +99,6 @@ export const assignIssue = async (req, res, next) => {
   }
 };
 
-// ---- GET /api/admin/analytics ----
 export const getAdminAnalytics = async (req, res, next) => {
   try {
     const analytics = await getAdminAnalyticsService();

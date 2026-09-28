@@ -1,50 +1,28 @@
-// ============================================================
-// context/AuthContext.jsx — GLOBAL AUTH STATE
-//
-// This context answers the question: "Is a user logged in?"
-// from anywhere in the app.
-//
-// It stores:
-//   user   → the logged-in user's data (name, email, id) or null
-//   token  → the JWT token saved in localStorage
-//
-// It provides:
-//   login()   → save token + user, called after successful API login
-//   logout()  → clear token + user, redirect to /login
-//   loading   → true while we're checking if user is already logged in
-// ============================================================
-
 import { createContext, useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getProfileAPI } from '../services/api'
 
-// Step 1: Create the context
 const AuthContext = createContext(null)
 
-// Step 2: Create the Provider (wraps the whole app)
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)       // null = not logged in
-  const [loading, setLoading] = useState(true) // true while checking token
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
-  // On first page load: check if a token already exists in localStorage
-  // If yes, fetch the user's profile so they stay "logged in" across refreshes
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) {
-      setLoading(false) // no token, definitely not logged in
+      setLoading(false)
       return
     }
 
-    // Abort if server doesn't respond in 8s (Render free tier cold start)
+    // Abort if server doesn't respond in 8s
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 8000)
 
-    // Token exists — verify it by fetching the user's profile
     getProfileAPI(controller.signal)
       .then((res) => setUser(res.data ?? res))
       .catch(() => {
-        // Token was invalid, expired, or server timed out — clear it
         localStorage.removeItem('token')
       })
       .finally(() => {
@@ -58,21 +36,18 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
-  // Called after a successful login API response
   const login = (token, userData) => {
-    localStorage.setItem('token', token) // save token to localStorage
+    localStorage.setItem('token', token)
     setUser(userData)
     navigate('/dashboard')
   }
 
-  // Called when user profile is updated
   const updateUser = (updatedData) => {
     setUser((prev) => ({ ...prev, ...updatedData }))
   }
 
-  // Called when user clicks logout
   const logout = () => {
-    localStorage.removeItem('token') // remove token from localStorage
+    localStorage.removeItem('token')
     setUser(null)
     navigate('/login')
   }
@@ -82,9 +57,6 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   )
-
 }
 
-// Step 3: Custom hook — use this in any component to access auth state
-// Example: const { user, login, logout } = useAuth()
 export const useAuth = () => useContext(AuthContext)

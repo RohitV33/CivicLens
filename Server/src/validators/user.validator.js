@@ -1,7 +1,4 @@
-// ============================================================
-// validators/user.validator.js - USER PROFILE VALIDATORS (ZOD)
-// ============================================================
-
+﻿
 import { z } from "zod";
 
 export const updateProfileSchema = z.object({

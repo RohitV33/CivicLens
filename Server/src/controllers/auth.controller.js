@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // controllers/auth.controller.js - AUTH CONTROLLER
 //
 // WHAT IS A CONTROLLER?
@@ -21,7 +21,6 @@ import {
   resetPasswordService,
 } from "../services/auth.service.js";
 
-// ---- POST /api/auth/register ----
 export const registerUser = async (req, res, next) => {
   try {
     // req.body contains: { name, email, password }
@@ -40,7 +39,6 @@ export const registerUser = async (req, res, next) => {
   }
 };
 
-// ---- POST /api/auth/login ----
 export const loginUser = async (req, res, next) => {
   try {
     // req.body contains: { email, password }
@@ -59,7 +57,6 @@ export const loginUser = async (req, res, next) => {
   }
 };
 
-// ---- POST /api/auth/google ----
 export const googleLoginUser = async (req, res, next) => {
   try {
     const { token } = req.body;
@@ -77,7 +74,6 @@ export const googleLoginUser = async (req, res, next) => {
   }
 };
 
-// ---- POST /api/auth/forgot-password ----
 export const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
@@ -92,7 +88,6 @@ export const forgotPassword = async (req, res, next) => {
   }
 };
 
-// ---- POST /api/auth/reset-password ----
 export const resetPassword = async (req, res, next) => {
   try {
     const { token, newPassword } = req.body;
@@ -107,7 +102,6 @@ export const resetPassword = async (req, res, next) => {
   }
 };
 
-// ---- POST /api/auth/logout ----
 export const logoutUser = (req, res) => {
   // Since we use JWT (token-based auth), logout is handled on the CLIENT side
   // The client just deletes the token from storage

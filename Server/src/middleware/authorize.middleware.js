@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // middleware/authorize.middleware.js - ROLE AUTHORIZATION MIDDLEWARE
 //
 // WHAT IS AUTHORIZATION?

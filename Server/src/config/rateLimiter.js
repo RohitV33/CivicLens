@@ -1,7 +1,4 @@
-// ============================================================
-// config/rateLimiter.js - EXPRESS RATE LIMITING CONFIGURATION
-// ============================================================
-
+﻿
 import rateLimit from "express-rate-limit";
 
 // Strict rate limit for authentication endpoints (prevent brute-force attacks)

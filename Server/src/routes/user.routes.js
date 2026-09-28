@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // routes/user.routes.js - USER ROUTES
 //
 // These routes REQUIRE a valid JWT token (protected routes).

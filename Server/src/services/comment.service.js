@@ -1,6 +1,5 @@
-import prisma from "../lib/prisma.js";
+﻿import prisma from "../lib/prisma.js";
 
-// ---- Get comments for an issue ----
 export const getIssueCommentsService = async (issueId) => {
   if (isNaN(issueId)) {
     const error = new Error("Invalid issue ID");
@@ -21,7 +20,6 @@ export const getIssueCommentsService = async (issueId) => {
   return comments;
 };
 
-// ---- Create a comment ----
 export const createCommentService = async (issueId, userId, content) => {
   if (isNaN(issueId)) {
     const error = new Error("Invalid issue ID");

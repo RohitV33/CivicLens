@@ -1,7 +1,4 @@
-// ============================================================
-// controllers/notification.controller.js - NOTIFICATION CONTROLLER
-// ============================================================
-
+﻿
 import {
   getUserNotificationsService,
   markNotificationAsReadService,

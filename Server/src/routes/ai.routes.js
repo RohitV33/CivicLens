@@ -1,7 +1,4 @@
-// ============================================================
-// routes/ai.routes.js - AI ROUTES
-// ============================================================
-
+﻿
 import express from "express";
 import { analyzeIssueImage, checkDuplicateIssue, classifyWaste } from "../controllers/ai.controller.js";
 import authMiddleware from "../middleware/auth.middleware.js";

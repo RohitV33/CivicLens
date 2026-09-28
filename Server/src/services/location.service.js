@@ -1,7 +1,4 @@
-// ============================================================
-// services/location.service.js - OPENSTREETMAP REVERSE GEOCODING
-// ============================================================
-
+﻿
 export const reverseGeocodeService = async (latitude, longitude) => {
   const lat = parseFloat(latitude);
   const lng = parseFloat(longitude);

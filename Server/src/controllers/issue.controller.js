@@ -1,7 +1,4 @@
-// ============================================================
-// controllers/issue.controller.js - ISSUE CONTROLLER
-// ============================================================
-
+﻿
 import {
   createIssueService,
   getAllIssuesService,
@@ -12,7 +9,6 @@ import {
   toggleUpvoteIssueService,
 } from "../services/issue.service.js";
 
-// ---- POST /api/issues ----
 export const createIssue = async (req, res, next) => {
   try {
     const createdById = req.user.id;
@@ -28,7 +24,6 @@ export const createIssue = async (req, res, next) => {
   }
 };
 
-// ---- GET /api/issues ----
 export const getAllIssues = async (req, res, next) => {
   try {
     const result = await getAllIssuesService(req.query);
@@ -42,7 +37,6 @@ export const getAllIssues = async (req, res, next) => {
   }
 };
 
-// ---- GET /api/issues/my ----
 export const getMyIssues = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -58,7 +52,6 @@ export const getMyIssues = async (req, res, next) => {
   }
 };
 
-// ---- GET /api/issues/:id ----
 export const getIssueById = async (req, res, next) => {
   try {
     const issueId = parseInt(req.params.id);
@@ -73,7 +66,6 @@ export const getIssueById = async (req, res, next) => {
   }
 };
 
-// ---- PATCH /api/issues/:id ----
 export const updateIssue = async (req, res, next) => {
   try {
     const issueId = parseInt(req.params.id);
@@ -89,7 +81,6 @@ export const updateIssue = async (req, res, next) => {
   }
 };
 
-// ---- POST /api/issues/:id/upvote ----
 export const toggleUpvoteIssue = async (req, res, next) => {
   try {
     const issueId = parseInt(req.params.id);
@@ -105,7 +96,6 @@ export const toggleUpvoteIssue = async (req, res, next) => {
   }
 };
 
-// ---- DELETE /api/issues/:id ----
 export const deleteIssue = async (req, res, next) => {
   try {
     const issueId = parseInt(req.params.id);

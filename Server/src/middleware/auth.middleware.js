@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // middleware/auth.middleware.js - AUTHENTICATION MIDDLEWARE
 //
 // WHAT IS MIDDLEWARE?

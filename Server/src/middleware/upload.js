@@ -1,7 +1,4 @@
-// ============================================================
-// middleware/upload.js - MULTER FILE UPLOAD MIDDLEWARE
-// ============================================================
-
+﻿
 import multer from "multer";
 
 // Memory storage keeps file buffers in memory (no temp files on disk)

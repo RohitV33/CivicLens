@@ -1,7 +1,4 @@
-// ============================================================
-// routes/upload.routes.js - IMAGE UPLOAD ROUTES
-// ============================================================
-
+﻿
 import express from "express";
 import { uploadImage } from "../controllers/upload.controller.js";
 import authMiddleware from "../middleware/auth.middleware.js";

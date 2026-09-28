@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // controllers/user.controller.js - USER CONTROLLER
 //
 // Handles requests related to users.
@@ -7,7 +7,6 @@
 
 import prisma from "../lib/prisma.js";
 
-// ---- GET /api/users/profile ----
 // Returns the currently logged-in user's profile
 // req.user is set by authMiddleware (contains { id, email, role })
 export const getMyProfile = async (req, res, next) => {
@@ -47,7 +46,6 @@ export const getMyProfile = async (req, res, next) => {
   }
 };
 
-// ---- PATCH /api/users/profile ----
 // Updates the logged-in user's profile
 export const updateMyProfile = async (req, res, next) => {
   try {
@@ -86,7 +84,6 @@ export const updateMyProfile = async (req, res, next) => {
 };
 
 
-// ---- GET /api/users/all ----
 // Returns ALL users in the database
 // ADMIN ONLY - protected by authorize("ADMIN") in the route
 export const getAllUsers = async (req, res, next) => {

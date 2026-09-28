@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // services/auth.service.js - AUTH BUSINESS LOGIC
 //
 // WHAT IS A SERVICE?
@@ -20,7 +20,6 @@ import { sendEmail } from "../utils/email.js";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// ---- REGISTER SERVICE ----
 export const registerService = async (userData) => {
 
   // Destructure the data sent from the request body
@@ -64,7 +63,6 @@ export const registerService = async (userData) => {
   return user;
 };
 
-// ---- LOGIN SERVICE ----
 export const loginService = async (userData) => {
 
   const { email, password } = userData;
@@ -121,7 +119,6 @@ export const loginService = async (userData) => {
   };
 };
 
-// ---- GOOGLE AUTH SERVICE ----
 export const googleAuthService = async (googleToken) => {
   let googleId, email, name;
 
@@ -194,7 +191,6 @@ export const googleAuthService = async (googleToken) => {
   };
 };
 
-// ---- FORGOT PASSWORD SERVICE ----
 export const forgotPasswordService = async (email) => {
   const user = await prisma.user.findUnique({
     where: { email },
@@ -239,7 +235,6 @@ export const forgotPasswordService = async (email) => {
   return { message: "Password reset code sent to your email address!" };
 };
 
-// ---- RESET PASSWORD SERVICE ----
 export const resetPasswordService = async (token, newPassword) => {
   if (!token || !newPassword) {
     const error = new Error("Reset token and new password are required");

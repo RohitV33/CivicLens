@@ -1,11 +1,7 @@
-// ============================================================
-// services/issue.service.js - ISSUE BUSINESS LOGIC
-// ============================================================
-
+﻿
 import prisma from "../lib/prisma.js";
 import { analyzeIssueImageService } from "./ai.service.js";
 
-// ---- Create a new civic issue ----
 export const createIssueService = async (issueData, createdById) => {
   const {
     title,
@@ -136,7 +132,6 @@ export const createIssueService = async (issueData, createdById) => {
   return result;
 };
 
-// ---- Get all public issues with pagination & filters ----
 export const getAllIssuesService = async (query = {}) => {
   const page = Math.max(1, parseInt(query.page) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(query.limit) || 20));
@@ -185,7 +180,6 @@ export const getAllIssuesService = async (query = {}) => {
   };
 };
 
-// ---- Get issues created by logged-in user ----
 export const getMyIssuesService = async (userId) => {
   const issues = await prisma.issue.findMany({
     where: { createdById: userId },
@@ -200,7 +194,6 @@ export const getMyIssuesService = async (userId) => {
   return issues;
 };
 
-// ---- Get single issue by ID ----
 export const getIssueByIdService = async (issueId) => {
   if (isNaN(issueId)) {
     const error = new Error("Invalid issue ID. Must be an integer");
@@ -237,7 +230,6 @@ export const getIssueByIdService = async (issueId) => {
   return issue;
 };
 
-// ---- Update an issue ----
 export const updateIssueService = async (issueId, updateData, user) => {
   if (isNaN(issueId)) {
     const error = new Error("Invalid issue ID");
@@ -284,7 +276,6 @@ export const updateIssueService = async (issueId, updateData, user) => {
   return updatedIssue;
 };
 
-// ---- Delete/Reject issue ----
 export const deleteIssueService = async (issueId, user) => {
   if (isNaN(issueId)) {
     const error = new Error("Invalid issue ID");
@@ -320,7 +311,6 @@ export const deleteIssueService = async (issueId, user) => {
   return { message: "Issue deleted successfully" };
 };
 
-// ---- Toggle Upvote / Endorse Issue ----
 export const toggleUpvoteIssueService = async (issueId, userId) => {
   if (isNaN(issueId)) {
     const error = new Error("Invalid issue ID");

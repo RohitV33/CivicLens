@@ -1,7 +1,4 @@
-// ============================================================
-// utils/wasteCategoryMap.js - CLEAN WASTE CATEGORY MAPPING LAYER
-// ============================================================
-
+﻿
 export const WASTE_CATEGORIES = {
   plastic: {
     category: "GARBAGE",

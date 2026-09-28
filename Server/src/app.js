@@ -1,7 +1,3 @@
-// ============================================================
-// app.js - EXPRESS APPLICATION MOUNTING & SECURITY MIDDLEWARE
-// ============================================================
-
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -21,14 +17,10 @@ import { errorHandler } from "./middleware/error.middleware.js";
 
 const app = express();
 
-// Trust proxy for Render / Vercel rate-limiting headers
 app.set('trust proxy', 1);
 
-
-// 1. HTTP Security Headers
 app.use(helmet());
 
-// 2. CORS configuration
 const allowedOrigins = [
   process.env.CLIENT_URL,
   'http://localhost:5173',
@@ -45,26 +37,21 @@ app.use(cors({
     if (origin.endsWith('.vercel.app') || origin.includes('localhost')) {
       return callback(null, true)
     }
-    return callback(null, true) // Allow origin to prevent production CORS deployment locks
+    return callback(null, true)
   },
   credentials: true,
 }));
 
-
-// 3. Body parsers with limits
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 
-// 4. General Rate Limiter for all APIs
 app.use("/api", apiRateLimiter);
 
-// 5. Health check
 app.get("/", (req, res) => {
-  res.json({ message: "✅ CivicLens API is running securely!" });
+  res.json({ message: "CivicLens API is running." });
 });
 
-// 6. Routes Mounting
 app.use("/api/auth", authRateLimiter, authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/issues", issueRoutes);
@@ -74,7 +61,6 @@ app.use("/api/location", locationRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/notifications", notificationRoutes);
 
-// 7. Global Error Handler (MUST BE LAST)
 app.use(errorHandler);
 
 export default app;

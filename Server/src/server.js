@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // server.js - THE ENTRY POINT OF YOUR APP
 // This is the very first file that runs when you do "npm run dev"
 // It loads environment variables and starts the HTTP server

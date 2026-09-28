@@ -1,7 +1,4 @@
-// ============================================================
-// routes/auth.routes.js - AUTH ROUTES WITH ZOD VALIDATION
-// ============================================================
-
+﻿
 import express from "express";
 import {
   registerUser,

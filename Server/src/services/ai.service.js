@@ -1,7 +1,4 @@
-// ============================================================
-// services/ai.service.js - REAL MULTI-MODAL GEMINI VISION AI & DUPLICATE DETECTION
-// ============================================================
-
+﻿
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import prisma from "../lib/prisma.js";
 
@@ -109,7 +106,6 @@ const GENERATE_CIVIC_TEXT = (category) => {
   }
 };
 
-// ---- AI Computer Vision & Classification Engine ----
 export const analyzeIssueImageService = async ({ imageUrl = "", title = "", description = "", yoloResult = null }) => {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
@@ -353,7 +349,6 @@ Return strictly valid JSON only with NO markdown formatting:
   };
 };
 
-// ---- Geo-Location Based Duplicate Issue Detector ----
 export const detectDuplicateIssueService = async (latitude, longitude, category, radiusInKm = 0.3) => {
   const lat = parseFloat(latitude);
   const lng = parseFloat(longitude);
@@ -414,7 +409,6 @@ export const detectDuplicateIssueService = async (latitude, longitude, category,
   };
 };
 
-// ---- YOLOv8 Waste Classification Python Microservice Integration ----
 export const classifyWasteService = async (fileBuffer, mimetype = "image/jpeg") => {
   const AI_SERVICE_URL = process.env.AI_SERVICE_URL || "http://localhost:8000";
 

@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer'
+﻿import nodemailer from 'nodemailer'
 
 export const sendEmail = async ({ to, subject, html, text }) => {
   const smtpHost = process.env.SMTP_HOST

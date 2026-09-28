@@ -1,7 +1,4 @@
-// ============================================================
-// routes/admin.routes.js - PROTECTED ADMIN ROUTES WITH ZOD VALIDATION
-// ============================================================
-
+﻿
 import express from "express";
 import {
   getAdminIssues,
